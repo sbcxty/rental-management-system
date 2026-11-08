@@ -14,3 +14,6 @@ config.properties
 *.iml
 .DS_Store
 Thumbs.db
+# Files the app creates while running (receipts, uploaded photos)
+receipts/
+uploads/
