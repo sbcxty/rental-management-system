@@ -14,7 +14,7 @@ The build only passes once every page that the portals reference exists.
 - [x] Properties (`PropertiesPage`, `PropertyDialog`, `CardGrid`)
 - [x] Units of a property (`UnitsPage`, `UnitDialog`)
 - [x] Inventory (`InventoryPage`) and its item dialog (`ItemDialog`, copy-from-unit)
-- [ ] Bookings (`BookingsPage`)
+- [x] Bookings (`BookingsPage`)
 - [ ] Payments (`PaymentsPage`)
 - [ ] Finances (`FinancesPage`) and Add expense dialog
 - [ ] Messages (shared `MessagesPage`, used by both portals)
@@ -42,3 +42,4 @@ The build only passes once every page that the portals reference exists.
 - Picked photos are copied into `uploads/properties/` only when the property is saved, under a new random name.
 - Buttons, not links, are used for actions inside clickable cards, so clicking them doesn't also open the card.
 - Inventory: items shared by the whole property (no unit) appear under a "Shared (whole property)" choice in the unit dropdown, only when some exist. Quantity saves on each +/− click; items needing attention are listed first with a tinted row.
+- Bookings: typing a booking reference (e.g. "GN-2026-8815" or "8815") finds it by binary search over the id-sorted list (SortedSearch) and ignores the selected tab; other text filters by renter, property or unit. Rejected and expired bookings are under the Cancelled tab. Tables use a new `RowTableModel` and are sized to their rows so only the page scrolls.
