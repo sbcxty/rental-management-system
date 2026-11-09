@@ -115,7 +115,7 @@ public class NeedsAttentionPage extends BasePage {
 
         row.add(item.isRefund()
                 ? Widgets.iconTile("receipt", Colors.PRIMARY_TINT, Colors.DANGER)
-                : Widgets.iconTile("calendar-check", Colors.PRIMARY_TINT, Colors.PRIMARY));
+                : Widgets.iconTile("calendar-check", Colors.PRIMARY_TINT, Colors.PRIMARY), "w 40!, h 40!");
 
         JPanel text = Ui.transparent("insets 0, gap 0 2, wrap 1", "[grow,fill]");
         JPanel titleRow = Ui.transparent("insets 0, gap 8", "[][]");
