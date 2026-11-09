@@ -68,6 +68,17 @@ public class ImageRing<T> {
         return current();
     }
 
+    /** Jumps to a 1-based position (used when a thumbnail is clicked). Walks the ring: O(n). */
+    public T moveTo(int target) {
+        if (target < 1 || target > size) {
+            return current();
+        }
+        while (position != target) {
+            next();
+        }
+        return current();
+    }
+
     public int size() {
         return size;
     }

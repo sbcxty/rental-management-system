@@ -53,7 +53,7 @@ public final class Fonts {
 
     // Headings (Plus Jakarta Sans)
     public static Font pageTitle() {
-        return jakartaBold.deriveFont(28f);
+        return jakartaBold.deriveFont(30f);
     }
 
     public static Font sectionTitle() {
@@ -65,7 +65,14 @@ public final class Fonts {
     }
 
     public static Font statValue() {
-        return jakartaBold.deriveFont(26f);
+        return jakartaBold.deriveFont(30f);
+    }
+
+    /** Small uppercase table header text with a little letter spacing. */
+    public static Font tableHeader() {
+        java.util.Map<java.awt.font.TextAttribute, Object> spacing =
+                java.util.Map.of(java.awt.font.TextAttribute.TRACKING, 0.06f);
+        return dm(dmMediumFamily, Font.PLAIN, 11).deriveFont(spacing);
     }
 
     public static Font logo() {

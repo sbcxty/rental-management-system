@@ -33,6 +33,9 @@ public final class Ui {
 
     public static JLabel label(String text, Font font, Color color) {
         JLabel label = new JLabel(text);
+        // 2px spare on the right: characters drawn from the fallback font (₱, ×) render slightly
+        // wider than Java measures them, which cut off the last digit of amounts like ₱16,200.00.
+        label.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 2));
         label.setFont(font);
         label.setForeground(color);
         return label;

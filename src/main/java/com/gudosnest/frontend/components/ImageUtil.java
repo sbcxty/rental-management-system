@@ -104,6 +104,29 @@ public final class ImageUtil {
         g.fillRect(x + size * 2 / 5, y + size / 4, size / 5, size * 5 / 12);
     }
 
+    /** Folder (relative to the project folder) where photos owners pick are copied. */
+    public static final String UPLOADS_DIR = "uploads/properties";
+
+    /**
+     * Copies a photo the owner picked into uploads/properties under a new unique name, so the
+     * app keeps working if the original is moved or deleted. Returns the path to store.
+     */
+    public static String copyToUploads(File source) throws IOException {
+        if (load(source.getPath()) == null) {
+            throw new IOException(source.getName() + " is not a picture this app can open (use JPG or PNG).");
+        }
+        String name = source.getName();
+        int dot = name.lastIndexOf('.');
+        String extension = dot < 0 ? ".png" : name.substring(dot).toLowerCase();
+        File folder = new File(UPLOADS_DIR);
+        if (!folder.isDirectory() && !folder.mkdirs()) {
+            throw new IOException("Could not create folder " + folder.getAbsolutePath());
+        }
+        File target = new File(folder, java.util.UUID.randomUUID() + extension);
+        java.nio.file.Files.copy(source.toPath(), target.toPath());
+        return UPLOADS_DIR + "/" + target.getName();
+    }
+
     /** Draws a Swing component into a PNG file (receipts are saved this way). */
     public static void saveAsPng(JComponent component, File file) throws IOException {
         component.setSize(component.getPreferredSize());

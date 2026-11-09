@@ -35,11 +35,14 @@ public final class Colors {
     public static final Color BLUE_TINT = new Color(0xE4EEF3);      // light Light Blue fill
     public static final Color SURFACE_HOVER = new Color(0xF6F4F8);  // row / item hover on white
 
-    // Sidebar (Burgundy background)
-    public static final Color SIDEBAR = BURGUNDY;
-    public static final Color SIDEBAR_TEXT = new Color(0xD9D2DF);
-    public static final Color SIDEBAR_HOVER = new Color(0x4A2731);
-    public static final Color SIDEBAR_DIVIDER = new Color(0x4F2C37);
+    public static final Color TABLE_HEADER = new Color(0xF7F5F9);  // light tint behind table headers
+
+    // Sidebar (light, as in the Stitch designs; Burgundy logo square)
+    public static final Color SIDEBAR = CARD;
+    public static final Color SIDEBAR_LOGO = BURGUNDY;
+    public static final Color SIDEBAR_TEXT = NEUTRAL;
+    public static final Color SIDEBAR_HOVER = PRIMARY_TINT;
+    public static final Color SIDEBAR_DIVIDER = BORDER;
     public static final Color SIDEBAR_ACTIVE = PRIMARY;
 
     /** "#593F62" style string, used in FlatLaf style properties. */

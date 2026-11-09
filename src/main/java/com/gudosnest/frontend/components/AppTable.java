@@ -91,10 +91,11 @@ public final class AppTable {
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean selected,
                                                        boolean focused, int row, int column) {
-            JLabel label = (JLabel) super.getTableCellRendererComponent(table, value, false, false, row, column);
-            label.setFont(Fonts.captionMedium());
+            String text = value == null ? "" : value.toString().toUpperCase();
+            JLabel label = (JLabel) super.getTableCellRendererComponent(table, text, false, false, row, column);
+            label.setFont(Fonts.tableHeader());
             label.setForeground(Colors.TEXT_MUTED);
-            label.setBackground(Colors.CARD);
+            label.setBackground(Colors.TABLE_HEADER);
             label.setHorizontalAlignment(SwingConstants.LEFT);
             label.setBorder(BorderFactory.createCompoundBorder(
                     BorderFactory.createMatteBorder(0, 0, 1, 0, Colors.BORDER),

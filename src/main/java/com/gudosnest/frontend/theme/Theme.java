@@ -74,8 +74,11 @@ public final class Theme {
         UIManager.put("Table.selectionBackground", Colors.PRIMARY_TINT);
         UIManager.put("Table.selectionForeground", Colors.TEXT);
         UIManager.put("Table.gridColor", Colors.BORDER);
-        UIManager.put("TableHeader.background", Colors.CARD);
-        UIManager.put("TableHeader.separatorColor", Colors.CARD);
+        UIManager.put("TableHeader.background", Colors.TABLE_HEADER);
+        UIManager.put("TableHeader.separatorColor", Colors.TABLE_HEADER);
+        // Headers can't be clicked (no sorting), so they don't change colour under the mouse.
+        UIManager.put("TableHeader.hoverBackground", Colors.TABLE_HEADER);
+        UIManager.put("TableHeader.pressedBackground", Colors.TABLE_HEADER);
         UIManager.put("TableHeader.bottomSeparatorColor", Colors.BORDER);
         UIManager.put("ToolTip.background", Colors.BURGUNDY);
         UIManager.put("ToolTip.foreground", Colors.TEXT_ON_DARK);

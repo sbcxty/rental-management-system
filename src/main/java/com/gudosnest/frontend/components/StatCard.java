@@ -17,7 +17,7 @@ public class StatCard extends Card {
     private final JLabel note;
 
     public StatCard(String titleText, String iconName) {
-        super(new MigLayout("insets 20, fillx, gap 0", "[grow][]", "[]8[]4[]"));
+        super(new MigLayout("insets 24, fillx, gap 0", "[grow][]", "[]12[]4[]"));
         title = Ui.label(titleText, Fonts.body(), Colors.TEXT_MUTED);
         value = Ui.label("-", Fonts.statValue(), Colors.TEXT);
         note = Ui.caption(" ");

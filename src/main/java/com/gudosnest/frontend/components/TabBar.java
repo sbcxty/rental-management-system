@@ -41,10 +41,8 @@ public class TabBar extends JPanel {
         tab.setFocusPainted(false);
         tab.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         tab.putClientProperty(FlatClientProperties.STYLE,
-                "arc:999;focusWidth:0;innerFocusWidth:0;borderWidth:1;margin:6,16,6,16"
+                "arc:999;focusWidth:0;innerFocusWidth:0;borderWidth:0;margin:6,18,6,18"
                         + ";background:#FFFFFF;foreground:" + Colors.hex(Colors.TEXT)
-                        + ";borderColor:" + Colors.hex(Colors.BORDER)
-                        + ";focusedBorderColor:" + Colors.hex(Colors.SECONDARY)
                         + ";focusedBackground:#FFFFFF"
                         + ";hoverBackground:" + Colors.hex(Colors.SURFACE_HOVER)
                         + ";selectedBackground:" + Colors.hex(Colors.PRIMARY)

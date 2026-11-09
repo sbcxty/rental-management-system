@@ -5,6 +5,7 @@ import com.gudosnest.frontend.theme.Colors;
 import com.gudosnest.frontend.theme.Fonts;
 import com.gudosnest.frontend.theme.Icons;
 import com.gudosnest.frontend.theme.Theme;
+import com.formdev.flatlaf.util.UIScale;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.BorderFactory;
@@ -29,15 +30,26 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 /**
- * The one sidebar used by every page, in both portals.
+ * The one sidebar used by every page, in both portals (layout taken from the Stitch designs).
  * Collapsed: 72px, icons only. Expanded: 240px, icons and labels; it pushes the page content.
- * The logo square at the top is the expand/collapse button. The avatar at the bottom opens a
- * small menu: name and email, "Switch to ... portal" (two-role accounts only) and "Log out".
+ * The Burgundy logo square at the top is the expand/collapse button. The avatar at the bottom
+ * opens a small menu: name and email, "Switch to ... portal" (two-role accounts only), "Log out".
+ *
+ * Spacing: 12px padding on both sides, so every row is 48px wide when collapsed and the
+ * icons sit in the middle with room on the left and the right.
+ *
+ * HiDPI: MigLayout grows gaps and sizes with the Windows display scale (for example 125%),
+ * so the sidebar width and everything painted here are scaled the same way with UIScale.
  */
 public class Sidebar extends JPanel {
 
     public static final int COLLAPSED_WIDTH = 72;
     public static final int EXPANDED_WIDTH = 240;
+
+    private static final int PAD = 12;      // left and right padding
+    private static final int ROW = 48;      // logo size, and nav row width when collapsed
+    private static final int NAV_HEIGHT = 44;
+    private static final int ICON = 20;
 
     /** One navigation entry, for example new Item("messages", "Messages", "message-square"). */
     public record Item(String id, String label, String icon) {
@@ -54,10 +66,8 @@ public class Sidebar extends JPanel {
 
     private final Map<String, NavButton> buttons = new LinkedHashMap<>();
     private final List<Consumer<Boolean>> expandListeners = new ArrayList<>();
-    private final JLabel logoText;
-    private final JLabel portalText;
-    private final JLabel userName;
-    private final JLabel userEmail;
+    private final JPanel logoLabels;
+    private final JPanel nameLabels;
     private boolean expanded;
 
     /**
@@ -65,11 +75,15 @@ public class Sidebar extends JPanel {
      * @param switchLabel "Switch to Renter portal", or null if the user has only one role
      */
     public Sidebar(String portalName, List<Item> items, User user, String switchLabel, Listener listener) {
-        super(new MigLayout("insets 16, gap 0, fillx, wrap 1", "[grow,fill]", ""));
+        // The right inset is 1px smaller because the 1px right border takes that space.
+        super(new MigLayout("insets 20 " + PAD + " 16 " + (PAD - 1) + ", gap 0, fillx, wrap 1",
+                "[grow,fill]", ""));
         setBackground(Colors.SIDEBAR);
+        setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, Colors.BORDER));
 
-        // Logo (also the expand button)
-        JPanel logoRow = Ui.transparent("insets 0, gap 12", "[][]");
+        // Logo (also the expand button). Labels use "gapleft" + hidemode 3, so when they are
+        // hidden their gap disappears too and nothing pushes the icons to the right.
+        JPanel logoRow = Ui.transparent("insets 0, gap 0", "[][grow,fill]");
         LogoButton logo = new LogoButton();
         logo.addMouseListener(new MouseAdapter() {
             @Override
@@ -77,13 +91,11 @@ public class Sidebar extends JPanel {
                 setExpanded(!expanded);
             }
         });
-        logoText = Ui.label("Gudo's Nest", Fonts.logo(), Colors.TEXT_ON_DARK);
-        portalText = Ui.label(portalName, Fonts.caption(), Colors.SIDEBAR_TEXT);
-        JPanel logoLabels = Ui.transparent("insets 0, gap 0, wrap 1", "");
-        logoLabels.add(logoText);
-        logoLabels.add(portalText);
-        logoRow.add(logo, "w 40!, h 40!");
-        logoRow.add(logoLabels, "hidemode 3");
+        logoLabels = Ui.transparent("insets 0, gap 0, wrap 1", "[grow,fill]");
+        logoLabels.add(Ui.label("Gudo's Nest", Fonts.logo(), Colors.TEXT), "wmin 0");
+        logoLabels.add(Ui.label(portalName, Fonts.caption(), Colors.TEXT_MUTED), "wmin 0");
+        logoRow.add(logo, "w " + ROW + "!, h " + ROW + "!");
+        logoRow.add(logoLabels, "gapleft 12, hidemode 3, wmin 0");
         add(logoRow, "gapbottom 24");
 
         // Navigation
@@ -96,7 +108,7 @@ public class Sidebar extends JPanel {
                 }
             });
             buttons.put(item.id(), button);
-            add(button, "h 44!, gapbottom 4");
+            add(button, "h " + NAV_HEIGHT + "!, gapbottom 4");
         }
 
         // Profile at the bottom
@@ -105,15 +117,13 @@ public class Sidebar extends JPanel {
         line.setBackground(Colors.SIDEBAR_DIVIDER);
         add(line, "h 1!, gapbottom 16");
 
-        JPanel profileRow = Ui.transparent("insets 0, gap 12", "[][grow,fill]");
+        JPanel profileRow = Ui.transparent("insets 0, gap 0", "[][grow,fill]");
         Avatar avatar = new Avatar(user.getInitials(), 40);
-        userName = Ui.label(user.getFullName(), Fonts.bodyMedium(), Colors.TEXT_ON_DARK);
-        userEmail = Ui.label(user.getEmail(), Fonts.caption(), Colors.SIDEBAR_TEXT);
-        JPanel nameLabels = Ui.transparent("insets 0, gap 0, wrap 1", "[grow,fill]");
-        nameLabels.add(userName, "wmin 0");
-        nameLabels.add(userEmail, "wmin 0");
-        profileRow.add(avatar, "w 40!, h 40!");
-        profileRow.add(nameLabels, "hidemode 3, wmin 0");
+        nameLabels = Ui.transparent("insets 0, gap 0, wrap 1", "[grow,fill]");
+        nameLabels.add(Ui.label(user.getFullName(), Fonts.bodyMedium(), Colors.TEXT), "wmin 0");
+        nameLabels.add(Ui.label(user.getEmail(), Fonts.caption(), Colors.TEXT_MUTED), "wmin 0");
+        profileRow.add(avatar, "w 40!, h 40!, gapleft 4");
+        profileRow.add(nameLabels, "gapleft 12, hidemode 3, wmin 0");
         profileRow.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         profileRow.setToolTipText("Account");
 
@@ -170,8 +180,8 @@ public class Sidebar extends JPanel {
 
     public void setExpanded(boolean expanded) {
         this.expanded = expanded;
-        logoText.getParent().setVisible(expanded);
-        userName.getParent().setVisible(expanded);
+        logoLabels.setVisible(expanded);
+        nameLabels.setVisible(expanded);
         buttons.values().forEach(b -> b.setToolTipText(expanded ? null : b.item.label()));
         revalidate();
         repaint();
@@ -188,7 +198,7 @@ public class Sidebar extends JPanel {
 
     @Override
     public Dimension getPreferredSize() {
-        return new Dimension(expanded ? EXPANDED_WIDTH : COLLAPSED_WIDTH, super.getPreferredSize().height);
+        return new Dimension(UIScale.scale(expanded ? EXPANDED_WIDTH : COLLAPSED_WIDTH), super.getPreferredSize().height);
     }
 
     @Override
@@ -198,9 +208,9 @@ public class Sidebar extends JPanel {
 
     // ----------------------------------------------------------------------------------------
 
-    /** The Primary square with a house icon. Clicking it expands or collapses the sidebar. */
+    /** The Burgundy square with a house icon. Clicking it expands or collapses the sidebar. */
     private final class LogoButton extends JComponent {
-        private final Icon icon = Icons.get("house", 20, Colors.TEXT_ON_DARK);
+        private final Icon icon = Icons.get("house", 22, Colors.TEXT_ON_DARK);
 
         LogoButton() {
             setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -211,8 +221,9 @@ public class Sidebar extends JPanel {
         protected void paintComponent(Graphics g) {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(Colors.PRIMARY);
-            g2.fillRoundRect(0, 0, getWidth(), getHeight(), Theme.RADIUS, Theme.RADIUS);
+            g2.setColor(Colors.SIDEBAR_LOGO);
+            int arc = UIScale.scale(Theme.RADIUS + 4);
+            g2.fillRoundRect(0, 0, getWidth(), getHeight(), arc, arc);
             icon.paintIcon(this, g2, (getWidth() - icon.getIconWidth()) / 2, (getHeight() - icon.getIconHeight()) / 2);
             g2.dispose();
         }
@@ -229,10 +240,9 @@ public class Sidebar extends JPanel {
 
         NavButton(Item item) {
             this.item = item;
-            this.normalIcon = Icons.get(item.icon(), 20, Colors.SIDEBAR_TEXT);
-            this.activeIcon = Icons.get(item.icon(), 20, Colors.TEXT_ON_DARK);
+            this.normalIcon = Icons.get(item.icon(), ICON, Colors.SIDEBAR_TEXT);
+            this.activeIcon = Icons.get(item.icon(), ICON, Colors.TEXT_ON_DARK);
             setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            setBorder(BorderFactory.createEmptyBorder());
             addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseEntered(MouseEvent e) {
@@ -266,24 +276,34 @@ public class Sidebar extends JPanel {
 
             if (active || hover) {
                 g2.setColor(active ? Colors.SIDEBAR_ACTIVE : Colors.SIDEBAR_HOVER);
-                g2.fillRoundRect(0, 0, getWidth(), getHeight(), Theme.CONTROL_RADIUS * 2, Theme.CONTROL_RADIUS * 2);
+                int arc = UIScale.scale(Theme.RADIUS);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), arc, arc);
             }
 
+            // The icon is centred in a collapsed-width row, so it doesn't move when the sidebar expands.
             Icon icon = active ? activeIcon : normalIcon;
-            int iconX = 10;   // centers a 20px icon in the 40px collapsed row
-            int iconY = (getHeight() - icon.getIconHeight()) / 2;
+            int iconSize = icon.getIconWidth();
+            int iconX = (UIScale.scale(ROW) - iconSize) / 2;
+            int iconY = (getHeight() - iconSize) / 2;
             icon.paintIcon(this, g2, iconX, iconY);
 
             if (unread) {
-                g2.setColor(Colors.LIGHT_BLUE);
-                g2.fillOval(iconX + 15, iconY - 3, 8, 8);
+                // Small dot on the icon's top-right corner, with a ring so it stands out.
+                int dot = UIScale.scale(8);
+                int ring = UIScale.scale(2);
+                int dotX = iconX + iconSize - UIScale.scale(5);
+                int dotY = iconY - UIScale.scale(3);
+                g2.setColor(active ? Colors.SIDEBAR_ACTIVE : Colors.SIDEBAR);
+                g2.fillOval(dotX - ring, dotY - ring, dot + 2 * ring, dot + 2 * ring);
+                g2.setColor(active ? Colors.LIGHT_BLUE : Colors.PRIMARY);
+                g2.fillOval(dotX, dotY, dot, dot);
             }
 
             if (expanded) {
                 g2.setFont(active ? Fonts.bodyMedium() : Fonts.body());
-                g2.setColor(active ? Colors.TEXT_ON_DARK : Colors.SIDEBAR_TEXT);
+                g2.setColor(active ? Colors.TEXT_ON_DARK : (hover ? Colors.TEXT : Colors.SIDEBAR_TEXT));
                 FontMetrics fm = g2.getFontMetrics();
-                g2.drawString(item.label(), iconX + 20 + 14, (getHeight() - fm.getHeight()) / 2 + fm.getAscent());
+                g2.drawString(item.label(), iconX + iconSize + UIScale.scale(12), (getHeight() - fm.getHeight()) / 2 + fm.getAscent());
             }
             g2.dispose();
         }
