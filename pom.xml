@@ -10,7 +10,7 @@
     <name>Gudo's Nest</name>
 
     <properties>
-        <maven.compiler.release>17</maven.compiler.release>
+        <maven.compiler.release>25</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- Class started by "mvnw exec:java". Override with -Dexec.mainClass=... -->
         <exec.mainClass>com.gudosnest.Main</exec.mainClass>
