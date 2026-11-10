@@ -82,7 +82,7 @@ public final class RefundReviewDialog {
         AppButton message = new AppButton("Message renter", AppButton.Style.OUTLINED).withIcon("message-square");
         message.addActionListener(e -> {
             dialog.dispose();
-            // portal.openConversation(b.getRenterId(), b.getRenterName(), b);
+            portal.openConversation(b.getRenterId(), b.getRenterName(), b);
         });
         dialog.addLeftButton(message);
         dialog.addButton(reject);

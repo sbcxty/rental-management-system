@@ -6,7 +6,7 @@ import com.gudosnest.frontend.MainWindow;
 import com.gudosnest.frontend.components.Sidebar;
 import com.gudosnest.frontend.portal.BasePage;
 import com.gudosnest.frontend.portal.Portal;
-// import com.gudosnest.frontend.shared.MessagesPage;
+import com.gudosnest.frontend.shared.MessagesPage;
 
 import java.util.List;
 
@@ -32,9 +32,9 @@ public class OwnerPortal extends Portal {
             case "properties" -> new PropertiesPage(this);
             case "bookings" -> new BookingsPage(this);
             case "payments" -> new PaymentsPage(this);
-            // case "finances" -> new FinancesPage(this);
-            // case "messages" -> new MessagesPage(this);
-            // case "damage" -> new DamageReportsPage(this);
+            case "finances" -> new FinancesPage(this);
+            case "messages" -> new MessagesPage(this);
+            case "damage" -> new DamageReportsPage(this);
             default -> new DashboardPage(this);
         };
     }

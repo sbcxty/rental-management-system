@@ -2,7 +2,7 @@ package com.gudosnest.frontend.portal;
 
 import com.gudosnest.backend.database.DataException;
 import com.gudosnest.backend.database.SessionManager;
-// import com.gudosnest.backend.model.Booking;
+import com.gudosnest.backend.model.Booking;
 import com.gudosnest.backend.model.User;
 import com.gudosnest.backend.service.BookingService;
 import com.gudosnest.backend.service.FinanceService;
@@ -13,8 +13,8 @@ import com.gudosnest.frontend.components.AppDialog;
 import com.gudosnest.frontend.components.PortalShell;
 import com.gudosnest.frontend.components.Sidebar;
 import com.gudosnest.frontend.owner.OwnerPortal;
-// import com.gudosnest.frontend.renter.RenterPortal;
-// import com.gudosnest.frontend.shared.MessagesPage;
+import com.gudosnest.frontend.renter.RenterPortal;
+import com.gudosnest.frontend.shared.MessagesPage;
 
 import javax.swing.JComponent;
 import java.util.List;
@@ -45,9 +45,9 @@ public abstract class Portal {
     }
 
     /** Picks the portal class for the role the person is using. */
-    // public static Portal create(MainWindow window, User user, SessionManager.Portal kind) {
-    //     return kind == SessionManager.Portal.OWNER ? new OwnerPortal(window, user) : new RenterPortal(window, user);
-    // }
+    public static Portal create(MainWindow window, User user, SessionManager.Portal kind) {
+        return kind == SessionManager.Portal.OWNER ? new OwnerPortal(window, user) : new RenterPortal(window, user);
+    }
 
     /** The factory method: builds the page for one sidebar item. */
     protected abstract BasePage createPage(String itemId);
@@ -113,12 +113,12 @@ public abstract class Portal {
     }
 
     /** Opens Messages with the conversation with this person selected (created if new). */
-    // public void openConversation(int otherUserId, String otherName, Booking booking) {
-    //     MessagesPage page = new MessagesPage(this, otherUserId, otherName, booking);
-    //     page.reload();
-    //     shell.showPage("messages", page);
-    //     refreshBadges();
-    // }
+    public void openConversation(int otherUserId, String otherName, Booking booking) {
+        MessagesPage page = new MessagesPage(this, otherUserId, otherName, booking);
+        page.reload();
+        shell.showPage("messages", page);
+        refreshBadges();
+    }
 
     /** Expires overdue pending bookings and updates occupancy (see BookingService). */
     public void refreshStatuses() {

@@ -244,7 +244,7 @@ public class UnitsPage extends BasePage {
                 }
             });
             AppButton message = new AppButton("Message guest", AppButton.Style.INVERTED);
-            // message.addActionListener(e -> portal.openConversation(stay.getRenterId(), stay.getRenterName(), stay));
+            message.addActionListener(e -> portal.openConversation(stay.getRenterId(), stay.getRenterName(), stay));
             actions.add(stayDetails);
             actions.add(message);
             body.add(actions, "gapbottom 8");
