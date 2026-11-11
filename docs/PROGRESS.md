@@ -33,7 +33,7 @@ The build passes: pages not built yet are placeholders ("Coming soon"). See `TOD
 
 ## Broken or missing
 
-- Renters have no "Message host" button yet (it belongs on the renter booking dialog / Booking history, not built); renters can only reply in existing conversations.
+- Renters have no "Message host" button on bookings yet (Booking history isn't built); they can start a conversation from the Messages search instead.
 - Messages' "Cancel stay" opens `CancellationsPage`, which is still a placeholder.
 
 ## Decisions made without asking
@@ -53,3 +53,4 @@ The build passes: pages not built yet are placeholders ("Coming soon"). See `TOD
 - Markdown docs live in `docs/` (README.md stays in the root). Skill files under `.claude/skills/` were left in place because Claude Code loads them from there.
 - Messages: built from the two Stitch screens, minus what the app has no data for (attach file, online status, reply time, "Inquiries" filter, settings button, house rules). Both portals use All / Unread filters. Each column scrolls inside itself so the page fits a 125% display (~1280×770); the side columns shrink a little on narrow windows.
 - Messages (renter): the panel's cancel button says "Cancel stay", not the design's "Request cancellation", because a renter's cancel takes effect at once (only the refund is reviewed). "View stay" opens a read-only booking dialog with the receipt.
+- Messages search also finds people to start a conversation with, no booking needed: renters find owners by name or property name, owners find renters by name. A conversation without a booking shows in the portal that matches the other person's role (owners in the Renter portal, renters in the Owner portal).

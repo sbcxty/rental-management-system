@@ -16,6 +16,6 @@ What is left to build. Keep this in step with `PROGRESS.md` (same folder).
 
 ## Broken or missing
 
-- Renters can't start a conversation: add a "Message host" button (calls `portal.openConversation(b.getOwnerId(), b.getOwnerName(), b)`) to the renter booking dialog when Booking history is built.
+- Add a "Message host" button (calls `portal.openConversation(b.getOwnerId(), b.getOwnerName(), b)`) to the renter booking dialog when Booking history is built, so the chat is linked to that booking. (Renters can already start a conversation from the Messages search.)
 - `RenterPortal.openCancellation(...)` is called from Messages ("Cancel stay"), but `CancellationsPage` ignores the booking id until it is built.
 - The startup check only confirmed the app runs for 40 seconds without errors; the window and login were not checked by hand.

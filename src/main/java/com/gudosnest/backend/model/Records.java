@@ -74,4 +74,12 @@ public final class Records {
     public record Conversation(int otherUserId, String otherName, String lastText, LocalDateTime lastAt,
                                int unread, Booking booking) {
     }
+
+    /**
+     * Someone found by the Messages search to start a new conversation with.
+     * {@code properties} lists an owner's property names ("Highland Glass Cabin, Sanctuary Cove House"),
+     * or is null for renters and owners without properties.
+     */
+    public record Contact(int userId, String name, String properties) {
+    }
 }

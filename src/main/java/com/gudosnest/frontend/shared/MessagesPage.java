@@ -2,7 +2,9 @@ package com.gudosnest.frontend.shared;
 
 import com.formdev.flatlaf.util.UIScale;
 import com.gudosnest.backend.database.SessionManager;
+import com.gudosnest.backend.database.DataException;
 import com.gudosnest.backend.model.Booking;
+import com.gudosnest.backend.model.Records.Contact;
 import com.gudosnest.backend.model.Records.Conversation;
 import com.gudosnest.backend.model.Records.Message;
 import com.gudosnest.frontend.components.AppButton;
@@ -100,13 +102,6 @@ public class MessagesPage extends BasePage {
         add(new PageHeader("Messages"), "gapbottom 24");
         loadConversations();
 
-        if (selectedId == null) {
-            add(Ui.emptyState(forOwner()
-                    ? "No messages yet. Use \"Message renter\" on a booking to start a conversation."
-                    : "No messages yet. You can message an owner from one of your bookings."), "grow, push");
-            return;
-        }
-
         // Side columns shrink a little on narrow windows (a 125% display is ~1280px wide) so the
         // chat keeps a usable width and nothing gets cut off on the right.
         JPanel columns = Ui.transparent("insets 0, gap 16, fill", "[240:280:280][grow,fill][256:300:300]");
@@ -119,7 +114,8 @@ public class MessagesPage extends BasePage {
 
     /**
      * Loads the list and marks the open conversation as read. With nothing selected, opens the most
-     * recent conversation. A person opened from a booking but never messaged gets a temporary row.
+     * recent conversation. A person opened from a booking or the search but never messaged gets a
+     * temporary row at the top until the first message is sent.
      */
     private void loadConversations() {
         if (selectedId != null) {
@@ -172,7 +168,7 @@ public class MessagesPage extends BasePage {
     private JComponent buildList() {
         Card card = new Card(new MigLayout("insets 16, fill, gap 0, wrap 1", "[grow,fill]", "[]12[]8[grow]"));
 
-        JTextField searchField = Ui.searchField(forOwner() ? "Search renters" : "Search conversations");
+        JTextField searchField = Ui.searchField(forOwner() ? "Search renters" : "Search owners or properties");
         searchField.setText(search);
         searchField.getDocument().addDocumentListener(new DocumentListener() {
             private void changed() {
@@ -217,6 +213,10 @@ public class MessagesPage extends BasePage {
         return card;
     }
 
+    /**
+     * The conversations that match the search and filter, then (while searching) people to start a
+     * new conversation with: owners or properties for renters, renters for owners.
+     */
     private void fillRows() {
         listRows.removeAll();
         String query = search.toLowerCase(Locale.ROOT);
@@ -231,11 +231,65 @@ public class MessagesPage extends BasePage {
             listRows.add(conversationRow(c));
             shown++;
         }
+
+        if (!query.isEmpty() && !unreadOnly) {
+            try {
+                List<Contact> people = new ArrayList<>();
+                for (Contact person : portal.messages.findPeople(me(), portal.kind(), search)) {
+                    if (find(person.userId()) == null) {   // already in the list above
+                        people.add(person);
+                    }
+                }
+                if (!people.isEmpty()) {
+                    listRows.add(Ui.label("START A NEW CONVERSATION", Fonts.tableHeader(), Colors.TEXT_MUTED),
+                            "gaptop " + (shown > 0 ? 12 : 4) + ", gapbottom 4, gapleft 12");
+                    for (Contact person : people) {
+                        listRows.add(personRow(person));
+                        shown++;
+                    }
+                }
+            } catch (DataException e) {
+                listRows.add(Ui.error(e.getMessage()), "gapleft 12");
+                shown++;
+            }
+        }
+
         if (shown == 0) {
-            listRows.add(Ui.emptyState(unreadOnly ? "No unread messages" : "No matches"));
+            String empty;
+            if (unreadOnly) {
+                empty = "No unread messages";
+            } else if (!query.isEmpty()) {
+                empty = forOwner() ? "No renters match" : "No owners or properties match";
+            } else {
+                empty = forOwner() ? "No conversations yet. Search for a renter to start one."
+                        : "No conversations yet. Search for an owner or a property to start one.";
+            }
+            listRows.add(Widgets.wrap(empty, Fonts.body(), Colors.TEXT_MUTED), "wmin 0, gaptop 16, gapleft 12");
         }
         listRows.revalidate();
         listRows.repaint();
+    }
+
+    /** Someone found by the search: name, and for owners the properties they rent out. */
+    private JComponent personRow(Contact person) {
+        RowPanel row = new RowPanel(false, () -> openPerson(person));
+        JPanel top = Ui.transparent("insets 0, gap 8, fillx", "[][grow,fill]");
+        top.add(new Avatar(initials(person.name()), 32), "spany 2, aligny center");
+        top.add(Ui.label(person.name(), Fonts.bodyMedium(), Colors.TEXT), "wmin 0, wrap");
+        String detail = person.properties() != null ? person.properties() : forOwner() ? "Renter" : "Owner";
+        top.add(Ui.caption(detail), "wmin 0");
+        row.add(top, "wmin 0");
+        return row;
+    }
+
+    /** Opens an empty chat with someone from the search; the first message creates the conversation. */
+    private void openPerson(Contact person) {
+        selectedId = person.userId();
+        selectedName = person.name();
+        selectedBooking = null;
+        search = "";          // so the new conversation shows at the top of the full list
+        unreadOnly = false;
+        reload();
     }
 
     private static boolean matches(Conversation c, String query) {
@@ -268,7 +322,9 @@ public class MessagesPage extends BasePage {
             if (b != null) {
                 row.add(Ui.label(b.getPropertyName(), Fonts.caption(), Colors.SECONDARY), "wmin 0");
             }
-        } else if (b != null) {
+        } else if (b == null) {
+            row.add(Ui.caption("Host"), "wmin 0");
+        } else {
             JPanel who = Ui.transparent("insets 0, gap 4", "[][]");
             who.add(Ui.label(c.otherName(), Fonts.bodyMedium(), Colors.TEXT), "wmin 0");
             who.add(Ui.caption("• Host"));
@@ -289,12 +345,20 @@ public class MessagesPage extends BasePage {
     // ---------------------------------------------------------------- middle: chat
 
     private JComponent buildChat() {
+        if (selectedId == null) {
+            Card empty = new Card(new MigLayout("insets 16, fill", "[center]", "[center]"));
+            empty.add(Ui.muted(forOwner() ? "Pick a conversation, or search for a renter to message."
+                    : "Pick a conversation, or search for an owner to message."));
+            return empty;
+        }
         Card card = new Card(new MigLayout("insets 16, fill, gap 0, wrap 1", "[grow,fill]", "[][][grow][]"));
 
         boolean viewStay = !forOwner() && selectedBooking != null;
         JPanel head = Ui.transparent("insets 0 0 12 0, gap 12 0, fillx", "[][grow,fill][]");
-        head.add(new Avatar(initials(selectedName), 40), "spany 2, aligny center");
-        head.add(Ui.label(selectedName, Fonts.sectionTitle(), Colors.TEXT), "wmin 0" + (viewStay ? "" : ", wrap"));
+        // Without a booking there's no second line, so the avatar and name share one centered row.
+        head.add(new Avatar(initials(selectedName), 40), selectedBooking != null ? "spany 2, aligny center" : "");
+        head.add(Ui.label(selectedName, Fonts.sectionTitle(), Colors.TEXT),
+                "wmin 0, aligny center" + (viewStay ? "" : ", wrap"));
         if (viewStay) {
             AppButton stay = new AppButton("View stay", AppButton.Style.OUTLINED).withIcon("house");
             stay.addActionListener(e -> showStay(selectedBooking));
@@ -385,7 +449,9 @@ public class MessagesPage extends BasePage {
         Card card = new Card(new MigLayout("insets 16, fill, gap 0, wrap 1", "[grow,fill]", "[grow][]"));
         Booking b = selectedBooking;
         if (b == null) {
-            card.add(Ui.emptyState("No booking linked"), "grow, push");
+            String text = selectedId == null ? "Booking details show here."
+                    : "No booking with " + firstName(selectedName) + " yet.";
+            card.add(Widgets.wrap(text, Fonts.body(), Colors.TEXT_MUTED), "wmin 0, aligny top");
             return card;
         }
 
