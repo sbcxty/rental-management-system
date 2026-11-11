@@ -88,6 +88,34 @@ public final class Formats {
         return dateTime == null ? "" : TIME.format(dateTime);
     }
 
+    /** Short "when" for lists: "10:24 AM" today, "Yesterday", "Oct 15" this year, else "Oct 15, 2024". */
+    public static String when(LocalDateTime dateTime) {
+        if (dateTime == null) {
+            return "";
+        }
+        LocalDate day = dateTime.toLocalDate();
+        LocalDate today = LocalDate.now();
+        if (day.equals(today)) {
+            return time(dateTime);
+        }
+        if (day.equals(today.minusDays(1))) {
+            return "Yesterday";
+        }
+        return day.getYear() == today.getYear() ? MONTH_DAY.format(day) : DATE.format(day);
+    }
+
+    /** Day heading in a chat: "Today", "Yesterday", or "Monday, November 17, 2025". */
+    public static String dayHeading(LocalDate day) {
+        LocalDate today = LocalDate.now();
+        if (day.equals(today)) {
+            return "Today";
+        }
+        if (day.equals(today.minusDays(1))) {
+            return "Yesterday";
+        }
+        return longDate(day);
+    }
+
     /** "Monday, November 17, 2025" */
     public static String longDate(LocalDate date) {
         return DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy", Locale.ENGLISH).format(date);
