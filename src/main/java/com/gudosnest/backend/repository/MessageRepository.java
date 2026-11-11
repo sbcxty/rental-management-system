@@ -9,14 +9,17 @@ import java.util.List;
 /** Messages between a renter and an owner. A conversation is everything between one pair of people. */
 public class MessageRepository {
 
-    /** Summary per other person: id, name, last text, last time, unread count, latest booking id. */
-    public record Thread(int otherId, String otherName, String lastText, LocalDateTime lastAt, int unread,
-                         Integer lastBookingId) {
+    /**
+     * Summary per other person: id, name, roles, last text, last time, unread count, latest booking id
+     * (null when they've never messaged about a booking).
+     */
+    public record Thread(int otherId, String otherName, boolean otherIsOwner, boolean otherIsRenter,
+                         String lastText, LocalDateTime lastAt, int unread, Integer lastBookingId) {
     }
 
     public List<Thread> threads(int userId) {
         return Db.list("""
-                SELECT other.user_id, other.full_name,
+                SELECT other.user_id, other.full_name, other.is_owner, other.is_renter,
                        (SELECT m2.message_text FROM Messages m2
                         WHERE (m2.sender_id = ? AND m2.receiver_id = other.user_id)
                            OR (m2.sender_id = other.user_id AND m2.receiver_id = ?)
@@ -30,9 +33,10 @@ public class MessageRepository {
                 FROM Messages m
                 JOIN Users other ON other.user_id = CASE WHEN m.sender_id = ? THEN m.receiver_id ELSE m.sender_id END
                 WHERE m.sender_id = ? OR m.receiver_id = ?
-                GROUP BY other.user_id, other.full_name
+                GROUP BY other.user_id, other.full_name, other.is_owner, other.is_renter
                 ORDER BY last_at DESC""",
-                rs -> new Thread(rs.getInt(1), rs.getString(2), rs.getString(3), Db.dateTime(rs, "last_at"),
+                rs -> new Thread(rs.getInt("user_id"), rs.getString("full_name"), rs.getBoolean("is_owner"),
+                        rs.getBoolean("is_renter"), rs.getString("last_text"), Db.dateTime(rs, "last_at"),
                         rs.getInt("unread"), Db.integer(rs, "last_booking")),
                 userId, userId, userId, userId, userId, userId, userId, userId);
     }

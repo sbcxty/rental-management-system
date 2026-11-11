@@ -167,7 +167,12 @@ public final class Widgets {
 
     /** Round tinted square with an icon, used at the start of list rows (Needs attention). */
     public static JComponent iconTile(String icon, Color background, Color iconColor) {
-        JLabel tile = new JLabel(Icons.get(icon, 20, iconColor), SwingConstants.CENTER) {
+        return iconTile(icon, 20, background, iconColor);
+    }
+
+    /** Same, with a chosen icon size (for example a large tile in an empty state). */
+    public static JComponent iconTile(String icon, int iconSize, Color background, Color iconColor) {
+        JLabel tile = new JLabel(Icons.get(icon, iconSize, iconColor), SwingConstants.CENTER) {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
