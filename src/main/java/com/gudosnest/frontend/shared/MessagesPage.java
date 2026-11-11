@@ -132,16 +132,15 @@ public class MessagesPage extends BasePage {
 
         if (selectedId != null) {
             Conversation current = find(selectedId);
+            // Always their latest booking, even when opened from an older one ("Message renter");
+            // older bookings are on the booking history pages.
             if (current == null) {
-                if (selectedBooking == null) {   // opened from the search: show a past booking, if any
-                    selectedBooking = portal.messages.latestBooking(me(), selectedId, portal.kind()).orElse(null);
-                }
+                selectedBooking = portal.messages.latestBooking(me(), selectedId, portal.kind())
+                        .orElse(selectedBooking);
                 conversations.add(0, new Conversation(selectedId, selectedName, null, null, 0, selectedBooking));
             } else {
                 selectedName = current.otherName();
-                if (selectedBooking == null) {
-                    selectedBooking = current.booking();
-                }
+                selectedBooking = current.booking();
             }
         }
         portal.refreshBadges();

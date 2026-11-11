@@ -35,16 +35,15 @@ public class MessageService {
     public List<Conversation> conversations(int userId, SessionManager.Portal portal) {
         List<Conversation> result = new ArrayList<>();
         for (MessageRepository.Thread t : messages.threads(userId)) {
-            Booking booking = t.lastBookingId() == null ? null : bookings.byId(t.lastBookingId()).orElse(null);
-            boolean belongs = booking != null
-                    ? belongsTo(booking, userId, portal)
+            // The booking the messages mention decides which portal the conversation belongs to...
+            Booking mentioned = t.lastBookingId() == null ? null : bookings.byId(t.lastBookingId()).orElse(null);
+            boolean belongs = mentioned != null
+                    ? belongsTo(mentioned, userId, portal)
                     : (portal == SessionManager.Portal.OWNER ? t.otherIsRenter() : t.otherIsOwner());
             if (belongs) {
-                if (booking == null) {
-                    // Never messaged about a booking: show the latest one they made together, if any
-                    booking = latestBooking(userId, t.otherId(), portal).orElse(null);
-                }
-                result.add(new Conversation(t.otherId(), t.otherName(), t.lastText(), t.lastAt(), t.unread(), booking));
+                // ...but the page always shows their latest booking (older ones are in booking history)
+                Booking latest = latestBooking(userId, t.otherId(), portal).orElse(mentioned);
+                result.add(new Conversation(t.otherId(), t.otherName(), t.lastText(), t.lastAt(), t.unread(), latest));
             }
         }
         return result;
