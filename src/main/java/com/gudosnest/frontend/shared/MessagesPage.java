@@ -133,6 +133,9 @@ public class MessagesPage extends BasePage {
         if (selectedId != null) {
             Conversation current = find(selectedId);
             if (current == null) {
+                if (selectedBooking == null) {   // opened from the search: show a past booking, if any
+                    selectedBooking = portal.messages.latestBooking(me(), selectedId, portal.kind()).orElse(null);
+                }
                 conversations.add(0, new Conversation(selectedId, selectedName, null, null, 0, selectedBooking));
             } else {
                 selectedName = current.otherName();
@@ -449,10 +452,7 @@ public class MessagesPage extends BasePage {
         Card card = new Card(new MigLayout("insets 16, fill, gap 0, wrap 1", "[grow,fill]", "[grow][]"));
         Booking b = selectedBooking;
         if (b == null) {
-            String text = selectedId == null ? "Booking details show here."
-                    : "No booking with " + firstName(selectedName) + " yet.";
-            card.add(Widgets.wrap(text, Fonts.body(), Colors.TEXT_MUTED), "wmin 0, aligny top");
-            return card;
+            return noBookingPanel();
         }
 
         // The details scroll if the window is short; the button stays pinned at the bottom.
@@ -507,6 +507,31 @@ public class MessagesPage extends BasePage {
                 card.add(actions, "gaptop 16");
             }
         }
+        return card;
+    }
+
+    /** Centered icon and a short note filling the column when there's no booking to show. */
+    private JComponent noBookingPanel() {
+        Card card = new Card(new MigLayout("insets 24, fill, gap 0, wrap 1", "[center]", "push[]16[]6[]push"));
+        String title;
+        String note;
+        if (selectedId == null) {
+            title = "Booking details";
+            note = "Pick a conversation to see the booking it's about.";
+        } else {
+            String name = firstName(selectedName);
+            title = "No bookings yet";
+            note = forOwner()
+                    ? "When " + name + " books one of your places, the booking shows here."
+                    : "When you book one of " + name + "'s places, the booking shows here.";
+        }
+        card.add(Widgets.iconTile("calendar-days", 28, Colors.PRIMARY_TINT, Colors.PRIMARY), "w 64!, h 64!");
+        card.add(Ui.label(title, Fonts.cardTitle(), Colors.TEXT));
+        // Centered HTML text wraps inside the column instead of running past its edges
+        JLabel text = new JLabel("<html><div style='text-align:center'>" + Widgets.escape(note) + "</div></html>");
+        text.setFont(Fonts.caption());
+        text.setForeground(Colors.TEXT_MUTED);
+        card.add(text, "wmin 0, wmax 220");
         return card;
     }
 

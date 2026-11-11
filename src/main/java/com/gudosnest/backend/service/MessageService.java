@@ -12,6 +12,7 @@ import com.gudosnest.backend.repository.UserRepository;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Conversations between a renter and an owner. A conversation can start from a booking or from
@@ -39,6 +40,10 @@ public class MessageService {
                     ? belongsTo(booking, userId, portal)
                     : (portal == SessionManager.Portal.OWNER ? t.otherIsRenter() : t.otherIsOwner());
             if (belongs) {
+                if (booking == null) {
+                    // Never messaged about a booking: show the latest one they made together, if any
+                    booking = latestBooking(userId, t.otherId(), portal).orElse(null);
+                }
                 result.add(new Conversation(t.otherId(), t.otherName(), t.lastText(), t.lastAt(), t.unread(), booking));
             }
         }
@@ -47,6 +52,16 @@ public class MessageService {
 
     private static boolean belongsTo(Booking booking, int userId, SessionManager.Portal portal) {
         return portal == SessionManager.Portal.OWNER ? booking.getOwnerId() == userId : booking.getRenterId() == userId;
+    }
+
+    /**
+     * The most recent booking between the two people, seen from this portal: in the Owner portal
+     * the other person is the renter; in the Renter portal they are the owner.
+     */
+    public Optional<Booking> latestBooking(int userId, int otherId, SessionManager.Portal portal) {
+        return portal == SessionManager.Portal.OWNER
+                ? bookings.latestBetween(otherId, userId)
+                : bookings.latestBetween(userId, otherId);
     }
 
     public boolean hasUnread(int userId, SessionManager.Portal portal) {

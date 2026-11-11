@@ -41,6 +41,12 @@ public class BookingRepository {
         return Db.list(SELECT + " WHERE b.renter_id = ? ORDER BY b.booking_id", BookingRepository::map, renterId);
     }
 
+    /** The most recently made booking by this renter at any of this owner's properties, if any. */
+    public Optional<Booking> latestBetween(int renterId, int ownerId) {
+        return Db.one(SELECT + " WHERE b.renter_id = ? AND p.owner_id = ? ORDER BY b.created_at DESC, b.booking_id DESC LIMIT 1",
+                BookingRepository::map, renterId, ownerId);
+    }
+
     public Optional<Booking> byId(int bookingId) {
         return Db.one(SELECT + " WHERE b.booking_id = ?", BookingRepository::map, bookingId);
     }
