@@ -17,7 +17,7 @@ The build passes: pages not built yet are placeholders ("Coming soon"). See `TOD
 - [x] Bookings (`BookingsPage`)
 - [x] Payments (`PaymentsPage`)
 - [ ] Finances (`FinancesPage`, placeholder) and Add expense dialog
-- [ ] Messages (shared `MessagesPage`, placeholder, used by both portals)
+- [x] Messages (shared `MessagesPage` + `ChatBubble`, owner and renter views)
 - [ ] Damage reports (`DamageReportsPage`, placeholder) and File report dialog
 
 ## Phase 3 – Renter portal
@@ -33,8 +33,8 @@ The build passes: pages not built yet are placeholders ("Coming soon"). See `TOD
 
 ## Broken or missing
 
-- "Message renter" / "Message guest" buttons open the placeholder Messages page, not a conversation.
-- `RenterPortal.openCancellation(...)` has no caller yet.
+- Renters have no "Message host" button yet (it belongs on the renter booking dialog / Booking history, not built); renters can only reply in existing conversations.
+- Messages' "Cancel stay" opens `CancellationsPage`, which is still a placeholder.
 
 ## Decisions made without asking
 
@@ -51,3 +51,5 @@ The build passes: pages not built yet are placeholders ("Coming soon"). See `TOD
 - Payments: the Stitch screenshot only partly rendered, so the layout follows the other list pages: 4 stats (Received, Refunded, Net received, Refunds to review), type tabs, table. A row opens its receipt; a "Requested" refund opens the refund review instead. The property filter matches by property name (payment rows carry no property id).
 - Placeholder pages were added for every missing page so the app compiles and runs; they show only a header and "Coming soon".
 - Markdown docs live in `docs/` (README.md stays in the root). Skill files under `.claude/skills/` were left in place because Claude Code loads them from there.
+- Messages: built from the two Stitch screens, minus what the app has no data for (attach file, online status, reply time, "Inquiries" filter, settings button, house rules). Both portals use All / Unread filters. Each column scrolls inside itself so the page fits a 125% display (~1280×770); the side columns shrink a little on narrow windows.
+- Messages (renter): the panel's cancel button says "Cancel stay", not the design's "Request cancellation", because a renter's cancel takes effect at once (only the refund is reviewed). "View stay" opens a read-only booking dialog with the receipt.

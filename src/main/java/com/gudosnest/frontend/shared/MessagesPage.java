@@ -6,6 +6,7 @@ import com.gudosnest.backend.model.Booking;
 import com.gudosnest.backend.model.Records.Conversation;
 import com.gudosnest.backend.model.Records.Message;
 import com.gudosnest.frontend.components.AppButton;
+import com.gudosnest.frontend.components.AppDialog;
 import com.gudosnest.frontend.components.Avatar;
 import com.gudosnest.frontend.components.Badge;
 import com.gudosnest.frontend.components.Card;
@@ -18,6 +19,7 @@ import com.gudosnest.frontend.components.Widgets;
 import com.gudosnest.frontend.owner.BookingReviewDialog;
 import com.gudosnest.frontend.portal.BasePage;
 import com.gudosnest.frontend.portal.Portal;
+import com.gudosnest.frontend.renter.RenterPortal;
 import com.gudosnest.frontend.theme.Colors;
 import com.gudosnest.frontend.theme.Fonts;
 import com.gudosnest.frontend.theme.Theme;
@@ -241,27 +243,46 @@ public class MessagesPage extends BasePage {
                 || (c.booking() != null && c.booking().getPropertyName().toLowerCase(Locale.ROOT).contains(query));
     }
 
-    /** Name, unread dot and time; the property; then the last message, cut off with "…". */
+    /**
+     * Owner: renter name, unread dot and time; the property; the last message (cut off with "…").
+     * Renter: the property first, then "Elena Vance • Host", the last message, and the stay dates.
+     */
     private JComponent conversationRow(Conversation c) {
         boolean selected = selectedId != null && c.otherUserId() == selectedId;
         RowPanel row = new RowPanel(selected, () -> open(c));
+        Booking b = c.booking();
 
         JPanel top = Ui.transparent("insets 0, gap 6, fillx", "[grow,fill][][]");
-        top.add(Ui.label(c.otherName(), Fonts.cardTitle(), Colors.TEXT), "wmin 0");
+        if (forOwner() || b == null) {
+            top.add(Ui.label(c.otherName(), Fonts.cardTitle(), Colors.TEXT), "wmin 0");
+        } else {
+            top.add(Ui.label(b.getPropertyName(), Fonts.captionMedium(), Colors.PRIMARY), "wmin 0");
+        }
         if (c.unread() > 0) {
             top.add(new Dot(), "aligny center");
         }
         top.add(Ui.caption(Formats.when(c.lastAt())), "aligny center");
         row.add(top, "wmin 0");
 
-        if (c.booking() != null) {
-            row.add(Ui.label(c.booking().getPropertyName(), Fonts.caption(), Colors.SECONDARY), "wmin 0");
+        if (forOwner()) {
+            if (b != null) {
+                row.add(Ui.label(b.getPropertyName(), Fonts.caption(), Colors.SECONDARY), "wmin 0");
+            }
+        } else if (b != null) {
+            JPanel who = Ui.transparent("insets 0, gap 4", "[][]");
+            who.add(Ui.label(c.otherName(), Fonts.bodyMedium(), Colors.TEXT), "wmin 0");
+            who.add(Ui.caption("• Host"));
+            row.add(who, "wmin 0, gaptop 2");
         }
         JLabel preview = c.lastText() == null
                 ? Ui.caption("No messages yet")
                 : Ui.label(c.lastText().replace('\n', ' '), Fonts.body(),
                         c.unread() > 0 ? Colors.TEXT : Colors.TEXT_MUTED);
         row.add(preview, "wmin 0, gaptop 2");
+        if (!forOwner() && b != null) {
+            row.add(Ui.iconLabel(BookingUi.dates(b), "calendar-days", Fonts.caption(), Colors.TEXT_MUTED),
+                    "wmin 0, gaptop 4");
+        }
         return row;
     }
 
@@ -270,11 +291,18 @@ public class MessagesPage extends BasePage {
     private JComponent buildChat() {
         Card card = new Card(new MigLayout("insets 16, fill, gap 0, wrap 1", "[grow,fill]", "[][][grow][]"));
 
-        JPanel head = Ui.transparent("insets 0 0 12 0, gap 12 0, fillx", "[][grow,fill]");
+        boolean viewStay = !forOwner() && selectedBooking != null;
+        JPanel head = Ui.transparent("insets 0 0 12 0, gap 12 0, fillx", "[][grow,fill][]");
         head.add(new Avatar(initials(selectedName), 40), "spany 2, aligny center");
-        head.add(Ui.label(selectedName, Fonts.sectionTitle(), Colors.TEXT), "wmin 0, wrap");
+        head.add(Ui.label(selectedName, Fonts.sectionTitle(), Colors.TEXT), "wmin 0" + (viewStay ? "" : ", wrap"));
+        if (viewStay) {
+            AppButton stay = new AppButton("View stay", AppButton.Style.OUTLINED).withIcon("house");
+            stay.addActionListener(e -> showStay(selectedBooking));
+            head.add(stay, "spany 2, aligny center, wrap");
+        }
         if (selectedBooking != null) {
-            head.add(Ui.label(BookingUi.place(selectedBooking), Fonts.caption(), Colors.SECONDARY), "wmin 0");
+            head.add(Ui.label(BookingUi.place(selectedBooking), Fonts.caption(), Colors.SECONDARY),
+                    "wmin 0, skip 1");
         }
         card.add(head);
         card.add(Ui.divider());
@@ -379,6 +407,10 @@ public class MessagesPage extends BasePage {
         details.add(stay, "gapbottom 8");
         details.add(detail("Guests", Formats.guests(b.getGuests()), false), "gapbottom 8");
         details.add(detail("Total", Formats.money(b.getTotal()), true));
+        boolean cancellable = b.getStage() == Booking.Stage.PENDING || b.getStage() == Booking.Stage.UPCOMING;
+        if (!forOwner() && cancellable) {
+            details.add(Widgets.policyBox(), "gaptop 16, wmin 0");
+        }
         card.add(whiteScroll(details), "grow, hmin 0");
 
         if (forOwner()) {
@@ -389,8 +421,58 @@ public class MessagesPage extends BasePage {
                 }
             });
             card.add(view, "gaptop 16, h " + Theme.CONTROL_HEIGHT + "!");
+        } else {
+            // Renter: receipt (once paid) and cancellation (only before check-in). Outlined, no second
+            // accent: the Cancellations page shows the refund and asks to confirm before cancelling.
+            // One row, side by side, so the booking details keep their room on short windows.
+            JPanel actions = Ui.transparent("insets 0, gap 8, fillx", "[grow,fill,sg a][grow,fill,sg a]");
+            if (b.getPaidAt() != null) {
+                AppButton receipt = new AppButton("View receipt", AppButton.Style.OUTLINED);
+                receipt.addActionListener(e -> BookingUi.showPaymentReceipt(this, b));
+                actions.add(receipt, "wmin 0, h " + Theme.CONTROL_HEIGHT + "!");
+            }
+            // "Cancel", not "Request": a renter's cancel takes effect at once (only the refund is reviewed).
+            if (cancellable && portal instanceof RenterPortal renter) {
+                AppButton cancel = new AppButton("Cancel stay", AppButton.Style.OUTLINED);
+                cancel.addActionListener(e -> renter.openCancellation(b.getId()));
+                actions.add(cancel, "wmin 0, h " + Theme.CONTROL_HEIGHT + "!");
+            }
+            if (actions.getComponentCount() > 0) {
+                card.add(actions, "gaptop 16");
+            }
         }
         return card;
+    }
+
+    /** Renter's read-only look at the stay: status, dates, payment, and the receipt. */
+    private void showStay(Booking b) {
+        AppDialog dialog = new AppDialog(this, "Booking " + Formats.refCode(b.getId(), b.getCreatedAt()));
+        JPanel body = dialog.getBody();
+
+        JPanel head = Ui.transparent("insets 0, gap 8, fillx", "[grow][]");
+        JPanel names = Ui.transparent("insets 0, gap 0, wrap 1", "[]");
+        names.add(Ui.label(b.getPropertyName(), Fonts.cardTitle(), Colors.TEXT));
+        names.add(Ui.muted(b.getUnitLabel() + " · " + b.getLocation()));
+        head.add(names);
+        head.add(BookingUi.badge(b), "aligny top");
+        body.add(head, "gapbottom 8");
+
+        body.add(BookingUi.banner(b, false), "gapbottom 4");
+        body.add(BookingUi.stayStrip(b), "gapbottom 4");
+        if (b.getSpecialRequests() != null) {
+            body.add(Ui.label("Special requests", Fonts.captionMedium(), Colors.TEXT_MUTED));
+            body.add(Widgets.wrap(b.getSpecialRequests(), Fonts.body(), Colors.TEXT), "wmin 0, gapbottom 4");
+        }
+        body.add(Ui.label("Payment", Fonts.captionMedium(), Colors.TEXT_MUTED));
+        body.add(BookingUi.paymentSummary(b));
+
+        if (b.getPaidAt() != null) {
+            AppButton receipt = new AppButton("View receipt", AppButton.Style.TEXT).withIcon("receipt");
+            receipt.addActionListener(e -> BookingUi.showPaymentReceipt(dialog, b));
+            dialog.addLeftButton(receipt);
+        }
+        dialog.addCloseButton("Close");
+        dialog.showDialog(640);
     }
 
     /** "Label ..... value" in a tinted box; the total is larger and on a stronger tint. */
