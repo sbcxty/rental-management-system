@@ -1,5 +1,20 @@
 package com.gudosnest.frontend.owner;
 
+import java.awt.Component;
+import java.io.File;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.filechooser.FileNameExtensionFilter;
+
 import com.gudosnest.backend.model.Property;
 import com.gudosnest.backend.model.Unit;
 import com.gudosnest.backend.service.RuleException;
@@ -14,20 +29,6 @@ import com.gudosnest.frontend.portal.Portal;
 import com.gudosnest.frontend.theme.Colors;
 import com.gudosnest.frontend.theme.Fonts;
 import com.gudosnest.frontend.theme.Icons;
-
-import javax.swing.JButton;
-import javax.swing.JFileChooser;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
-import javax.swing.filechooser.FileNameExtensionFilter;
-import java.awt.Component;
-import java.io.File;
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Add or edit a property: name, location, type, acquisition cost and date, photos. A house also
@@ -141,7 +142,7 @@ final class PropertyDialog {
         });
         dialog.addButton(save);
         showType.run();
-        dialog.showDialog(600);
+        dialog.showDialog();
         return result[0];
     }
 

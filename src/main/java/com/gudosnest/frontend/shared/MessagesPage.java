@@ -1,8 +1,33 @@
 package com.gudosnest.frontend.shared;
 
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollBar;
+import javax.swing.JScrollPane;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+
 import com.formdev.flatlaf.util.UIScale;
-import com.gudosnest.backend.database.SessionManager;
 import com.gudosnest.backend.database.DataException;
+import com.gudosnest.backend.database.SessionManager;
 import com.gudosnest.backend.model.Booking;
 import com.gudosnest.backend.model.Records.Contact;
 import com.gudosnest.backend.model.Records.Conversation;
@@ -25,31 +50,8 @@ import com.gudosnest.frontend.renter.RenterPortal;
 import com.gudosnest.frontend.theme.Colors;
 import com.gudosnest.frontend.theme.Fonts;
 import com.gudosnest.frontend.theme.Theme;
-import net.miginfocom.swing.MigLayout;
 
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollBar;
-import javax.swing.JScrollPane;
-import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import java.awt.Color;
-import java.awt.Cursor;
-import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
+import net.miginfocom.swing.MigLayout;
 
 /**
  * Conversations between renters and owners, shared by both portals. Three columns: the people
@@ -562,7 +564,7 @@ public class MessagesPage extends BasePage {
             dialog.addLeftButton(receipt);
         }
         dialog.addCloseButton("Close");
-        dialog.showDialog(640);
+        dialog.showDialog();
     }
 
     /** "Label ..... value" in a tinted box; the total is larger and on a stronger tint. */

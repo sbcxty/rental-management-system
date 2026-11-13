@@ -8,17 +8,29 @@ import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.KeyStroke;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.Scrollable;
 import javax.swing.SwingUtilities;
 import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.GraphicsEnvironment;
+import java.awt.LayoutManager;
+import java.awt.Rectangle;
 import java.awt.Window;
 import java.awt.event.KeyEvent;
 
 /**
  * Modal dialog with a title, a body, and buttons in the footer (right aligned).
- * Esc closes it.
+ * Every dialog has the same width; tall content scrolls. Esc closes it.
  */
 public class AppDialog extends JDialog {
+
+    /** Every dialog is this wide (the Bookings dialog's width). */
+    public static final int STANDARD_WIDTH = 640;
+    /** Short dialogs are stretched to at least this height. */
+    public static final int MIN_HEIGHT = 420;
 
     private final JPanel body;
     private final JPanel footerLeft;
@@ -32,9 +44,15 @@ public class AppDialog extends JDialog {
         root.setBackground(Colors.CARD);
         root.add(Ui.sectionTitle(title), "wrap");
 
-        body = new JPanel(new MigLayout("insets 0, fillx, gap 8, wrap 1", "[grow,fill]"));
+        body = new BodyPanel(new MigLayout("insets 0, fillx, gap 8, wrap 1", "[grow,fill]"));
         body.setOpaque(false);
-        root.add(body, "wrap");
+        JScrollPane scroll = new JScrollPane(body, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scroll.setBorder(null);
+        scroll.setOpaque(false);
+        scroll.getViewport().setOpaque(false);
+        scroll.getVerticalScrollBar().setUnitIncrement(16);
+        root.add(scroll, "wrap");
 
         JPanel footer = Ui.transparent("insets 0, fillx", "[][grow][]");
         footerLeft = Ui.transparent("insets 0, gap 8", "");
@@ -47,6 +65,14 @@ public class AppDialog extends JDialog {
         setResizable(false);
         getRootPane().registerKeyboardAction(e -> dispose(),
                 KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+    }
+
+    /** Standard width; height follows the content, but never below MIN_HEIGHT or above the screen. */
+    @Override
+    public Dimension getPreferredSize() {
+        Dimension d = super.getPreferredSize();
+        int maxHeight = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds().height - 40;
+        return new Dimension(STANDARD_WIDTH, Math.min(Math.max(d.height, MIN_HEIGHT), maxHeight));
     }
 
     /** The content area. Uses a one-column MigLayout with 8px gaps. */
@@ -72,14 +98,43 @@ public class AppDialog extends JDialog {
         return close;
     }
 
-    /** Sizes the dialog to its content (at least the given width) and shows it. Blocks until closed. */
-    public void showDialog(int minWidth) {
+    /** Shows the dialog at the standard size. Blocks until closed. */
+    public void showDialog() {
         pack();
-        if (getWidth() < minWidth) {
-            setSize(minWidth, getHeight());
-        }
         setLocationRelativeTo(getOwner());
         setVisible(true);
+    }
+
+    /** Old callers still compile; the width argument is ignored. */
+    public void showDialog(int ignoredWidth) {
+        showDialog();
+    }
+
+    /** Body that follows the viewport's width and scrolls only vertically. */
+    private static final class BodyPanel extends JPanel implements Scrollable {
+        BodyPanel(LayoutManager layout) {
+            super(layout);
+        }
+
+        public Dimension getPreferredScrollableViewportSize() {
+            return getPreferredSize();
+        }
+
+        public int getScrollableUnitIncrement(Rectangle visible, int orientation, int direction) {
+            return 16;
+        }
+
+        public int getScrollableBlockIncrement(Rectangle visible, int orientation, int direction) {
+            return visible.height;
+        }
+
+        public boolean getScrollableTracksViewportWidth() {
+            return true;
+        }
+
+        public boolean getScrollableTracksViewportHeight() {
+            return false;
+        }
     }
 
     // Simple shared message boxes

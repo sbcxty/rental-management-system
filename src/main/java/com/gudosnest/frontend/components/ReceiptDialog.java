@@ -1,17 +1,18 @@
 package com.gudosnest.frontend.components;
 
-import com.gudosnest.frontend.theme.Colors;
+import java.awt.Component;
+import java.awt.Image;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import java.awt.Component;
-import java.awt.Image;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
+
+import com.gudosnest.frontend.theme.Colors;
 
 /** Shows a receipt and lets the person save it as a PNG wherever they like. */
 public final class ReceiptDialog {
@@ -49,6 +50,6 @@ public final class ReceiptDialog {
         AppButton close = new AppButton("Close", AppButton.Style.PRIMARY);
         close.addActionListener(e -> dialog.dispose());
         dialog.addButton(close);
-        dialog.showDialog(0);
+        dialog.showDialog();
     }
 }

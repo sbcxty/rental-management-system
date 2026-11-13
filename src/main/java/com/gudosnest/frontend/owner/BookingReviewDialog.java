@@ -1,5 +1,12 @@
 package com.gudosnest.frontend.owner;
 
+import java.awt.Component;
+import java.util.List;
+
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+
 import com.gudosnest.backend.database.DataException;
 import com.gudosnest.backend.model.Booking;
 import com.gudosnest.backend.service.RuleException;
@@ -12,14 +19,6 @@ import com.gudosnest.frontend.portal.Portal;
 import com.gudosnest.frontend.shared.BookingUi;
 import com.gudosnest.frontend.theme.Colors;
 import com.gudosnest.frontend.theme.Fonts;
-import net.miginfocom.swing.MigLayout;
-
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import java.awt.Component;
-import java.util.List;
-
 /**
  * Everything an owner does with one booking happens here: approve or reject a pending booking,
  * cancel an upcoming one (full refund), mark a stay as completed, see the receipt, message the renter.
@@ -127,7 +126,7 @@ public final class BookingReviewDialog {
             }
             default -> dialog.addCloseButton("Close");
         }
-        dialog.showDialog(640);
+        dialog.showDialog();
         if (changed[0]) {
             portal.refreshBadges();
         }
@@ -153,7 +152,7 @@ public final class BookingReviewDialog {
             ask.dispose();
         });
         ask.addButton(confirm);
-        ask.showDialog(460);
+        ask.showDialog();
         return result[0];
     }
 

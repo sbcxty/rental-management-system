@@ -1,5 +1,12 @@
 package com.gudosnest.frontend.owner;
 
+import java.awt.Component;
+import java.math.BigDecimal;
+
+import javax.swing.JComboBox;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+
 import com.gudosnest.backend.model.Item;
 import com.gudosnest.backend.service.RuleException;
 import com.gudosnest.frontend.components.AppButton;
@@ -11,12 +18,6 @@ import com.gudosnest.frontend.components.Ui;
 import com.gudosnest.frontend.portal.Portal;
 import com.gudosnest.frontend.theme.Colors;
 import com.gudosnest.frontend.theme.Fonts;
-
-import javax.swing.JComboBox;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
-import java.awt.Component;
-import java.math.BigDecimal;
 
 /** Add or edit one inventory item. */
 final class ItemDialog {
@@ -86,7 +87,7 @@ final class ItemDialog {
         });
         dialog.addButton(save);
         dialog.getRootPane().setDefaultButton(save);
-        dialog.showDialog(560);
+        dialog.showDialog();
         return saved[0];
     }
 }

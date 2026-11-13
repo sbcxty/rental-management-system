@@ -1,5 +1,11 @@
 package com.gudosnest.frontend.owner;
 
+import java.awt.Component;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+
+import javax.swing.JPanel;
+
 import com.gudosnest.backend.model.Booking;
 import com.gudosnest.backend.model.Records.RefundRow;
 import com.gudosnest.backend.service.refund.RefundPolicy;
@@ -13,12 +19,8 @@ import com.gudosnest.frontend.components.Widgets;
 import com.gudosnest.frontend.portal.Portal;
 import com.gudosnest.frontend.theme.Colors;
 import com.gudosnest.frontend.theme.Fonts;
-import net.miginfocom.swing.MigLayout;
 
-import javax.swing.JPanel;
-import java.awt.Component;
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
+import net.miginfocom.swing.MigLayout;
 
 /** The owner reviews a renter's refund request: approve (paid out now) or reject. */
 public final class RefundReviewDialog {
@@ -87,7 +89,7 @@ public final class RefundReviewDialog {
         dialog.addLeftButton(message);
         dialog.addButton(reject);
         dialog.addButton(approve);
-        dialog.showDialog(560);
+        dialog.showDialog();
         if (changed[0]) {
             portal.refreshBadges();
         }

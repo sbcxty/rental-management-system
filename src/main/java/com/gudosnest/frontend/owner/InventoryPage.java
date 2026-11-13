@@ -1,5 +1,17 @@
 package com.gudosnest.frontend.owner;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+
+import javax.swing.BorderFactory;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+
 import com.gudosnest.backend.model.Item;
 import com.gudosnest.backend.model.Property;
 import com.gudosnest.backend.model.Unit;
@@ -16,18 +28,8 @@ import com.gudosnest.frontend.portal.BasePage;
 import com.gudosnest.frontend.portal.Portal;
 import com.gudosnest.frontend.theme.Colors;
 import com.gudosnest.frontend.theme.Fonts;
-import net.miginfocom.swing.MigLayout;
 
-import javax.swing.BorderFactory;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import net.miginfocom.swing.MigLayout;
 
 /**
  * Inventory of one unit (Stitch "Inventory"): a unit dropdown, item count and how many need
@@ -296,6 +298,6 @@ public class InventoryPage extends BasePage {
             }
         });
         dialog.addButton(copy);
-        dialog.showDialog(480);
+        dialog.showDialog();
     }
 }

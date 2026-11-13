@@ -1,5 +1,13 @@
 package com.gudosnest.frontend.owner;
 
+import java.awt.Component;
+import java.math.BigDecimal;
+
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+
 import com.gudosnest.backend.model.Property;
 import com.gudosnest.backend.model.Unit;
 import com.gudosnest.backend.service.RuleException;
@@ -12,13 +20,6 @@ import com.gudosnest.frontend.components.Widgets;
 import com.gudosnest.frontend.portal.Portal;
 import com.gudosnest.frontend.theme.Colors;
 import com.gudosnest.frontend.theme.Fonts;
-
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
-import java.awt.Component;
-import java.math.BigDecimal;
 
 /** Add, edit or duplicate one unit of a property. */
 final class UnitDialog {
@@ -60,7 +61,7 @@ final class UnitDialog {
         });
         dialog.addButton(save);
         dialog.getRootPane().setDefaultButton(save);
-        dialog.showDialog(520);
+        dialog.showDialog();
         return saved[0];
     }
 
