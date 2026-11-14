@@ -117,7 +117,7 @@ public final class BookingReviewDialog {
                 }));
                 dialog.addButton(cancel);
             }
-            case STAYING, CHECKOUT_DUE -> {
+            case STAYING -> {
                 AppButton complete = new AppButton("Mark as completed", AppButton.Style.PRIMARY);
                 complete.addActionListener(e -> dialog.confirmPage("Mark this stay as completed?",
                         "The unit becomes available again.", "Mark as completed", AppButton.Style.PRIMARY, () -> {
