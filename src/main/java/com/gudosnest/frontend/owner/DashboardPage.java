@@ -38,14 +38,26 @@ import java.util.List;
 /**
  * Owner dashboard (Stitch "Owner Dashboard"): greeting, four stats, income per month,
  * today's check-ins and check-outs, and what needs attention.
+ * <p>
+ * Fits the window without scrolling, down to the minimum window size (1180x720): the page is
+ * only as tall as its content with a short chart, so the scroll area stretches it to the window
+ * and the income chart takes whatever height is left. The Today list shows its first few events
+ * with a link to the rest. If the window is ever too small anyway (for example the sidebar is
+ * expanded at the minimum size, so the stats wrap to two rows), the page scrolls instead of
+ * cutting content off.
  */
 public class DashboardPage extends BasePage {
+
+    /** Today events listed before "+N more"; keeps the right column inside the window. */
+    private static final int TODAY_ROWS = 3;
 
     private Integer propertyId;
     private int chartRange;   // 0 = 6 months, 1 = this year
 
     public DashboardPage(Portal portal) {
         super(portal);
+        // Tighter than other pages, and the last row (chart and lists) fills the remaining height
+        setLayout(new MigLayout("insets 16 28 16 28, fill, gap 0, wrap 1", "[grow,fill]", "[][][grow,fill]"));
     }
 
     @Override
@@ -65,7 +77,7 @@ public class DashboardPage extends BasePage {
             reload();
         });
         header.addAction(filter);
-        add(header, "gapbottom 24");
+        add(header, "gapbottom 10");
 
         // Stats
         LocalDate today = LocalDate.now();
@@ -82,14 +94,15 @@ public class DashboardPage extends BasePage {
         stats.addCard(stat("Occupancy rate", "building-2", Formats.percent(occupancy), "Share of nights booked, last 30 days"));
         stats.addCard(stat("Properties managed", "house", String.valueOf(shown.size()),
                 units + (units == 1 ? " bookable unit" : " bookable units")));
-        add(stats, "gapbottom 24");
+        add(stats, "gapbottom 12");
 
-        JPanel row = Ui.transparent("insets 0, gap 24, fillx", "[grow 62,fill][grow 38,fill]");
-        row.add(incomeCard(ledger), "aligny top");
-        JPanel right = Ui.transparent("insets 0, gap 24, wrap 1, fillx", "[grow,fill]");
+        JPanel row = new JPanel(new MigLayout("insets 0, gap 12, fill", "[0:0:n,grow 62,fill][0:0:n,grow 38,fill]", "[grow,fill]"));
+        row.setOpaque(false);
+        row.add(incomeCard(ledger), "wmin 0");
+        JPanel right = Ui.transparent("insets 0, gap 12, wrap 1, fillx", "[grow,fill]");
         right.add(todayCard(bookings));
         right.add(attentionCard(bookings));
-        row.add(right, "aligny top");
+        row.add(right, "wmin 0, aligny top");
         add(row);
     }
 
@@ -103,6 +116,9 @@ public class DashboardPage extends BasePage {
 
     private static StatCard stat(String title, String icon, String value, String note) {
         StatCard card = new StatCard(title, icon);
+        // Smaller padding and gaps than StatCard's default, for this page only
+        ((MigLayout) card.getLayout()).setLayoutConstraints("insets 14 18 14 18, fillx, gap 0");
+        ((MigLayout) card.getLayout()).setRowConstraints("[]6[]2[]");
         card.setValue(value);
         card.setNote(note);
         return card;
@@ -111,7 +127,7 @@ public class DashboardPage extends BasePage {
     // ------------------------------------------------------------------------- income chart
 
     private JComponent incomeCard(List<Transaction> ledger) {
-        Card card = new Card(new MigLayout("insets 24, gap 0, fillx, wrap 1", "[grow,fill]"));
+        Card card = new Card(new MigLayout("insets 16 20 16 20, gap 0, fill, wrap 1", "[grow,fill]"));
         JPanel top = Ui.transparent("insets 0, fillx", "[grow][]");
         JPanel titles = Ui.transparent("insets 0, gap 0, wrap 1", "[]");
         titles.add(Ui.sectionTitle("Income per month"));
@@ -126,7 +142,7 @@ public class DashboardPage extends BasePage {
             reload();
         });
         top.add(range, "aligny top");
-        card.add(top, "gapbottom 16");
+        card.add(top, "gapbottom 8");
 
         YearMonth now = YearMonth.now();
         int count = chartRange == 0 ? 6 : now.getMonthValue();
@@ -156,9 +172,9 @@ public class DashboardPage extends BasePage {
             JLabel line = Ui.label(monthName + " so far: " + Formats.money(current.income()) + ", " + change,
                     Fonts.body(), Colors.TEXT_MUTED);
             line.setIcon(Icons.get(diff.signum() < 0 ? "arrow-down" : "arrow-up", 14, Colors.TEXT_MUTED));
-            card.add(line, "gaptop 4, gapbottom 16");
+            card.add(line, "gaptop 2, gapbottom 8");
         }
-        card.add(Ui.divider(), "gapbottom 16");
+        card.add(Ui.divider(), "gapbottom 8");
 
         BarChart chart = new BarChart();
         List<String> labels = new ArrayList<>();
@@ -168,7 +184,8 @@ public class DashboardPage extends BasePage {
             values.add(m.income());
         }
         chart.setData(labels, values);
-        card.add(chart, "h 300!");
+        // Asks for only 100 px and grows into the height left in the window, instead of a fixed 300 px
+        card.add(chart, "h 100:100:n, push, grow");
         return card;
     }
 
@@ -193,17 +210,17 @@ public class DashboardPage extends BasePage {
         }
         events.sort(Comparator.comparing(Event::at));
 
-        Card card = new Card(new MigLayout("insets 20 24 20 24, gap 0, fillx, wrap 1", "[grow,fill]"));
+        Card card = new Card(new MigLayout("insets 14 18 14 18, gap 0, fillx, wrap 1", "[grow,fill]"));
         JPanel head = Ui.transparent("insets 0, fillx", "[grow][]");
         head.add(Ui.iconLabel("Today", "calendar-days", Fonts.sectionTitle(), Colors.TEXT));
         head.add(new Badge(events.size() + (events.size() == 1 ? " event" : " events"), Badge.Tone.NEUTRAL));
-        card.add(head, "gapbottom 12");
-        card.add(Ui.divider(), "gapbottom 4");
+        card.add(head, "gapbottom 8");
+        card.add(Ui.divider(), "gapbottom 2");
         if (events.isEmpty()) {
-            card.add(Ui.muted("No check-ins or check-outs today."), "gaptop 12");
+            card.add(Ui.muted("No check-ins or check-outs today."), "gaptop 8");
         }
-        for (Event ev : events) {
-            Card row = Widgets.clickableCard(new MigLayout("insets 10 8 10 8, gap 12, fillx", "[][grow,fill][]"),
+        for (Event ev : events.subList(0, Math.min(TODAY_ROWS, events.size()))) {
+            Card row = Widgets.clickableCard(new MigLayout("insets 6 8 6 8, gap 12, fillx", "[][grow,fill][]"),
                     () -> {
                         if (BookingReviewDialog.show(this, portal, ev.booking())) {
                             reload();
@@ -218,6 +235,11 @@ public class DashboardPage extends BasePage {
             row.add(Ui.label(Formats.time(ev.at()), Fonts.bodyBold(), Colors.TEXT));
             card.add(row);
         }
+        if (events.size() > TODAY_ROWS) {
+            // The rest are on the Bookings page, so nothing is lost from view
+            card.add(Widgets.link("+" + (events.size() - TODAY_ROWS) + " more today: see Bookings", true,
+                    () -> portal.navigate("bookings")), "gaptop 4");
+        }
         return card;
     }
 
@@ -225,14 +247,14 @@ public class DashboardPage extends BasePage {
 
     private JComponent attentionCard(List<Booking> bookings) {
         Attention attention = Attention.load(portal, bookings, propertyId);
-        Card card = new Card(new MigLayout("insets 20 24 20 24, gap 0, fillx, wrap 1", "[grow,fill]"));
+        Card card = new Card(new MigLayout("insets 14 18 14 18, gap 0, fillx, wrap 1", "[grow,fill]"));
         JPanel head = Ui.transparent("insets 0, fillx", "[grow][]");
         head.add(Ui.sectionTitle("Needs attention"));
         head.add(new Badge(attention.total() + (attention.total() == 1 ? " item" : " items"), Badge.Tone.NEUTRAL));
-        card.add(head, "gapbottom 12");
-        card.add(Ui.divider(), "gapbottom 4");
+        card.add(head, "gapbottom 8");
+        card.add(Ui.divider(), "gapbottom 2");
         if (attention.total() == 0) {
-            card.add(Ui.muted("Nothing to review. New bookings and refund requests appear here."), "gaptop 12");
+            card.add(Ui.muted("Nothing to review. New bookings and refund requests appear here."), "gaptop 8, wmin 0");
             return card;
         }
 
@@ -249,14 +271,13 @@ public class DashboardPage extends BasePage {
             card.add(attentionRow("Pending bookings", attention.pendingCount + " awaiting",
                     "Awaiting approval (" + String.join(", ", names) + ")", 2));
         }
-        card.add(Ui.divider(), "gaptop 4, gapbottom 12");
         card.add(Widgets.link("View all (" + attention.total() + (attention.total() == 1 ? " item)" : " items)"), true,
-                () -> portal.open(new NeedsAttentionPage(portal, 0, propertyId))));
+                () -> portal.open(new NeedsAttentionPage(portal, 0, propertyId))), "gaptop 4");
         return card;
     }
 
     private JComponent attentionRow(String title, String count, String detail, int tab) {
-        Card row = Widgets.clickableCard(new MigLayout("insets 12 8 12 8, gap 4 2, fillx", "[grow,fill][]"),
+        Card row = Widgets.clickableCard(new MigLayout("insets 6 8 6 8, gap 4 2, fillx", "[grow,fill][]"),
                 () -> portal.open(new NeedsAttentionPage(portal, tab, propertyId)));
         row.setBorder(javax.swing.BorderFactory.createEmptyBorder());
         JPanel titleRow = Ui.transparent("insets 0, gap 8", "[][]");
