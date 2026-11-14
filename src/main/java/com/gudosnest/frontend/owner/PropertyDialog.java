@@ -6,8 +6,8 @@ import com.gudosnest.backend.service.RuleException;
 import com.gudosnest.frontend.components.AppButton;
 import com.gudosnest.frontend.components.AppDialog;
 import com.gudosnest.frontend.components.DateField;
-import com.gudosnest.frontend.components.Formats;
 import com.gudosnest.frontend.components.ImageUtil;
+import com.gudosnest.frontend.components.MoneyInput;
 import com.gudosnest.frontend.components.Segmented;
 import com.gudosnest.frontend.components.Ui;
 import com.gudosnest.frontend.portal.Portal;
@@ -56,13 +56,13 @@ final class PropertyDialog {
 
         JTextField name = Ui.textField("For example Highland Glass Cabin");
         JTextField location = Ui.textField("For example Tagaytay Ridge, Cavite");
-        JTextField cost = Ui.textField("For example 4500000");
+        JTextField cost = Ui.textField("For example 4,500,000");
         DateField acquired = new DateField("Pick a date");
         acquired.setMaximum(LocalDate.now());
         if (!adding) {
             name.setText(existing.getName());
             location.setText(existing.getLocation());
-            cost.setText(Formats.plainMoney(existing.getAcquisitionCost()));
+            cost.setText(MoneyInput.format(existing.getAcquisitionCost()));
             acquired.setValue(existing.getAcquisitionDate());
         }
         body.add(Ui.field("Property name", name));
@@ -114,10 +114,7 @@ final class PropertyDialog {
         save.addActionListener(e -> {
             int ownerId = portal.user().getId();
             boolean ok = BookingReviewDialog.run(dialog, () -> {
-                BigDecimal acquisitionCost = Formats.parseMoney(cost.getText());
-                if (acquisitionCost == null) {
-                    throw new RuleException("Enter the acquisition cost as a number, for example 4500000.");
-                }
+                BigDecimal acquisitionCost = MoneyInput.parse(cost.getText(), "Acquisition cost");
                 boolean house = adding ? type.getSelectedIndex() == 0 : existing.isHouse();
                 Unit unit = house ? unitFields.toUnit(houseUnit.getId(), adding ? 0 : existing.getId(),
                         houseUnit.isOccupied()) : null;
