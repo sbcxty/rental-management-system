@@ -174,7 +174,7 @@ public class DashboardPage extends BasePage {
 
     // -------------------------------------------------------------------------------- today
 
-    /** Check-ins and check-outs today, plus stays whose check-out time has passed unconfirmed. */
+    /** Check-ins and check-outs today. */
     private JComponent todayCard(List<Booking> bookings) {
         LocalDate today = LocalDate.now();
         record Event(Booking booking, String kind, LocalDateTime at) {
@@ -189,8 +189,6 @@ public class DashboardPage extends BasePage {
             }
             if (b.getCheckOut().toLocalDate().equals(today)) {
                 events.add(new Event(b, "Check-out", b.getCheckOut()));
-            } else if (b.getCheckOut().toLocalDate().isBefore(today)) {
-                events.add(new Event(b, "Check-out due", b.getCheckOut()));
             }
         }
         events.sort(Comparator.comparing(Event::at));
@@ -212,13 +210,12 @@ public class DashboardPage extends BasePage {
                         }
                     });
             row.setBorder(javax.swing.BorderFactory.createEmptyBorder());
-            row.add(new Badge(ev.kind(), ev.kind().equals("Check-out due") ? Badge.Tone.STRONG : Badge.Tone.NEUTRAL));
+            row.add(new Badge(ev.kind(), Badge.Tone.NEUTRAL));
             JPanel text = Ui.transparent("insets 0, gap 0, wrap 1", "[grow,fill]");
             text.add(Ui.label(ev.booking().getPropertyName(), Fonts.bodyMedium(), Colors.TEXT), "wmin 0");
             text.add(Ui.caption(ev.booking().getRenterName() + " · " + ev.booking().getUnitLabel()), "wmin 0");
             row.add(text, "wmin 0");
-            String time = ev.kind().equals("Check-out due") ? Formats.date(ev.at()) : Formats.time(ev.at());
-            row.add(Ui.label(time, Fonts.bodyBold(), Colors.TEXT));
+            row.add(Ui.label(Formats.time(ev.at()), Fonts.bodyBold(), Colors.TEXT));
             card.add(row);
         }
         return card;

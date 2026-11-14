@@ -114,7 +114,7 @@ public class BookingsPage extends BasePage {
         return b -> switch (tab) {
             case 1 -> b.getStage() == Booking.Stage.PENDING;
             case 2 -> b.getStage() == Booking.Stage.UPCOMING;
-            case 3 -> b.getStage() == Booking.Stage.STAYING || b.getStage() == Booking.Stage.CHECKOUT_DUE;
+            case 3 -> b.getStage() == Booking.Stage.STAYING;
             case 4 -> b.getStage() == Booking.Stage.COMPLETED;
             case 5 -> b.getStage() == Booking.Stage.CANCELLED || b.getStage() == Booking.Stage.REJECTED
                     || b.getStage() == Booking.Stage.EXPIRED;

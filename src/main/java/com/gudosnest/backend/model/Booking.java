@@ -16,7 +16,6 @@ public class Booking {
         PENDING("Pending"),
         UPCOMING("Upcoming"),
         STAYING("Staying now"),
-        CHECKOUT_DUE("Check-out due"),
         COMPLETED("Completed"),
         CANCELLED("Cancelled"),
         REJECTED("Rejected"),
@@ -127,8 +126,9 @@ public class Booking {
             case CANCELLED -> Stage.CANCELLED;
             case REJECTED -> Stage.REJECTED;
             case EXPIRED -> Stage.EXPIRED;
-            case APPROVED -> now.isBefore(checkIn) ? Stage.UPCOMING
-                    : now.isBefore(checkOut) ? Stage.STAYING : Stage.CHECKOUT_DUE;
+            // Once check-out time passes, BookingService.refreshStatuses() completes the stay
+            // (within a few minutes at most), so until then it still counts as staying.
+            case APPROVED -> now.isBefore(checkIn) ? Stage.UPCOMING : Stage.STAYING;
         };
     }
 

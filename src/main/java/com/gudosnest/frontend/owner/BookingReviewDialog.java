@@ -113,7 +113,7 @@ public final class BookingReviewDialog {
                 dialog.addButton(cancel);
                 dialog.addCloseButton("Close");
             }
-            case STAYING, CHECKOUT_DUE -> {
+            case STAYING -> {
                 dialog.addCloseButton("Close");
                 AppButton complete = new AppButton("Mark as completed", AppButton.Style.PRIMARY);
                 complete.addActionListener(e -> {

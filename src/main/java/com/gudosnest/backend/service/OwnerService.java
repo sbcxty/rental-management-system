@@ -244,12 +244,12 @@ public class OwnerService {
         return ops.damageReports(ownerId);
     }
 
-    /** Bookings a report can be filed against: the stay has started (staying, check-out due, completed). */
+    /** Bookings a report can be filed against: the stay has started (staying or completed). */
     public List<Booking> reportableBookings(List<Booking> ownerBookings) {
         LocalDateTime now = LocalDateTime.now();
         return ownerBookings.stream()
                 .filter(b -> switch (b.getStage(now)) {
-                    case STAYING, CHECKOUT_DUE, COMPLETED -> true;
+                    case STAYING, COMPLETED -> true;
                     default -> false;
                 })
                 .sorted((a, b) -> b.getCheckOut().compareTo(a.getCheckOut()))

@@ -96,15 +96,27 @@ public class BookingRepository {
     }
 
     /**
-     * A unit is occupied while it has an approved booking whose check-in time has passed
-     * (until that booking is completed). Recomputed for every unit in one statement.
+     * Approved stays whose check-out time has passed become completed, confirmed at their
+     * check-out time. Returns how many changed (running it again changes nothing).
      */
-    public void refreshOccupancy(LocalDateTime now) {
-        Db.update("""
-                UPDATE Units u SET unit_status = CASE WHEN EXISTS (
+    public int completeEnded(LocalDateTime now) {
+        return Db.update("UPDATE Bookings SET booking_status = 'completed', checkout_confirmed_at = check_out"
+                + " WHERE booking_status = 'approved' AND check_out <= ?", now);
+    }
+
+    /**
+     * A unit is occupied while it has an approved booking whose stay is going on right now
+     * (check-in passed, check-out not yet). Recomputed for every unit in one statement.
+     * Only units whose status is wrong are written, so the result is how many units changed.
+     */
+    public int refreshOccupancy(LocalDateTime now) {
+        String status = """
+                CASE WHEN EXISTS (
                     SELECT 1 FROM Bookings b WHERE b.unit_id = u.unit_id
-                    AND b.booking_status = 'approved' AND b.check_in <= ?)
-                THEN 'occupied' ELSE 'unoccupied' END""", now);
+                    AND b.booking_status = 'approved' AND b.check_in <= ? AND b.check_out > ?)
+                THEN 'occupied' ELSE 'unoccupied' END""";
+        return Db.update("UPDATE Units u SET unit_status = " + status + " WHERE u.unit_status <> " + status,
+                now, now, now, now);
     }
 
     static Booking map(ResultSet rs) throws SQLException {

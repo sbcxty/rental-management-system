@@ -17,6 +17,8 @@ import com.gudosnest.frontend.renter.RenterPortal;
 import com.gudosnest.frontend.shared.MessagesPage;
 
 import javax.swing.JComponent;
+import javax.swing.SwingWorker;
+import javax.swing.Timer;
 import java.util.List;
 
 // PATTERN: Factory Method
@@ -38,6 +40,12 @@ public abstract class Portal {
 
     private Sidebar sidebar;
     private PortalShell shell;
+
+    /** How often statuses are brought up to date while the portal is open (auto check-out etc.). */
+    private static final int STATUS_REFRESH_MS = 3 * 60 * 1000;
+    private Timer statusTimer;
+    private boolean refreshRunning;
+    private boolean reloadPending;
 
     protected Portal(MainWindow window, User user) {
         this.window = window;
@@ -84,6 +92,8 @@ public abstract class Portal {
         });
         shell = new PortalShell(sidebar);
         navigate(menuItems().get(0).id());
+        statusTimer = new Timer(STATUS_REFRESH_MS, e -> refreshStatusesInBackground());
+        statusTimer.start();
         return shell;
     }
 
@@ -126,6 +136,62 @@ public abstract class Portal {
             bookings.refreshStatuses();
         } catch (DataException e) {
             // pages show their own error when they can't load
+        }
+    }
+
+    /**
+     * Timer tick: runs {@link BookingService#refreshStatuses()} off the Event Dispatch Thread, then
+     * reloads the open page if anything changed. Stops itself once this portal is closed (log out
+     * or switching portals replaces the window's content).
+     */
+    private void refreshStatusesInBackground() {
+        if (!shell.isDisplayable()) {
+            statusTimer.stop();
+            return;
+        }
+        if (refreshRunning) {
+            return;
+        }
+        refreshRunning = true;
+        new SwingWorker<Boolean, Void>() {
+            @Override
+            protected Boolean doInBackground() {
+                try {
+                    return bookings.refreshStatuses();
+                } catch (DataException e) {
+                    return false;   // pages show their own error when they can't load
+                }
+            }
+
+            @Override
+            protected void done() {
+                refreshRunning = false;
+                try {
+                    reloadPending |= get();
+                } catch (Exception e) {
+                    // nothing changed that we know of
+                }
+                reloadCurrentPageIfSafe();
+            }
+        }.execute();
+    }
+
+    /**
+     * Reloads the open page after a background status change. Waits (until the next tick) while a
+     * dialog is open, and leaves Messages alone so a half-typed message isn't lost.
+     */
+    private void reloadCurrentPageIfSafe() {
+        BasePage page = shell.getCurrentPage();
+        if (!reloadPending || page == null || !shell.isDisplayable()) {
+            return;
+        }
+        if (java.awt.KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow()
+                instanceof java.awt.Dialog) {
+            return;
+        }
+        reloadPending = false;
+        if (!(page instanceof MessagesPage)) {
+            page.reload();
         }
     }
 

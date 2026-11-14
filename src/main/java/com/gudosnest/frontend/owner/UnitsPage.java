@@ -231,7 +231,7 @@ public class UnitsPage extends BasePage {
         body.add(rates, "gapbottom 12");
 
         Optional<Booking> current = bookings.stream().filter(b -> b.getUnitId() == unit.getId())
-                .filter(b -> b.getStage() == Booking.Stage.STAYING || b.getStage() == Booking.Stage.CHECKOUT_DUE)
+                .filter(b -> b.getStage() == Booking.Stage.STAYING)
                 .findFirst();
         if (current.isPresent()) {
             Booking stay = current.get();
@@ -280,7 +280,7 @@ public class UnitsPage extends BasePage {
     private static String checkoutText(Booking stay) {
         long days = ChronoUnit.DAYS.between(LocalDate.now(), stay.getCheckOut().toLocalDate());
         if (days <= 0) {
-            return stay.getStage() == Booking.Stage.CHECKOUT_DUE ? "Check-out due" : "Check-out today";
+            return "Check-out today";
         }
         return "Check-out in " + days + "d";
     }

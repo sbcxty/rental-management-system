@@ -34,7 +34,7 @@ public final class BookingUi {
         return switch (stage) {
             case PENDING -> Badge.Tone.NEUTRAL;
             case UPCOMING -> Badge.Tone.INFO;
-            case STAYING, CHECKOUT_DUE -> Badge.Tone.STRONG;
+            case STAYING -> Badge.Tone.STRONG;
             default -> Badge.Tone.MUTED;
         };
     }
@@ -122,9 +122,6 @@ public final class BookingUi {
                     + " to approve. If it isn't approved, you're refunded in full.";
             case UPCOMING -> "Approved. Check-in is " + Formats.dateTime(b.getCheckIn()) + ".";
             case STAYING -> "Checked in. Check-out is " + Formats.dateTime(b.getCheckOut()) + ".";
-            case CHECKOUT_DUE -> forOwner
-                    ? "Check-out time has passed. Mark the stay as completed once the guest has left."
-                    : "Check-out time has passed. Confirm your check-out below.";
             case COMPLETED -> "Completed on " + Formats.date(b.getCheckoutConfirmedAt()) + ".";
             case CANCELLED -> "Cancelled by the " + b.getCancelledBy() + " on " + Formats.date(b.getCancelledAt()) + ".";
             case REJECTED -> "The owner didn't approve this booking.";
