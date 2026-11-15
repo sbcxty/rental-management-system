@@ -68,12 +68,18 @@ public class AppButton extends JButton {
         };
     }
 
+    /**
+     * A filled button. The "default." keys repeat the colours for when the button is a dialog's
+     * default button (Enter presses it): FlatLaf paints default buttons with those keys instead.
+     */
     private static String fill(Color bg, Color hover, Color fg) {
-        return "borderWidth:0;background:" + Colors.hex(bg)
+        String colors = "background:" + Colors.hex(bg)
                 + ";hoverBackground:" + Colors.hex(hover)
                 + ";pressedBackground:" + Colors.hex(hover)
                 + ";focusedBackground:" + Colors.hex(bg)
-                + ";foreground:" + Colors.hex(fg)
+                + ";foreground:" + Colors.hex(fg);
+        String defaultColors = ";default." + colors.replace(";", ";default.");
+        return "borderWidth:0;" + colors + defaultColors
                 + ";disabledBackground:" + Colors.hex(Colors.BORDER)
                 + ";disabledText:" + Colors.hex(Colors.NEUTRAL);
     }
