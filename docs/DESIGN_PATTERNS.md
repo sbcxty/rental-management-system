@@ -196,7 +196,7 @@ And `build()` checks the required values before making the object:
 
 **Where to find it:**
 - `src/main/java/com/gudosnest/backend/model/Item.java`, lines 74–79: `copyTo(targetUnitId)`. Used in `src/main/java/com/gudosnest/backend/service/OwnerService.java`, line 188 ("Copy inventory from another unit").
-- `src/main/java/com/gudosnest/backend/model/Unit.java`, lines 29–35: `copy(newName)`. Used in `src/main/java/com/gudosnest/frontend/owner/UnitDialog.java`, line 40 ("Duplicate unit").
+- `src/main/java/com/gudosnest/backend/model/Unit.java`, lines 29–35: `copy(newName)`. Used in `src/main/java/com/gudosnest/frontend/owner/UnitDialog.java`, line 41 ("Duplicate unit").
 
 
 **Code snippet:** Look at what changes in the copy: id becomes 0 (a new row), the unit is the target, and the condition resets to `GOOD`.

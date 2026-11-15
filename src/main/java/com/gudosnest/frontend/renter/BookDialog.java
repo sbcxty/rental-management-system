@@ -115,7 +115,7 @@ final class BookDialog {
 
     // ---------------------------------------------------------------------------- layout
 
-    /** Left column: carousel, name, about the unit, house rules, cancellation policy. */
+    /** Left column: carousel, name, about the unit, check-in and check-out times, cancellation policy. */
     private JComponent details() {
         JPanel left = Ui.transparent("insets 0 0 0 12, gap 0, fillx, wrap 1", "[grow,fill]");
         Carousel carousel = new Carousel(190);
@@ -129,7 +129,7 @@ final class BookDialog {
         left.add(Ui.label("About this place", Fonts.bodyBold(), Colors.TEXT), "gapbottom 4");
         left.add(about, "wmin 0, gapbottom 12");
 
-        left.add(Ui.label("House rules", Fonts.bodyBold(), Colors.TEXT), "gapbottom 4");
+        left.add(Ui.label("Check-in and check-out", Fonts.bodyBold(), Colors.TEXT), "gapbottom 4");
         LocalDate any = LocalDate.now();
         left.add(Ui.iconLabel("Check-in after " + Formats.time(any.atTime(BookingService.CHECK_IN_TIME)),
                 "clock", Fonts.caption(), Colors.TEXT));

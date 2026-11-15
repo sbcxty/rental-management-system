@@ -3,6 +3,7 @@ package com.gudosnest.frontend.owner;
 import com.gudosnest.backend.model.Property;
 import com.gudosnest.backend.model.Unit;
 import com.gudosnest.backend.service.pricing.Money;
+import com.gudosnest.backend.service.pricing.Price;
 import com.gudosnest.frontend.components.AppButton;
 import com.gudosnest.frontend.components.AppDialog;
 import com.gudosnest.frontend.components.MoneyInput;
@@ -89,6 +90,7 @@ final class UnitDialog {
             }
             panel.add(Ui.field("Nightly rate (₱)", rate));
             panel.add(Ui.field("Cleaning fee (₱, once per stay)", fee));
+            panel.add(Widgets.wrap(discountNote(), Fonts.caption(), Colors.TEXT_MUTED), "span 2, wmin 0");
             JPanel guestsField = Ui.transparent("insets 0, gap 0, wrap 1", "[]");
             guestsField.add(Ui.label("Maximum guests", Fonts.bodyMedium(), Colors.TEXT), "gapbottom 4");
             guestsField.add(guests, "h 40!");
@@ -96,6 +98,13 @@ final class UnitDialog {
             panel.add(Ui.fieldFree("Description (shown to renters)", new JScrollPane(description)), "span 2");
             panel.add(Widgets.wrap("Example: Ground floor · 1 King bed · En-suite bath", Fonts.caption(),
                     Colors.TEXT_MUTED), "span 2, wmin 0");
+        }
+
+        /** The app-wide long-stay discount, so owners know about it before setting a rate (see Price). */
+        private static String discountNote() {
+            String percent = Price.LongStayDiscount.RATE.movePointRight(2).stripTrailingZeros().toPlainString();
+            return "Renters get " + percent + "% off the nights (not the cleaning fee) for stays of "
+                    + Price.LongStayDiscount.MIN_NIGHTS + " nights or more.";
         }
 
         /** Reads the inputs; a typo in an amount is reported the same way as a broken rule. */
