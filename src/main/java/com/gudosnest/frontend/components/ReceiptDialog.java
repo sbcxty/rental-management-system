@@ -46,9 +46,6 @@ public final class ReceiptDialog {
             }
         });
         dialog.addButton(save);
-        AppButton close = new AppButton("Close", AppButton.Style.PRIMARY);
-        close.addActionListener(e -> dialog.dispose());
-        dialog.addButton(close);
         dialog.showDialog(0);
     }
 }

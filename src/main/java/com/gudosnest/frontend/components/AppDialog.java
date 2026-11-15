@@ -82,21 +82,37 @@ public class AppDialog extends JDialog {
         setVisible(true);
     }
 
-    // Simple shared message boxes
+    // Simple shared message boxes.
+    // They are centred on the app window, not on the component passed in: pages are taller than the
+    // screen (they sit in a scroll pane), so centring on the page put the box at the screen edge.
 
     public static void info(Component parent, String message) {
-        JOptionPane.showMessageDialog(parent, message, "Gudo's Nest", JOptionPane.PLAIN_MESSAGE);
+        JOptionPane.showMessageDialog(windowOf(parent), message, "Gudo's Nest", JOptionPane.PLAIN_MESSAGE);
     }
 
     public static void error(Component parent, String message) {
-        JOptionPane.showMessageDialog(parent, message, "Gudo's Nest", JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(windowOf(parent), message, "Gudo's Nest", JOptionPane.ERROR_MESSAGE);
     }
 
     /** Yes/No question. Returns true if the user chose the confirm option. */
     public static boolean confirm(Component parent, String message, String confirmText) {
         Object[] options = {confirmText, "Go back"};
-        int choice = JOptionPane.showOptionDialog(parent, message, "Gudo's Nest",
+        int choice = JOptionPane.showOptionDialog(windowOf(parent), message, "Gudo's Nest",
                 JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null, options, options[1]);
         return choice == 0;
+    }
+
+    /**
+     * The window to centre a message box on. A dialog that was just closed (for example the booking
+     * dialog after Approve) is skipped, so the box centres on the main window instead of where that
+     * dialog used to be. Falls back to null, which centres it on the screen.
+     */
+    private static Window windowOf(Component parent) {
+        Window w = parent == null ? null
+                : parent instanceof Window win ? win : SwingUtilities.getWindowAncestor(parent);
+        while (w != null && !w.isShowing()) {
+            w = w.getOwner();
+        }
+        return w;
     }
 }
