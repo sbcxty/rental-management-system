@@ -26,7 +26,7 @@ The build passes: pages not built yet are placeholders ("Coming soon"). See `TOD
 - [x] Browse (`BrowsePage` from PR #2, `BrowseService`, Trie location suggestions)
 - [x] Property detail + booking (`BookDialog`: carousel, price card, confirm, "Payment received")
 - [ ] Booking history (`BookingHistoryPage`, placeholder)
-- [x] Cancellations (`CancellationsPage`, from PR #2; not reviewed yet). Fixed: the "I understand" tick disappeared after clicking and moving the mouse away (focused checkboxes now stay filled, `Theme`); the reservation field's text is centred vertically; the footer says the cancellation is immediate and can't be undone (was "Step 1 of 1")
+- [x] Cancellations (`CancellationsPage`, from PR #2; not reviewed yet). Fixed: the "I understand" tick disappeared after clicking and moving the mouse away (focused checkboxes now stay filled, `Theme`); the reservation field's text is centred vertically; the footer says "Cancelled automatically" (was "Step 1 of 1")
 
 ## Blocked
 

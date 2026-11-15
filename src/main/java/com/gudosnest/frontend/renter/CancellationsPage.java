@@ -157,7 +157,7 @@ public class CancellationsPage extends BasePage {
         card.add(agree, "gapbottom 20");
 
         JPanel footer = Ui.transparent("insets 0, fillx", "[grow][]");
-        footer.add(Ui.iconLabel("Your stay is cancelled right away. This can't be undone.", "info",
+        footer.add(Ui.iconLabel("Cancelled automatically", "info",
                 Fonts.caption(), Colors.TEXT_MUTED), "wmin 0");
         AppButton submit = new AppButton("Cancel this stay", AppButton.Style.PRIMARY).withIcon("calendar-x");
         submit.addActionListener(e -> submit(understood, (String) reasons.getSelectedItem(), notes.getText()));
