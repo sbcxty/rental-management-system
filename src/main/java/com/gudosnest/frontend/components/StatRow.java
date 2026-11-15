@@ -9,9 +9,9 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 
 /**
- * The row of stat cards at the top of a page. Shows them side by side, and switches to two
- * per row when the window (or an expanded sidebar) leaves too little width, so the cards
- * never get squeezed past their contents or pushed off the right edge.
+ * The row of stat cards at the top of a page: equal cards side by side, or two per row when the
+ * window (or an expanded sidebar) leaves less than 176px per card. Only the width decides, so
+ * the layout doesn't jump when the numbers change.
  */
 public class StatRow extends JPanel {
 
@@ -37,33 +37,22 @@ public class StatRow extends JPanel {
         updateColumns();
     }
 
+    /** Narrowest a card may get before the row switches to two per row. */
+    private static final int MIN_CARD_WIDTH = 176;
+
     private void updateColumns() {
-        // Three layouts, best first: one row of equal cards; one row where each card is as wide
-        // as its own contents needs (so a long amount still fits); two cards per row.
-        int widest = 0;
-        int total = 0;
-        for (var card : getComponents()) {
-            int w = card.getPreferredSize().width;
-            widest = Math.max(widest, w);
-            total += w;
-        }
+        // Chosen from the width alone, never from the numbers inside, so the page keeps the same
+        // layout whatever is selected (a long amount shrinks to fit its card instead, see StatCard).
         int gaps = UIScale.scale(Theme.L) * (count - 1);
-        String mode;
-        if (getWidth() == 0 || widest * count + gaps <= getWidth()) {
-            mode = "equal";
-        } else if (total + gaps <= getWidth()) {
-            mode = "fit";
-        } else {
-            mode = "two";
-        }
+        boolean oneRow = getWidth() == 0 || UIScale.scale(MIN_CARD_WIDTH) * count + gaps <= getWidth();
+        String mode = oneRow ? "one" : "two";
         if (mode.equals(this.mode)) {
             return;
         }
         this.mode = mode;
-        int columns = mode.equals("two") ? Math.min(2, count) : count;
-        String column = mode.equals("fit") ? "[grow,fill]" : "[grow,fill,sg card]";
+        int columns = oneRow ? count : Math.min(2, count);
         layout.setLayoutConstraints("insets 0, gap " + Theme.L + ", fillx, wrap " + columns);
-        layout.setColumnConstraints(column.repeat(columns));
+        layout.setColumnConstraints("[grow,fill,sg card]".repeat(columns));
         revalidate();
     }
 }

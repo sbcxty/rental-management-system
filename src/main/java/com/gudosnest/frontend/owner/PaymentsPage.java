@@ -8,6 +8,7 @@ import com.gudosnest.frontend.components.AppTable;
 import com.gudosnest.frontend.components.Badge;
 import com.gudosnest.frontend.components.Formats;
 import com.gudosnest.frontend.components.PageHeader;
+import com.gudosnest.frontend.components.Pager;
 import com.gudosnest.frontend.components.Receipt;
 import com.gudosnest.frontend.components.ReceiptDialog;
 import com.gudosnest.frontend.components.RowTableModel;
@@ -40,6 +41,8 @@ public class PaymentsPage extends BasePage {
     private final RowTableModel<PaymentRow> model = new RowTableModel<>(PaymentsPage::toRow,
             "Date", "Renter", "Property / unit", "Type", "Amount", "Status");
     private JTable table;
+    private final Pager pager = new Pager();
+    private List<PaymentRow> shown = List.of();
     private final JPanel tableHolder = Ui.transparent("insets 0, gap 0, fillx, wrap 1", "[grow,fill]");
 
     public PaymentsPage(Portal portal) {
@@ -60,6 +63,7 @@ public class PaymentsPage extends BasePage {
         PropertyFilter filter = new PropertyFilter(properties, propertyId);
         filter.onChange(() -> {
             propertyId = filter.selectedId();
+            pager.reset();
             reload();
         });
         header.addAction(filter);
@@ -69,7 +73,7 @@ public class PaymentsPage extends BasePage {
         BigDecimal refunded = sum(rows.stream().filter(r -> r.isRefund() && "Refunded".equals(r.status())).toList());
         long waiting = rows.stream().filter(r -> r.isRefund() && "Requested".equals(r.status())).count();
         StatRow stats = new StatRow();
-        stats.addCard(stat("Received", "wallet", Formats.money(received), "Booking payments and damage fees"));
+        stats.addCard(stat("Received", "wallet", Formats.money(received), "Bookings and damage fees"));
         stats.addCard(stat("Refunded", "refresh-ccw", Formats.money(refunded), "Paid back to renters"));
         stats.addCard(stat("Net received", "credit-card", Formats.money(received.subtract(refunded)), "Received minus refunded"));
         stats.addCard(stat("Refunds to review", "clock", String.valueOf(waiting),
@@ -83,6 +87,7 @@ public class PaymentsPage extends BasePage {
         tabs.setSelectedIndex(tab);
         tabs.onChange(i -> {
             tab = i;
+            pager.reset();
             refreshTable();
         });
         add(tabs, "gapbottom 16");
@@ -95,7 +100,9 @@ public class PaymentsPage extends BasePage {
         AppTable.setColumnWidth(table, 4, 130);
         AppTable.setColumnWidth(table, 5, 120);
         RowTableModel.onRowClick(table, model, this::open);
-        add(tableHolder);
+        pager.onChange(this::showPage);
+        add(tableHolder, "gapbottom 16");
+        add(pager);
         refreshTable();
     }
 
@@ -120,11 +127,17 @@ public class PaymentsPage extends BasePage {
     }
 
     private void refreshTable() {
-        List<PaymentRow> shown = rows.stream().filter(inTab(tab)).toList();
-        model.setRows(shown);
+        shown = rows.stream().filter(inTab(tab)).toList();
+        pager.setTotal(shown.size());
+        showPage();
+    }
+
+    /** The current page of rows (newest first), or the empty card. */
+    private void showPage() {
+        model.setRows(pager.slice(shown));
         tableHolder.removeAll();
         if (shown.isEmpty()) {
-            tableHolder.add(Ui.emptyState("No payments here yet."), "growx");
+            tableHolder.add(AppTable.emptyCard("No payments here yet."));
         } else {
             RowTableModel.fitToRows(table);
             tableHolder.add(AppTable.inCard(table));

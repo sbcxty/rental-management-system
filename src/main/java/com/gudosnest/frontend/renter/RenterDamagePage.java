@@ -4,6 +4,7 @@ import com.gudosnest.backend.model.Records.DamageReport;
 import com.gudosnest.frontend.components.AppTable;
 import com.gudosnest.frontend.components.Formats;
 import com.gudosnest.frontend.components.PageHeader;
+import com.gudosnest.frontend.components.Pager;
 import com.gudosnest.frontend.components.RowTableModel;
 import com.gudosnest.frontend.components.StatCard;
 import com.gudosnest.frontend.components.StatRow;
@@ -35,6 +36,8 @@ public class RenterDamagePage extends BasePage {
     private final RowTableModel<DamageReport> model = new RowTableModel<>(RenterDamagePage::toRow,
             "Reported", "Property / unit", "Damage", "Fee", "Pay by", "Status");
     private JTable table;
+    private final Pager pager = new Pager();
+    private List<DamageReport> shown = List.of();
     private final JPanel tableHolder = Ui.transparent("insets 0, gap 0, fillx, wrap 1", "[grow,fill]");
 
     public RenterDamagePage(Portal portal) {
@@ -79,6 +82,7 @@ public class RenterDamagePage extends BasePage {
         tabs.setSelectedIndex(tab);
         tabs.onChange(i -> {
             tab = i;
+            pager.reset();
             refreshTable();
         });
         add(tabs, "gapbottom 16");
@@ -95,7 +99,9 @@ public class RenterDamagePage extends BasePage {
                 reload();
             }
         });
-        add(tableHolder);
+        pager.onChange(this::showPage);
+        add(tableHolder, "gapbottom 16");
+        add(pager);
         refreshTable();
     }
 
@@ -120,12 +126,18 @@ public class RenterDamagePage extends BasePage {
     }
 
     private void refreshTable() {
-        List<DamageReport> shown = reports.stream().filter(inTab(tab)).toList();
-        model.setRows(shown);
+        shown = reports.stream().filter(inTab(tab)).toList();
+        pager.setTotal(shown.size());
+        showPage();
+    }
+
+    /** The current page of reports, or the empty card. */
+    private void showPage() {
+        model.setRows(pager.slice(shown));
         tableHolder.removeAll();
         if (shown.isEmpty()) {
-            tableHolder.add(Ui.emptyState(reports.isEmpty() ? "No damage reports. Thanks for taking care of your stays."
-                    : "No reports here."), "growx");
+            tableHolder.add(AppTable.emptyCard(reports.isEmpty()
+                    ? "No damage reports. Thanks for taking care of your stays." : "No reports here."));
         } else {
             RowTableModel.fitToRows(table);
             tableHolder.add(AppTable.inCard(table));

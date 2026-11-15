@@ -7,6 +7,7 @@ import com.gudosnest.frontend.components.AppButton;
 import com.gudosnest.frontend.components.AppTable;
 import com.gudosnest.frontend.components.Formats;
 import com.gudosnest.frontend.components.PageHeader;
+import com.gudosnest.frontend.components.Pager;
 import com.gudosnest.frontend.components.RowTableModel;
 import com.gudosnest.frontend.components.StatCard;
 import com.gudosnest.frontend.components.StatRow;
@@ -48,6 +49,9 @@ public class DamageReportsPage extends BasePage {
     private final RowTableModel<DamageReport> model = new RowTableModel<>(DamageReportsPage::toRow,
             "Filed", "Renter", "Property / unit", "Damage", "Fee", "Status");
     private JTable table;
+    private final Pager pager = new Pager();
+    private List<DamageReport> shown = List.of();
+    private String emptyText = "";
     private final JPanel tableHolder = Ui.transparent("insets 0, gap 0, fillx, wrap 1", "[grow,fill]");
 
     public DamageReportsPage(Portal portal) {
@@ -69,6 +73,7 @@ public class DamageReportsPage extends BasePage {
         PropertyFilter filter = new PropertyFilter(properties, propertyId);
         filter.onChange(() -> {
             propertyId = filter.selectedId();
+            pager.reset();
             reload();
         });
         header.addAction(filter);
@@ -76,6 +81,7 @@ public class DamageReportsPage extends BasePage {
         file.addActionListener(e -> {
             if (DamageReportDialog.file(this, portal, propertyId)) {
                 tab = 1;                        // show the new report under Awaiting payment
+                pager.reset();
                 reload();
             }
         });
@@ -104,6 +110,7 @@ public class DamageReportsPage extends BasePage {
         tabs.setSelectedIndex(tab);
         tabs.onChange(i -> {
             tab = i;
+            pager.reset();
             refreshTable();
         });
         controls.add(tabs, "cell 0 0");
@@ -125,6 +132,7 @@ public class DamageReportsPage extends BasePage {
 
             private void changed() {
                 query = search.getText().trim();
+                pager.reset();
                 refreshTable();
             }
         });
@@ -143,7 +151,9 @@ public class DamageReportsPage extends BasePage {
                 reload();
             }
         });
-        add(tableHolder);
+        pager.onChange(this::showPage);
+        add(tableHolder, "gapbottom 16");
+        add(pager);
         refreshTable();
     }
 
@@ -168,7 +178,6 @@ public class DamageReportsPage extends BasePage {
     }
 
     private void refreshTable() {
-        List<DamageReport> shown;
         int refId = query.isEmpty() ? -1 : SortedSearch.bookingIdFromReference(query);
         if (refId >= 0) {
             // A reference was typed: a booking can have several reports, so binary search finds
@@ -185,12 +194,19 @@ public class DamageReportsPage extends BasePage {
                             || r.description().toLowerCase().contains(q))
                     .toList();
         }
-        model.setRows(shown);
+        emptyText = refId >= 0 ? "No damage report on that booking."
+                : reports.isEmpty() ? "No damage reports yet. Use File report after a stay."
+                : query.isEmpty() ? "No reports here." : "No reports match.";
+        pager.setTotal(shown.size());
+        showPage();
+    }
+
+    /** The current page of reports, or the empty card. */
+    private void showPage() {
+        model.setRows(pager.slice(shown));
         tableHolder.removeAll();
         if (shown.isEmpty()) {
-            tableHolder.add(Ui.emptyState(refId >= 0 ? "No damage report on that booking."
-                    : reports.isEmpty() ? "No damage reports yet. Use File report after a stay."
-                    : query.isEmpty() ? "No reports here." : "No reports match."), "growx");
+            tableHolder.add(AppTable.emptyCard(emptyText));
         } else {
             RowTableModel.fitToRows(table);
             tableHolder.add(AppTable.inCard(table));

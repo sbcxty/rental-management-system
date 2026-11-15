@@ -73,6 +73,13 @@ public final class AppTable {
     }
 
     /** Puts the table in a card with a border and no extra scroll border. */
+    /** The empty-list message in a card the width of a table, so the page keeps its shape. */
+    public static Card emptyCard(String message) {
+        Card card = new Card(new net.miginfocom.swing.MigLayout("insets 0, fill", "[grow,fill]"));
+        card.add(Ui.emptyState(message), "growx");
+        return card;
+    }
+
     public static Card inCard(JTable table) {
         Card card = new Card(new MigLayout("insets 1, fill", "[grow,fill]", "[grow,fill]"));
         JScrollPane scroll = WheelScroll.install(new JScrollPane(table));
