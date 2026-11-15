@@ -54,15 +54,6 @@ public class InventoryTree {
         return total;
     }
 
-    /** Number of item lines in this node and below. */
-    public int itemCount() {
-        int count = items.size();
-        for (InventoryTree child : children) {
-            count += child.itemCount();
-        }
-        return count;
-    }
-
     /** Items that are damaged, missing or in maintenance, in this node and below. */
     public int needsAttentionCount() {
         int count = (int) items.stream().filter(i -> i.getCondition().needsAttention()).count();

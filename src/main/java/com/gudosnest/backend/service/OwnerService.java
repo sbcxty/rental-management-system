@@ -1,7 +1,6 @@
 package com.gudosnest.backend.service;
 
 import com.gudosnest.backend.database.Db;
-import com.gudosnest.backend.model.Booking;
 import com.gudosnest.backend.model.Item;
 import com.gudosnest.backend.model.Property;
 import com.gudosnest.backend.model.Records.PaymentRow;

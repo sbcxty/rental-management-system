@@ -7,7 +7,6 @@ import com.gudosnest.backend.model.Records.Transaction;
 import com.gudosnest.backend.repository.MoneyRepository;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
@@ -43,7 +42,7 @@ public class FinanceService {
     }
 
     /** Totals for a period. */
-    public record Summary(BigDecimal income, BigDecimal expenses, int bookings, Map<String, BigDecimal> expenseByType) {
+    public record Summary(BigDecimal income, BigDecimal expenses) {
         public BigDecimal net() {
             return income.subtract(expenses);
         }
@@ -66,9 +65,6 @@ public class FinanceService {
     public Summary summary(List<Transaction> ledger, LocalDate from, LocalDate toExclusive) {
         BigDecimal income = BigDecimal.ZERO;
         BigDecimal expenses = BigDecimal.ZERO;
-        int bookingCount = 0;
-        Map<String, BigDecimal> byType = new LinkedHashMap<>();
-        EXPENSE_TYPES.keySet().forEach(k -> byType.put(k, BigDecimal.ZERO));
         for (Transaction t : ledger) {
             LocalDate day = t.date().toLocalDate();
             if (day.isBefore(from) || !day.isBefore(toExclusive)) {
@@ -77,13 +73,9 @@ public class FinanceService {
             income = income.add(incomeEffect(t));
             if (t.isExpense()) {
                 expenses = expenses.add(t.amount());
-                byType.merge(t.type(), t.amount(), BigDecimal::add);
-            }
-            if (t.type().equals("rental_income")) {
-                bookingCount++;
             }
         }
-        return new Summary(income, expenses, bookingCount, byType);
+        return new Summary(income, expenses);
     }
 
     /**
@@ -108,16 +100,6 @@ public class FinanceService {
             }
         }
         return months.entrySet().stream().map(e -> new Month(e.getKey(), e.getValue()[0], e.getValue()[1])).toList();
-    }
-
-    /** Share (0..1) of the acquisition cost already earned back as all-time net profit. */
-    public double investmentRecovery(List<Transaction> ledger, List<Property> properties) {
-        BigDecimal cost = properties.stream().map(Property::getAcquisitionCost).reduce(BigDecimal.ZERO, BigDecimal::add);
-        if (cost.signum() == 0) {
-            return 0;
-        }
-        Summary all = summary(ledger, LocalDate.MIN, LocalDate.MAX);
-        return Math.max(0, all.net().divide(cost, 4, RoundingMode.HALF_UP).doubleValue());
     }
 
     public void addExpense(int ownerId, Property property, String type, BigDecimal amount, LocalDate date, String note) {

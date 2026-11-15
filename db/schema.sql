@@ -1,5 +1,5 @@
 -- =====================================================================================
--- Gudo's Nest - database schema and seed data
+-- Gudo's Nest - database schema (run this first, then db/seed.sql for the demo data)
 --
 -- Run the whole file in MySQL Workbench (or the mysql command line).
 -- WARNING: it drops and re-creates the gudos_nest database, so all data is reset.

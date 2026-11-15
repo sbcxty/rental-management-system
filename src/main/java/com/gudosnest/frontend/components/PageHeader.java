@@ -93,8 +93,4 @@ public class PageHeader extends JPanel {
         back.setVisible(true);
         return this;
     }
-
-    public void setTitle(String text) {
-        title.setText(text);
-    }
 }

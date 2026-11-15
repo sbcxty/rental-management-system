@@ -19,8 +19,6 @@ import com.gudosnest.frontend.shared.BookingUi;
 import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.JTextField;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import java.awt.Dimension;
 import java.math.BigDecimal;
 import java.util.Comparator;
@@ -107,24 +105,10 @@ public class BookingHistoryPage extends BasePage {
         add(tabs, "gapbottom 16");
 
         search.setText(query);
-        search.getDocument().addDocumentListener(new DocumentListener() {
-            public void insertUpdate(DocumentEvent e) {
-                changed();
-            }
-
-            public void removeUpdate(DocumentEvent e) {
-                changed();
-            }
-
-            public void changedUpdate(DocumentEvent e) {
-                changed();
-            }
-
-            private void changed() {
-                query = search.getText().trim();
-                pager.reset();
-                refreshTable();
-            }
+        Ui.onTextChange(search, () -> {
+            query = search.getText().trim();
+            pager.reset();
+            refreshTable();
         });
 
         table = AppTable.create(model);

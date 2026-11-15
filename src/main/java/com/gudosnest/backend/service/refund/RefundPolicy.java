@@ -31,9 +31,6 @@ public interface RefundPolicy {
             new String[]{"Partial refund:", "cancelled 3 to 6 days before check-in. A 20% cancellation fee of the booking total is deducted."},
             new String[]{"No refund:", "cancelled within 2 days of check-in."});
 
-    /** The approval rule shown under every Pay button and on pending bookings. */
-    String APPROVAL_NOTE = "Owner approves within 48 hours, or you're refunded in full.";
-
     /** Result of applying a policy to a booking total. */
     record Quote(String tier, String tierLabel, BigDecimal fee, BigDecimal refund) {
         public boolean refundsAnything() {

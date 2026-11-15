@@ -11,6 +11,7 @@ import com.gudosnest.backend.service.FinanceService;
 import com.gudosnest.backend.service.MessageService;
 import com.gudosnest.backend.service.OwnerService;
 import com.gudosnest.frontend.MainWindow;
+import com.gudosnest.frontend.components.AppButton;
 import com.gudosnest.frontend.components.AppDialog;
 import com.gudosnest.frontend.components.PortalShell;
 import com.gudosnest.frontend.components.Sidebar;
@@ -56,9 +57,12 @@ public abstract class Portal {
         this.user = user;
     }
 
-    /** Picks the portal class for the role the person is using. */
-    public static Portal create(MainWindow window, User user, SessionManager.Portal kind) {
-        return kind == SessionManager.Portal.OWNER ? new OwnerPortal(window, user) : new RenterPortal(window, user);
+    /** Picks the portal class for the logged-in person and the role they are using (from the session). */
+    public static Portal create(MainWindow window) {
+        SessionManager session = SessionManager.getInstance();
+        User user = session.getCurrentUser();
+        return session.getCurrentPortal() == SessionManager.Portal.OWNER
+                ? new OwnerPortal(window, user) : new RenterPortal(window, user);
     }
 
     /** The factory method: builds the page for one sidebar item. */
@@ -90,7 +94,7 @@ public abstract class Portal {
             @Override
             public void onLogOut() {
                 if (AppDialog.confirm(window, "Log out?", "You'll need your email and password to log in again.",
-                        "Log out", com.gudosnest.frontend.components.AppButton.Style.PRIMARY, "log-out")) {
+                        "Log out", AppButton.Style.PRIMARY, "log-out")) {
                     window.logOut();
                 }
             }

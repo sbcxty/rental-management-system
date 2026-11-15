@@ -79,8 +79,4 @@ public class PortalShell extends JPanel {
         pageArea.repaint();
         pageArea.requestFocusInWindow();
     }
-
-    public Sidebar getSidebar() {
-        return sidebar;
-    }
 }

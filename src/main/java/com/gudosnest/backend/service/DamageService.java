@@ -48,10 +48,6 @@ public class DamageService {
         return forRenter(renterId).stream().filter(r -> r.isOverdue(now)).toList();
     }
 
-    public boolean isSuspended(int renterId) {
-        return !overdue(renterId).isEmpty();
-    }
-
     /** Stops a suspended renter from booking (called by BookingService.book). */
     public void checkCanBook(int renterId) {
         List<DamageReport> late = overdue(renterId);

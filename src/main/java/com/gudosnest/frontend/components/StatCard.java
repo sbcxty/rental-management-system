@@ -29,10 +29,6 @@ public class StatCard extends Card {
         add(note, "span, growx, wmin 0");
     }
 
-    public void setTitle(String text) {
-        title.setText(text);
-    }
-
     public void setValue(String text) {
         value.setText(text);
     }

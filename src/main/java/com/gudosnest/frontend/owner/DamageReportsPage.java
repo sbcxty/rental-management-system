@@ -21,8 +21,6 @@ import com.formdev.flatlaf.util.UIScale;
 import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.JTextField;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import java.awt.Dimension;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -117,24 +115,10 @@ public class DamageReportsPage extends BasePage {
         JTextField search = Ui.searchField("Renter, property or Ref #GN-…");
         search.setPreferredSize(new Dimension(UIScale.scale(240), search.getPreferredSize().height));
         search.setText(query);
-        search.getDocument().addDocumentListener(new DocumentListener() {
-            public void insertUpdate(DocumentEvent e) {
-                changed();
-            }
-
-            public void removeUpdate(DocumentEvent e) {
-                changed();
-            }
-
-            public void changedUpdate(DocumentEvent e) {
-                changed();
-            }
-
-            private void changed() {
-                query = search.getText().trim();
-                pager.reset();
-                refreshTable();
-            }
+        Ui.onTextChange(search, () -> {
+            query = search.getText().trim();
+            pager.reset();
+            refreshTable();
         });
         controls.add(search, "cell 2 0, h 40!, aligny center");
         add(controls, "gapbottom 16");

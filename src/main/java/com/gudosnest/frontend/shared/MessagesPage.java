@@ -34,8 +34,6 @@ import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
@@ -172,26 +170,9 @@ public class MessagesPage extends BasePage {
 
         JTextField searchField = Ui.searchField(forOwner() ? "Search renters" : "Search owners or properties");
         searchField.setText(search);
-        searchField.getDocument().addDocumentListener(new DocumentListener() {
-            private void changed() {
-                search = searchField.getText().strip();
-                fillRows();   // only the rows, so the search box keeps focus
-            }
-
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                changed();
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                changed();
-            }
-
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                changed();
-            }
+        Ui.onTextChange(searchField, () -> {
+            search = searchField.getText().strip();
+            fillRows();   // only the rows, so the search box keeps focus
         });
         card.add(searchField, "h " + Theme.CONTROL_HEIGHT + "!");
 

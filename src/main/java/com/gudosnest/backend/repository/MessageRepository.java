@@ -58,8 +58,4 @@ public class MessageRepository {
         Db.update("UPDATE Messages SET is_read = TRUE WHERE receiver_id = ? AND sender_id = ? AND is_read = FALSE",
                 userId, otherId);
     }
-
-    public int unreadCount(int userId) {
-        return Db.count("SELECT COUNT(*) FROM Messages WHERE receiver_id = ? AND is_read = FALSE", userId);
-    }
 }

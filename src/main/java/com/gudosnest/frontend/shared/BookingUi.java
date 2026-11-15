@@ -23,7 +23,6 @@ import javax.swing.JPanel;
 import javax.swing.ListCellRenderer;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.function.Function;
@@ -181,11 +180,6 @@ public final class BookingUi {
     public static void showRefundReceipt(Component parent, Booking b, LocalDateTime processedAt) {
         ReceiptDialog.show(parent, Receipt.forRefund(b, processedAt),
                 "refund-" + Formats.refCode(b.getId(), b.getCreatedAt()) + ".png");
-    }
-
-    /** Label that shows money paid or refunded on list rows. */
-    public static JLabel amountLabel(BigDecimal amount) {
-        return Ui.label(Formats.money(amount), Fonts.bodyBold(), Colors.TEXT);
     }
 
     /**

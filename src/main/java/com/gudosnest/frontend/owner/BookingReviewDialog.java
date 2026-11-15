@@ -12,7 +12,6 @@ import com.gudosnest.frontend.portal.Portal;
 import com.gudosnest.frontend.shared.BookingUi;
 import com.gudosnest.frontend.theme.Colors;
 import com.gudosnest.frontend.theme.Fonts;
-import net.miginfocom.swing.MigLayout;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;

@@ -23,8 +23,6 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -117,23 +115,9 @@ public class InventoryPage extends BasePage {
         JPanel controls = Ui.transparent("insets 0, fillx", "[][grow][]");
         JTextField search = Ui.searchField("Search items");
         search.setText(query);
-        search.getDocument().addDocumentListener(new DocumentListener() {
-            public void insertUpdate(DocumentEvent e) {
-                changed();
-            }
-
-            public void removeUpdate(DocumentEvent e) {
-                changed();
-            }
-
-            public void changedUpdate(DocumentEvent e) {
-                changed();
-            }
-
-            private void changed() {
-                query = search.getText().trim().toLowerCase();
-                refreshTable();
-            }
+        Ui.onTextChange(search, () -> {
+            query = search.getText().trim().toLowerCase();
+            refreshTable();
         });
         controls.add(search, "w 320!, h 40!");
         TabBar tabs = new TabBar("All", "Consumable", "Equipment");

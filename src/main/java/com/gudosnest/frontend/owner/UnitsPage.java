@@ -30,8 +30,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
@@ -100,23 +98,9 @@ public class UnitsPage extends BasePage {
         if (!property.isHouse()) {
             JTextField search = Ui.searchField("Search unit name");
             search.setText(query);
-            search.getDocument().addDocumentListener(new DocumentListener() {
-                public void insertUpdate(DocumentEvent e) {
-                    changed();
-                }
-
-                public void removeUpdate(DocumentEvent e) {
-                    changed();
-                }
-
-                public void changedUpdate(DocumentEvent e) {
-                    changed();
-                }
-
-                private void changed() {
-                    query = search.getText().trim().toLowerCase();
-                    refreshGrid();   // only the cards are redrawn, so the search box keeps focus
-                }
+            Ui.onTextChange(search, () -> {
+                query = search.getText().trim().toLowerCase();
+                refreshGrid();   // only the cards are redrawn, so the search box keeps focus
             });
             controls.add(search, "cell 2 0, w 280!, h 40!");
         }

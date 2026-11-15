@@ -26,7 +26,7 @@ public class Stepper extends JPanel {
     private int max;
 
     public Stepper(int value, int min, int max) {
-        super(new MigLayout("insets 0, gap 6", "[][28!,center][]"));
+        super(new MigLayout("insets 0, gap 8, filly", "[][28!,center][]", "[center]"));
         setOpaque(false);
         this.min = min;
         this.max = max;

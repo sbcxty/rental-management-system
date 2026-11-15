@@ -16,8 +16,6 @@ import com.gudosnest.frontend.shared.BookingUi;
 import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.JTextField;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
@@ -85,24 +83,10 @@ public class BookingsPage extends BasePage {
         });
         controls.add(tabs);
         search.setText(query);
-        search.getDocument().addDocumentListener(new DocumentListener() {
-            public void insertUpdate(DocumentEvent e) {
-                changed();
-            }
-
-            public void removeUpdate(DocumentEvent e) {
-                changed();
-            }
-
-            public void changedUpdate(DocumentEvent e) {
-                changed();
-            }
-
-            private void changed() {
-                query = search.getText().trim();
-                pager.reset();
-                refreshTable();
-            }
+        Ui.onTextChange(search, () -> {
+            query = search.getText().trim();
+            pager.reset();
+            refreshTable();
         });
         add(controls, "gapbottom 16");
 

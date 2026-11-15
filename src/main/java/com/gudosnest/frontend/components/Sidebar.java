@@ -23,11 +23,9 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 
 /**
  * The one sidebar used by every page, in both portals (layout taken from the Stitch designs).
@@ -65,7 +63,6 @@ public class Sidebar extends JPanel {
     }
 
     private final Map<String, NavButton> buttons = new LinkedHashMap<>();
-    private final List<Consumer<Boolean>> expandListeners = new ArrayList<>();
     private final JPanel logoLabels;
     private final JPanel nameLabels;
     private boolean expanded;
@@ -174,10 +171,6 @@ public class Sidebar extends JPanel {
         }
     }
 
-    public boolean isExpanded() {
-        return expanded;
-    }
-
     public void setExpanded(boolean expanded) {
         this.expanded = expanded;
         logoLabels.setVisible(expanded);
@@ -188,12 +181,6 @@ public class Sidebar extends JPanel {
         if (getParent() != null) {
             getParent().revalidate();
         }
-        expandListeners.forEach(l -> l.accept(expanded));
-    }
-
-    /** Pages that change layout with the sidebar width (Messages) listen here. */
-    public void onExpandChange(Consumer<Boolean> listener) {
-        expandListeners.add(listener);
     }
 
     @Override

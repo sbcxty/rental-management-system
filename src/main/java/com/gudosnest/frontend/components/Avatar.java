@@ -28,16 +28,6 @@ public class Avatar extends JComponent {
         setMaximumSize(new Dimension(size, size));
     }
 
-    public void setInitials(String initials) {
-        this.initials = initials;
-        repaint();
-    }
-
-    public void setBackgroundColor(Color color) {
-        this.background = color;
-        repaint();
-    }
-
     @Override
     protected void paintComponent(Graphics g) {
         Graphics2D g2 = (Graphics2D) g.create();

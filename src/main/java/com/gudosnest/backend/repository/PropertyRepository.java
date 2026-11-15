@@ -123,10 +123,4 @@ public class PropertyRepository {
         Db.update("DELETE FROM Items WHERE unit_id = ?", unitId);
         Db.update("DELETE FROM Units WHERE unit_id = ?", unitId);
     }
-
-    /** All distinct locations and property names, for the Browse search suggestions. */
-    public List<String> searchWords() {
-        return Db.list("SELECT location FROM Properties UNION SELECT property_name FROM Properties",
-                rs -> rs.getString(1));
-    }
 }

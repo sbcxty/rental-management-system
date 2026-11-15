@@ -17,6 +17,9 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.Scrollable;
 import javax.swing.SwingConstants;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.text.JTextComponent;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -101,6 +104,26 @@ public final class Ui {
                 Icons.get("search", 16, Colors.NEUTRAL));
         field.putClientProperty(FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, true);
         return field;
+    }
+
+    /** Runs the action every time the text in a field or text area changes (typing, deleting, pasting). */
+    public static void onTextChange(JTextComponent field, Runnable action) {
+        field.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                action.run();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                action.run();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                action.run();
+            }
+        });
     }
 
     public static JTextArea textArea(int rows) {
