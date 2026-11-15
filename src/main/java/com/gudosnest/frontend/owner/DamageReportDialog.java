@@ -98,7 +98,9 @@ final class DamageReportDialog {
         };
         fillRenters.run();
         place.addActionListener(e -> fillRenters.run());
-        JPanel pickers = Ui.transparent("insets 0, gap 12 0, fillx", "[grow 45,fill][grow 55,fill]");
+        // Both columns start at 0 wide and share the whole row 45/55, so their widths never depend
+        // on the chosen property or renter name (with content-sized columns they jumped on change).
+        JPanel pickers = Ui.transparent("insets 0, gap 12 0, fillx", "[0:0,grow 45,fill][0:0,grow 55,fill]");
         pickers.add(Ui.field("Property", place), "wmin 0");
         pickers.add(Ui.field("Renter", stay), "wmin 0");
         body.add(pickers, "wmin 0");
