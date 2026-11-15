@@ -237,7 +237,7 @@ public class InventoryPage extends BasePage {
         row.add(condition, "w 140!, h 32!");
         row.add(Ui.muted(item.getUpdatedAt() == null ? "" : Formats.date(item.getUpdatedAt())));
 
-        JPanel actions = Ui.transparent("insets 0, gap 0", "[][]");
+        JPanel actions = Ui.transparent("insets 0, gap 8", "[][]");   // 8px between edit and delete
         AppButton edit = new AppButton("", AppButton.Style.TEXT).withIcon("pencil");
         edit.setToolTipText("Edit item");
         edit.addActionListener(e -> {
