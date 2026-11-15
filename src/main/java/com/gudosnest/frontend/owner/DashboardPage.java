@@ -1,5 +1,6 @@
 package com.gudosnest.frontend.owner;
 
+import com.formdev.flatlaf.util.UIScale;
 import com.gudosnest.backend.model.Booking;
 import com.gudosnest.backend.model.BookingStatus;
 import com.gudosnest.backend.model.Property;
@@ -25,7 +26,11 @@ import net.miginfocom.swing.MigLayout;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JViewport;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import java.awt.event.HierarchyBoundsAdapter;
+import java.awt.event.HierarchyEvent;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -41,11 +46,46 @@ import java.util.List;
  */
 public class DashboardPage extends BasePage {
 
+    /** The chart is this tall when there is room, and shrinks down to the minimum on a small window. */
+    private static final int CHART_HEIGHT = 240;
+    private static final int CHART_MIN_HEIGHT = 100;
+    /** Space kept under the chart: the card's padding plus the page's bottom padding. */
+    private static final int BELOW_CHART = 24 + 40;
+
     private Integer propertyId;
     private int chartRange;   // 0 = 6 months, 1 = this year
+    private BarChart chart;
+    private int chartHeight = CHART_HEIGHT;
 
     public DashboardPage(Portal portal) {
         super(portal);
+        // Runs when the window is resized or maximised, and when the page is first placed in it
+        addHierarchyBoundsListener(new HierarchyBoundsAdapter() {
+            @Override
+            public void ancestorResized(HierarchyEvent e) {
+                fitChart();
+            }
+        });
+    }
+
+    /**
+     * Sizes the chart to the space left in the window, so the whole chart shows without scrolling:
+     * window height minus where the chart starts minus the padding under it, kept between the
+     * minimum and the full height.
+     */
+    private void fitChart() {
+        JViewport viewport = (JViewport) SwingUtilities.getAncestorOfClass(JViewport.class, this);
+        if (chart == null || viewport == null || chart.getParent() == null || chart.getHeight() == 0) {
+            return;
+        }
+        int chartTop = SwingUtilities.convertPoint(chart, 0, 0, this).y;
+        int room = UIScale.unscale(viewport.getHeight() - chartTop) - BELOW_CHART;
+        int height = Math.max(CHART_MIN_HEIGHT, Math.min(CHART_HEIGHT, room));
+        if (height != chartHeight) {
+            chartHeight = height;
+            ((MigLayout) chart.getParent().getLayout()).setComponentConstraints(chart, "h " + height + "!");
+            chart.revalidate();
+        }
     }
 
     @Override
@@ -91,6 +131,7 @@ public class DashboardPage extends BasePage {
         right.add(attentionCard(bookings));
         row.add(right, "aligny top");
         add(row);
+        SwingUtilities.invokeLater(this::fitChart);   // once the page is laid out in the window
     }
 
     private static String greeting() {
@@ -156,11 +197,10 @@ public class DashboardPage extends BasePage {
             JLabel line = Ui.label(monthName + " so far: " + Formats.money(current.income()) + ", " + change,
                     Fonts.body(), Colors.TEXT_MUTED);
             line.setIcon(Icons.get(diff.signum() < 0 ? "arrow-down" : "arrow-up", 14, Colors.TEXT_MUTED));
-            card.add(line, "gaptop 4, gapbottom 16");
+            card.add(line, "gaptop 4, gapbottom 8");
         }
-        card.add(Ui.divider(), "gapbottom 16");
 
-        BarChart chart = new BarChart();
+        chart = new BarChart();
         List<String> labels = new ArrayList<>();
         List<BigDecimal> values = new ArrayList<>();
         for (FinanceService.Month m : months) {
@@ -168,7 +208,7 @@ public class DashboardPage extends BasePage {
             values.add(m.income());
         }
         chart.setData(labels, values);
-        card.add(chart, "h 240!");
+        card.add(chart, "h " + chartHeight + "!");
         return card;
     }
 
@@ -268,10 +308,5 @@ public class DashboardPage extends BasePage {
         row.add(chevron, "spany 2, wrap");
         row.add(Ui.caption(detail), "wmin 0, gapleft 20");
         return row;
-    }
-    
-    @Override
-    public boolean scrolls() {
-        return false;
     }
 }
