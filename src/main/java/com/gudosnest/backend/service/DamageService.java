@@ -18,6 +18,9 @@ import java.util.List;
  */
 public class DamageService {
 
+    /** Days after check-out the owner can still report damage on a stay. */
+    public static final int REPORT_WITHIN_DAYS = 7;
+
     /** Longest damage description the owner can write. */
     public static final int MAX_DESCRIPTION = 1000;
 
@@ -61,7 +64,10 @@ public class DamageService {
 
     // ---------------------------------------------------------------------- owner
 
-    /** Bookings a report can be filed against: the stay has started (staying, check-out due, completed). */
+    /**
+     * Bookings a report can be filed against: the renter is staying now (or check-out is due), or
+     * the stay was completed no more than 7 days after its check-out. Latest check-out first.
+     */
     public List<Booking> reportableBookings(List<Booking> ownerBookings) {
         LocalDateTime now = LocalDateTime.now();
         return ownerBookings.stream()
@@ -72,7 +78,8 @@ public class DamageService {
 
     private static boolean isReportable(Booking b, LocalDateTime now) {
         return switch (b.getStage(now)) {
-            case STAYING, CHECKOUT_DUE, COMPLETED -> true;
+            case STAYING, CHECKOUT_DUE -> true;
+            case COMPLETED -> !now.isAfter(b.getCheckOut().plusDays(REPORT_WITHIN_DAYS));
             default -> false;
         };
     }
@@ -85,7 +92,8 @@ public class DamageService {
             throw new RuleException("That booking is on another owner's property.");
         }
         if (!isReportable(booking, LocalDateTime.now())) {
-            throw new RuleException("Damage can only be reported on a stay that has started or finished.");
+            throw new RuleException("Damage can be reported during a stay or up to " + REPORT_WITHIN_DAYS
+                    + " days after check-out.");
         }
         if (description == null || description.isBlank()) {
             throw new RuleException("Describe the damage.");

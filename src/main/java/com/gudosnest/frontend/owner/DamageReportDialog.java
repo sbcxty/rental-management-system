@@ -39,7 +39,10 @@ import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Owner side of damage reports: file a new one against a stay, and open one to dismiss it or see
@@ -49,6 +52,8 @@ final class DamageReportDialog {
 
     private static final int WIDTH = DamageUi.DIALOG_WIDTH;
     private static final int TEXT_WIDTH = DamageUi.TEXT_WIDTH;
+    /** File report is wider: Property and Renter sit side by side and the form fits without scrolling. */
+    private static final int FILE_WIDTH = 640;
 
     private DamageReportDialog() {
     }
@@ -56,38 +61,59 @@ final class DamageReportDialog {
     // ---------------------------------------------------------------------------------- file
 
     /**
-     * New report. Only stays that have started or finished can be picked; with a property chosen on
-     * the page, its newest stay is selected first. Returns true if a report was filed.
+     * New report: pick the property, then the renter. Only renters staying now or who checked out in
+     * the last 7 days are listed, so the lists stay short. With a property chosen on the page, it
+     * is selected first. Returns true if a report was filed.
      */
     static boolean file(Component parent, Portal portal, Integer propertyId) {
         int ownerId = portal.user().getId();
         List<Booking> stays = portal.damage.reportableBookings(portal.bookings.forOwner(ownerId));
         if (stays.isEmpty()) {
-            AppDialog.info(parent, "There are no stays to report on yet. A report can be filed once a stay has started.");
+            AppDialog.info(parent, "No stays to report on. Damage can be reported during a stay or up to "
+                    + DamageService.REPORT_WITHIN_DAYS + " days after check-out.");
             return false;
         }
         boolean[] filed = {false};
         AppDialog dialog = new AppDialog(parent, "File damage report");
         JPanel body = dialog.getBody();
-        body.add(Widgets.wrap("Pick a stay that has started or finished. The renter sees the report and has "
-                + DamageReport.PAY_WITHIN_HOURS + " hours to pay it.", Fonts.body(), Colors.TEXT_MUTED, TEXT_WIDTH),
-                "wmin 0, gapbottom 8");
-
-        JComboBox<Booking> stay = new JComboBox<>(stays.toArray(new Booking[0]));
-        stay.setRenderer(BookingUi.stayRenderer(stay, b -> b, true));
-        stays.stream().filter(b -> propertyId != null && b.getPropertyId() == propertyId)
-                .findFirst().ifPresent(stay::setSelectedItem);
-        body.add(Ui.field("Stay", stay), "wmin 0, gapbottom 8");
+        // Group the stays by property (insertion order = latest check-out first), so the property
+        // list holds only places with someone to report on, and each renter list is short.
+        Map<Integer, PlaceStays> byProperty = new LinkedHashMap<>();
+        for (Booking b : stays) {
+            byProperty.computeIfAbsent(b.getPropertyId(), id -> new PlaceStays(b.getPropertyName(), new ArrayList<>()))
+                    .stays().add(b);
+        }
+        JComboBox<PlaceStays> place = new JComboBox<>(byProperty.values().toArray(new PlaceStays[0]));
+        if (propertyId != null && byProperty.containsKey(propertyId)) {
+            place.setSelectedItem(byProperty.get(propertyId));
+        }
+        JComboBox<Booking> stay = new JComboBox<>();
+        stay.setRenderer(BookingUi.renterRenderer(stay));
+        Runnable fillRenters = () -> {
+            stay.removeAllItems();
+            PlaceStays chosen = (PlaceStays) place.getSelectedItem();
+            if (chosen != null) {
+                chosen.stays().forEach(stay::addItem);
+            }
+        };
+        fillRenters.run();
+        place.addActionListener(e -> fillRenters.run());
+        JPanel pickers = Ui.transparent("insets 0, gap 12 0, fillx", "[grow 45,fill][grow 55,fill]");
+        pickers.add(Ui.field("Property", place), "wmin 0");
+        pickers.add(Ui.field("Renter", stay), "wmin 0");
+        body.add(pickers, "wmin 0");
+        body.add(Ui.caption("Renters staying now or who checked out in the last " + DamageService.REPORT_WITHIN_DAYS
+                + " days."), "wmin 0");
 
         // Label and counter above the text, 4px apart like Ui.field
         JLabel counter = Ui.caption("0 / " + DamageService.MAX_DESCRIPTION);
         JPanel descriptionField = Ui.transparent("insets 0, gap 0, fillx, wrap 2", "[grow][]");
         descriptionField.add(Ui.label("What was damaged", Fonts.bodyMedium(), Colors.TEXT));
         descriptionField.add(counter, "aligny bottom");
-        JTextArea description = Ui.textArea(4);
+        JTextArea description = Ui.textArea(3);   // 3 rows = the 72px box, so no scrollbar until it is full
         limit(description, counter, DamageService.MAX_DESCRIPTION);
         JScrollPane descriptionScroll = WheelScroll.install(new JScrollPane(description));
-        descriptionField.add(descriptionScroll, "span 2, growx, h 88!, wmin 0, gaptop 4");
+        descriptionField.add(descriptionScroll, "span 2, growx, h 72!, wmin 0, gaptop 4");
         body.add(descriptionField, "wmin 0, gapbottom 8");
 
         JTextField fee = Ui.textField("For example 1,200");
@@ -111,8 +137,16 @@ final class DamageReportDialog {
         });
         dialog.addButton(save);
         dialog.getRootPane().setDefaultButton(save);
-        dialog.showDialog(WIDTH);
+        dialog.showDialog(FILE_WIDTH);
         return filed[0];
+    }
+
+    /** One property in the picker with its reportable stays; shows as the property name. */
+    private record PlaceStays(String name, List<Booking> stays) {
+        @Override
+        public String toString() {
+            return name;
+        }
     }
 
     /** Stops typing at {@code max} characters and shows "n / max" in the counter. */

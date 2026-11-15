@@ -177,6 +177,29 @@ public final class BookingUi {
      */
     public static <T> ListCellRenderer<T> stayRenderer(JComboBox<T> combo, Function<T, Booking> booking,
                                                        boolean forOwner) {
+        return twoLineRenderer(combo, value -> {
+            Booking b = booking.apply(value);
+            String dates = dates(b);
+            String ref = Formats.ref(b.getId(), b.getCreatedAt());
+            return new String[]{place(b), place(b) + " · " + dates, forOwner
+                    ? b.getRenterName() + " · " + dates + " · " + ref
+                    : dates + " · " + ref + " · " + Formats.money(b.getTotal())};
+        });
+    }
+
+    /**
+     * The same two-line dropdown with the renter first (the property is already chosen):
+     * "Miguel Alvarez", then "Room 1 · Nov 15 – Nov 19, 2026 · Ref #GN-…". Closed, it shows
+     * "Miguel Alvarez · Room 1".
+     */
+    public static ListCellRenderer<Booking> renterRenderer(JComboBox<Booking> combo) {
+        return twoLineRenderer(combo, b -> new String[]{b.getRenterName(),
+                b.getRenterName() + " · " + b.getUnitLabel(),
+                b.getUnitLabel() + " · " + dates(b) + " · " + Formats.ref(b.getId(), b.getCreatedAt())});
+    }
+
+    /** {@code texts} gives {main line in the list, the one line in the closed field, second line}. */
+    private static <T> ListCellRenderer<T> twoLineRenderer(JComboBox<T> combo, Function<T, String[]> texts) {
         MigLayout layout = new MigLayout("insets 6 12 6 12, gap 0, wrap 1", "[grow,fill]");
         JPanel cell = new JPanel(layout);
         JLabel name = new JLabel();
@@ -191,13 +214,9 @@ public final class BookingUi {
                 name.setText(" ");
                 details.setText(" ");
             } else {
-                Booking b = booking.apply(value);
-                String dates = dates(b);
-                String ref = Formats.ref(b.getId(), b.getCreatedAt());
-                name.setText(place(b) + (closed ? " · " + dates : ""));
-                details.setText(forOwner
-                        ? b.getRenterName() + " · " + dates + " · " + ref
-                        : dates + " · " + ref + " · " + Formats.money(b.getTotal()));
+                String[] t = texts.apply(value);
+                name.setText(closed ? t[1] : t[0]);
+                details.setText(t[2]);
             }
             details.setVisible(!closed);
             layout.setLayoutConstraints(closed ? "insets 0 4 0 4, gap 0, wrap 1, aligny center"
