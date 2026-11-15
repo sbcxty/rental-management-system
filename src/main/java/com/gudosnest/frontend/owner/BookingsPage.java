@@ -5,6 +5,7 @@ import com.gudosnest.backend.structures.SortedSearch;
 import com.gudosnest.frontend.components.AppTable;
 import com.gudosnest.frontend.components.Formats;
 import com.gudosnest.frontend.components.PageHeader;
+import com.gudosnest.frontend.components.Pager;
 import com.gudosnest.frontend.components.RowTableModel;
 import com.gudosnest.frontend.components.TabBar;
 import com.gudosnest.frontend.components.Ui;
@@ -37,6 +38,9 @@ public class BookingsPage extends BasePage {
     private final RowTableModel<Booking> model = new RowTableModel<>(BookingsPage::toRow,
             "Renter", "Property / unit", "Dates", "Total", "Status");
     private JTable table;
+    private final Pager pager = new Pager();
+    private List<Booking> shown = List.of();
+    private String emptyText = "";
     private final JPanel tableHolder = Ui.transparent("insets 0, gap 0, fillx, wrap 1", "[grow,fill]");
 
     public BookingsPage(Portal portal) {
@@ -56,6 +60,7 @@ public class BookingsPage extends BasePage {
         PropertyFilter filter = new PropertyFilter(portal.owner.properties(ownerId), propertyId);
         filter.onChange(() -> {
             propertyId = filter.selectedId();
+            pager.reset();
             reload();
         });
         JTextField search = Ui.searchField("Renter, property or Ref #GN-…");
@@ -75,6 +80,7 @@ public class BookingsPage extends BasePage {
         tabs.setSelectedIndex(tab);
         tabs.onChange(i -> {
             tab = i;
+            pager.reset();
             refreshTable();
         });
         controls.add(tabs);
@@ -94,6 +100,7 @@ public class BookingsPage extends BasePage {
 
             private void changed() {
                 query = search.getText().trim();
+                pager.reset();
                 refreshTable();
             }
         });
@@ -110,7 +117,9 @@ public class BookingsPage extends BasePage {
                 reload();
             }
         });
-        add(tableHolder);
+        pager.onChange(this::showPage);
+        add(tableHolder, "gapbottom 16");
+        add(pager);
         refreshTable();
     }
 
@@ -127,7 +136,6 @@ public class BookingsPage extends BasePage {
     }
 
     private void refreshTable() {
-        List<Booking> shown;
         int refId = query.isEmpty() ? -1 : SortedSearch.bookingIdFromReference(query);
         if (refId >= 0) {
             // A reference was typed: binary search the id-sorted list instead of scanning it
@@ -141,11 +149,18 @@ public class BookingsPage extends BasePage {
                     .sorted(Comparator.comparing(Booking::getCheckIn).reversed())
                     .toList();
         }
-        model.setRows(shown);
+        emptyText = refId >= 0 ? "No booking with that reference."
+                : bookings.isEmpty() ? "No bookings yet." : "No bookings match.";
+        pager.setTotal(shown.size());
+        showPage();
+    }
+
+    /** The current page of bookings (10 at a time), or the empty card. */
+    private void showPage() {
+        model.setRows(pager.slice(shown));
         tableHolder.removeAll();
         if (shown.isEmpty()) {
-            tableHolder.add(Ui.emptyState(refId >= 0 ? "No booking with that reference."
-                    : bookings.isEmpty() ? "No bookings yet." : "No bookings match."), "growx");
+            tableHolder.add(AppTable.emptyCard(emptyText));
         } else {
             RowTableModel.fitToRows(table);
             tableHolder.add(AppTable.inCard(table));

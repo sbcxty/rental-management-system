@@ -15,7 +15,7 @@ The build passes: pages not built yet are placeholders ("Coming soon"). See `TOD
 - [x] Properties (`PropertiesPage`, `PropertyDialog`, `CardGrid`)
 - [x] Units of a property (`UnitsPage`, `UnitDialog`)
 - [x] Inventory (`InventoryPage`) and its item dialog (`ItemDialog`, copy-from-unit)
-- [x] Bookings (`BookingsPage`)
+- [x] Bookings (`BookingsPage`). Nov 15: 10 bookings a page with `Pager` (resets to page 1 when the tab, property or search changes); empty results show in a table-sized card
 - [x] Payments (`PaymentsPage`). Nov 15: the page keeps one layout whatever property is picked: `StatRow` chooses one row or two only from the window width (it used to look at the amounts, so picking a property could flip it between 4 across and 2×2), and a long amount shrinks to fit its card (`StatCard`). Tables show 10 rows a page with `Pager` ("Showing 1–10 of 40", Page n of m, ‹ › arrows, always shown so nothing jumps); empty lists show in a card the size of the table (`AppTable.emptyCard`). Damage reports (both portals) use the same pager.
 - [x] Finances (`FinancesPage`, `ExpenseDialog`): the ledger of every recorded transaction, newest first, 10 a page (`Pager`), All/Income/Refunds/Expenses tabs, property filter, totals (income, refunds, expenses, net profit, same formula as the Dashboard via `FinanceService.summary`). Category pills: Rental income green, Damage fee blue, Refund amber, Maintenance Primary tint, Supplies grey, Utilities Primary. Income, damage fees and refunds are recorded by the app; expenses only through Add expense (property, category, amount, date not in the future, note up to 255 characters; rules in `FinanceService.addExpense`).
 - [x] Messages (shared `MessagesPage` + `ChatBubble`, owner and renter views)
