@@ -3,6 +3,7 @@ package com.gudosnest.frontend.owner;
 import com.gudosnest.backend.model.Property;
 import com.gudosnest.backend.model.Unit;
 import com.gudosnest.backend.service.RuleException;
+import com.gudosnest.backend.service.pricing.Money;
 import com.gudosnest.frontend.components.AppButton;
 import com.gudosnest.frontend.components.AppDialog;
 import com.gudosnest.frontend.components.DateField;
@@ -62,7 +63,7 @@ final class PropertyDialog {
         if (!adding) {
             name.setText(existing.getName());
             location.setText(existing.getLocation());
-            cost.setText(MoneyInput.format(existing.getAcquisitionCost()));
+            cost.setText(Money.plain(existing.getAcquisitionCost()));
             acquired.setValue(existing.getAcquisitionDate());
         }
         body.add(Ui.field("Property name", name));
@@ -114,7 +115,7 @@ final class PropertyDialog {
         save.addActionListener(e -> {
             int ownerId = portal.user().getId();
             boolean ok = BookingReviewDialog.run(dialog, () -> {
-                BigDecimal acquisitionCost = MoneyInput.parse(cost.getText(), "Acquisition cost");
+                BigDecimal acquisitionCost = MoneyInput.parse(cost.getText(), "Acquisition cost", MoneyInput.MAX_COST);
                 boolean house = adding ? type.getSelectedIndex() == 0 : existing.isHouse();
                 Unit unit = house ? unitFields.toUnit(houseUnit.getId(), adding ? 0 : existing.getId(),
                         houseUnit.isOccupied()) : null;

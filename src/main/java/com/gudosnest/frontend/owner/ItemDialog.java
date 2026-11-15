@@ -1,10 +1,10 @@
 package com.gudosnest.frontend.owner;
 
 import com.gudosnest.backend.model.Item;
-import com.gudosnest.backend.service.RuleException;
+import com.gudosnest.backend.service.pricing.Money;
 import com.gudosnest.frontend.components.AppButton;
 import com.gudosnest.frontend.components.AppDialog;
-import com.gudosnest.frontend.components.Formats;
+import com.gudosnest.frontend.components.MoneyInput;
 import com.gudosnest.frontend.components.Segmented;
 import com.gudosnest.frontend.components.Stepper;
 import com.gudosnest.frontend.components.Ui;
@@ -59,7 +59,7 @@ final class ItemDialog {
         quantityField.add(quantity, "h 40!");
         row.add(quantityField, "aligny top");
         JTextField price = Ui.textField("For example 350");
-        price.setText(Formats.plainMoney(item.getUnitPrice()));
+        price.setText(Money.plain(item.getUnitPrice()));
         row.add(Ui.field("Price per item (₱)", price), "aligny top");
         JComboBox<Item.Condition> condition = new JComboBox<>(Item.Condition.values());
         condition.setSelectedItem(item.getCondition());
@@ -70,10 +70,7 @@ final class ItemDialog {
         AppButton save = new AppButton(isNew ? "Add item" : "Save changes", AppButton.Style.PRIMARY);
         save.addActionListener(e -> {
             boolean ok = BookingReviewDialog.run(dialog, () -> {
-                BigDecimal unitPrice = price.getText().isBlank() ? BigDecimal.ZERO : Formats.parseMoney(price.getText());
-                if (unitPrice == null) {
-                    throw new RuleException("Enter the price per item as a number, for example 350 (or 0).");
-                }
+                BigDecimal unitPrice = MoneyInput.parseOrZero(price.getText(), "Price per item");
                 Item edited = new Item(item.getId(), item.getPropertyId(), item.getUnitId(), name.getText(),
                         type.getSelectedIndex() == 1 ? Item.Type.CONSUMABLE : Item.Type.EQUIPMENT,
                         quantity.getValue(), unitPrice, (Item.Condition) condition.getSelectedItem(), null);

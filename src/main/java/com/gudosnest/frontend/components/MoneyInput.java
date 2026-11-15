@@ -1,73 +1,73 @@
 package com.gudosnest.frontend.components;
 
 import com.gudosnest.backend.service.RuleException;
+import com.gudosnest.backend.service.pricing.Money;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
-import java.util.Locale;
 import java.util.regex.Pattern;
 
 /**
- * Strict reading and writing of a peso amount typed into a text field, with thousands commas:
- *   "1250000", "1,250,000", " 1,250,000.50 "  ->  1250000.00 / 1250000.50
- * Unlike {@link Formats#parseMoney}, a wrong value is not guessed at: the person is told what to fix.
+ * Reads a peso amount typed into a text field, with or without thousands commas:
+ *   "2800", "2,800", " 1,250,000.50 "  ->  2800.00 / 2800.00 / 1250000.50
+ * A wrong value is never guessed at: the person is told what to fix. To put a stored amount back
+ * into a field, use {@link Money#plain} ("1,250,000.00").
  */
 public final class MoneyInput {
 
-    /** Digits with commas every 3 digits, or digits with no commas; then up to 2 decimals. */
+    /** Largest amount a DECIMAL(10,2) column holds: rates, fees, prices. */
+    public static final BigDecimal MAX = new BigDecimal("99999999.99");
+
+    /** Largest amount a DECIMAL(12,2) column holds: a property's acquisition cost. */
+    public static final BigDecimal MAX_COST = new BigDecimal("9999999999.99");
+
+    /** Digits with a comma every 3 digits, or no commas at all; then up to 2 decimals. */
     private static final Pattern AMOUNT = Pattern.compile("(\\d{1,3}(,\\d{3})+|\\d+)(\\.\\d{1,2})?");
 
-    /** DECIMAL(12,2) holds at most 10 digits before the decimal point. */
-    private static final int MAX_WHOLE_DIGITS = 10;
-
-    private static final ThreadLocal<DecimalFormat> FORMAT = ThreadLocal.withInitial(
-            () -> new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.US)));
+    private static final String EXAMPLE = " For example 2,800 or 2,800.50.";
 
     private MoneyInput() {
     }
 
-    /**
-     * Reads an amount of 0 or more. Throws a {@link RuleException} with a message that names the
-     * field (for example "Acquisition cost") when the text is empty or not a valid amount.
-     */
+    /** A required amount up to {@link #MAX}. */
     public static BigDecimal parse(String text, String fieldName) {
-        String example = " For example 1,250,000 or 1,250,000.50.";
+        return parse(text, fieldName, MAX);
+    }
+
+    /** An optional amount up to {@link #MAX}: an empty field means 0. */
+    public static BigDecimal parseOrZero(String text, String fieldName) {
+        return text == null || text.isBlank() ? BigDecimal.ZERO.setScale(2) : parse(text, fieldName, MAX);
+    }
+
+    /**
+     * A required amount of 0 up to {@code max}. Throws a {@link RuleException} whose message names
+     * the field (for example "Nightly rate") when the text is empty or not a valid amount.
+     */
+    public static BigDecimal parse(String text, String fieldName, BigDecimal max) {
         String s = text == null ? "" : text.strip();
-        if (s.startsWith("₱")) {
-            s = s.substring(1).strip();
-        }
         if (s.isEmpty()) {
-            throw new RuleException("Enter the " + fieldName.toLowerCase() + "." + example);
+            throw new RuleException("Enter the " + fieldName.toLowerCase() + "." + EXAMPLE);
         }
         if (s.startsWith("-")) {
             throw new RuleException(fieldName + " can't be negative.");
         }
         if (!s.matches("[0-9.,]+")) {
-            throw new RuleException(fieldName + " can only have numbers, commas and a decimal point." + example);
+            throw new RuleException(fieldName + " can only have numbers, commas and a decimal point." + EXAMPLE);
         }
         int dot = s.indexOf('.');
         if (dot != s.lastIndexOf('.')) {
-            throw new RuleException(fieldName + " can have only one decimal point." + example);
+            throw new RuleException(fieldName + " can have only one decimal point." + EXAMPLE);
         }
         if (dot >= 0 && s.length() - dot - 1 > 2) {
-            throw new RuleException(fieldName + " can have at most 2 decimal places." + example);
+            throw new RuleException(fieldName + " can have at most 2 decimal places." + EXAMPLE);
         }
         if (!AMOUNT.matcher(s).matches()) {
             throw new RuleException(fieldName + " isn't a valid amount. Put commas every 3 digits (or leave them out)"
-                    + " and a number before and after the decimal point." + example);
+                    + " and a number before and after the decimal point." + EXAMPLE);
         }
-        String plain = s.replace(",", "");
-        String whole = dot >= 0 ? plain.substring(0, plain.indexOf('.')) : plain;
-        if (whole.replaceFirst("^0+(?=\\d)", "").length() > MAX_WHOLE_DIGITS) {
-            throw new RuleException(fieldName + " is too large.");
+        BigDecimal amount = new BigDecimal(s.replace(",", "")).setScale(2);
+        if (amount.compareTo(max) > 0) {
+            throw new RuleException(fieldName + " is too large. The most it can be is " + Money.plain(max) + ".");
         }
-        return new BigDecimal(plain).setScale(2, RoundingMode.UNNECESSARY);
-    }
-
-    /** "1,250,000.00" for putting a stored amount back into a text field (no peso sign). */
-    public static String format(BigDecimal amount) {
-        return amount == null ? "" : FORMAT.get().format(amount.setScale(2, RoundingMode.HALF_UP));
+        return amount;
     }
 }

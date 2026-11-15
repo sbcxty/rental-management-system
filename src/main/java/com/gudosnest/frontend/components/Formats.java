@@ -28,30 +28,6 @@ public final class Formats {
         return amount == null ? "" : Money.format(amount);
     }
 
-    /**
-     * Reads an amount the person typed ("2800", "₱2,800.00", "2,800.5"). Returns null when it is
-     * empty or not a number, so the caller can say what to fix.
-     */
-    public static BigDecimal parseMoney(String text) {
-        if (text == null) {
-            return null;
-        }
-        String cleaned = text.replace("₱", "").replace(",", "").trim();
-        if (cleaned.isEmpty()) {
-            return null;
-        }
-        try {
-            return new BigDecimal(cleaned).setScale(2, java.math.RoundingMode.HALF_UP);
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
-
-    /** "2800.00" for putting a stored amount back into a text field. */
-    public static String plainMoney(BigDecimal amount) {
-        return amount == null ? "" : amount.setScale(2, java.math.RoundingMode.HALF_UP).toPlainString();
-    }
-
     /** Whole pesos for chart labels: ₱68k, ₱1.2M, ₱950. */
     public static String moneyShort(BigDecimal amount) {
         double v = amount.doubleValue();

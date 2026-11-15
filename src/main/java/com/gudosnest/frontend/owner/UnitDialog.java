@@ -2,10 +2,10 @@ package com.gudosnest.frontend.owner;
 
 import com.gudosnest.backend.model.Property;
 import com.gudosnest.backend.model.Unit;
-import com.gudosnest.backend.service.RuleException;
+import com.gudosnest.backend.service.pricing.Money;
 import com.gudosnest.frontend.components.AppButton;
 import com.gudosnest.frontend.components.AppDialog;
-import com.gudosnest.frontend.components.Formats;
+import com.gudosnest.frontend.components.MoneyInput;
 import com.gudosnest.frontend.components.Stepper;
 import com.gudosnest.frontend.components.Ui;
 import com.gudosnest.frontend.components.Widgets;
@@ -72,7 +72,7 @@ final class UnitDialog {
         final JPanel panel = Ui.transparent("insets 0, gap 12 8, fillx, wrap 2", "[grow,fill,sg f][grow,fill,sg f]");
         private final JTextField name = Ui.textField("For example Courtyard Suite A");
         private final Stepper guests;
-        private final JTextField rate = Ui.textField("For example 2800");
+        private final JTextField rate = Ui.textField("For example 2,800");
         private final JTextField fee = Ui.textField("For example 500");
         private final JTextArea description = Ui.textArea(3);
         private final boolean withName;
@@ -81,8 +81,8 @@ final class UnitDialog {
             this.withName = withName;
             guests = new Stepper(Math.max(1, unit.getCapacity()), 1, 30);
             name.setText(unit.getName());
-            rate.setText(Formats.plainMoney(unit.getDailyRate()));
-            fee.setText(Formats.plainMoney(unit.getCleaningFee()));
+            rate.setText(Money.plain(unit.getDailyRate()));
+            fee.setText(Money.plain(unit.getCleaningFee()));
             description.setText(unit.getDescription());
             if (withName) {
                 panel.add(Ui.field("Unit name", name), "span 2");
@@ -100,14 +100,8 @@ final class UnitDialog {
 
         /** Reads the inputs; a typo in an amount is reported the same way as a broken rule. */
         Unit toUnit(int id, int propertyId, boolean occupied) {
-            BigDecimal nightly = Formats.parseMoney(rate.getText());
-            if (nightly == null) {
-                throw new RuleException("Enter the nightly rate as a number, for example 2800.");
-            }
-            BigDecimal cleaning = fee.getText().isBlank() ? BigDecimal.ZERO : Formats.parseMoney(fee.getText());
-            if (cleaning == null) {
-                throw new RuleException("Enter the cleaning fee as a number, for example 500 (or 0).");
-            }
+            BigDecimal nightly = MoneyInput.parse(rate.getText(), "Nightly rate");
+            BigDecimal cleaning = MoneyInput.parseOrZero(fee.getText(), "Cleaning fee");
             String unitName = withName ? name.getText() : Property.Type.HOUSE.label();
             String text = description.getText().isBlank() ? null : description.getText().trim();
             return new Unit(id, propertyId, unitName, text, guests.getValue(), nightly, cleaning, occupied);
