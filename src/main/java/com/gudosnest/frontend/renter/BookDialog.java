@@ -96,7 +96,6 @@ final class BookDialog {
             portal.openConversation(p.getOwnerId(), p.getOwnerName(), null);
         });
         dialog.addLeftButton(message);
-        dialog.addCloseButton("Close");
         reserve.addActionListener(e -> reserve());
         dialog.addButton(reserve);
         dialog.getRootPane().setDefaultButton(reserve);
