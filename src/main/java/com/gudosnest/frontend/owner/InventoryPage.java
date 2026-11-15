@@ -35,7 +35,7 @@ import java.util.List;
  */
 public class InventoryPage extends BasePage {
 
-    private static final String COLUMNS = "[grow,fill,wmin 160][120!][130!,center][160!][120!][]";
+    private static final String COLUMNS = "[160::,grow,fill][120!][130!,center][160!][120!][]";
 
     private final int propertyId;
     private Integer unitId;          // null = items shared by the whole property
