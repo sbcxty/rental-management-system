@@ -6,8 +6,6 @@ import net.miginfocom.swing.MigLayout;
 
 import javax.swing.JComponent;
 import javax.swing.JPanel;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
 
 /**
  * Equal-width cards in rows (Properties, a property's units). Shows as many columns as fit
@@ -27,12 +25,17 @@ public class CardGrid extends JPanel {
         setOpaque(false);
         setLayout(layout);
         apply(maxColumns);
-        addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentResized(ComponentEvent e) {
-                updateColumns();
-            }
-        });
+    }
+
+    /**
+     * Picks the column count as soon as the grid is given its size, during layout, rather than
+     * from a resize event (which arrives after the first paint, so the cards visibly jumped from
+     * 3 columns to 2 when a page opened). PortalShell lays a new page out until it settles.
+     */
+    @Override
+    public void setBounds(int x, int y, int width, int height) {
+        super.setBounds(x, y, width, height);
+        updateColumns();
     }
 
     public void addCard(JComponent card) {

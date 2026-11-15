@@ -55,7 +55,7 @@ public class FinancesPage extends BasePage {
         ledger = portal.finance.ledger(ownerId, propertyId);
 
         PageHeader header = new PageHeader("Finances");
-        header.setSubtitle("Every recorded transaction. Bookings, damage fees and refunds are added for you; add expenses yourself.");
+        header.setSubtitle("All recorded transactions. Expenses are added by you.");
         PropertyFilter filter = new PropertyFilter(properties, propertyId);
         filter.onChange(() -> {
             propertyId = filter.selectedId();

@@ -69,7 +69,13 @@ public class PortalShell extends JPanel {
         JComponent view = page.scrolls() ? Ui.scroll(page) : page;
         pageArea.removeAll();
         pageArea.add(view, BorderLayout.CENTER);
-        pageArea.revalidate();
+        // Lay the page out until it settles before it is painted: the first pass can change the
+        // number of grid columns or show the scrollbar, which needs another pass. Without this the
+        // first paint used the old layout and the cards and photos jumped into place.
+        pageArea.validate();
+        for (int pass = 0; pass < 3 && !view.isValid(); pass++) {
+            view.validate();
+        }
         pageArea.repaint();
         pageArea.requestFocusInWindow();
     }

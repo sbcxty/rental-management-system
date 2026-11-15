@@ -51,15 +51,17 @@ public class PageHeader extends JPanel {
         });
         add(back, "span, wrap");
 
-        JPanel left = Ui.transparent("insets 0, gap 0, wrap 1, hidemode 3", "[]");
+        // The title side may shrink (wmin 0) so a long subtitle never pushes the actions past the
+        // window's right edge (it gets "…" and shows in full as a tooltip instead).
+        JPanel left = Ui.transparent("insets 0, gap 0, wrap 1, hidemode 3", "[grow,fill]");
         title = Ui.pageTitle(titleText);
         titleRow = Ui.transparent("insets 0, gap 16", "[]");
         titleRow.add(title);
         left.add(titleRow);
         subtitle = Ui.label("", Fonts.body(), Colors.TEXT_MUTED);
         subtitle.setVisible(false);
-        left.add(subtitle, "gaptop 4");
-        add(left, "growx, aligny top");
+        left.add(subtitle, "gaptop 4, wmin 0");
+        add(left, "growx, aligny top, wmin 0");
 
         actions = Ui.transparent("insets 0, gap 8", "");
         add(actions, "aligny center");
@@ -79,6 +81,7 @@ public class PageHeader extends JPanel {
 
     public PageHeader setSubtitle(String text) {
         subtitle.setText(text);
+        subtitle.setToolTipText(text == null || text.isEmpty() ? null : text);
         subtitle.setVisible(text != null && !text.isEmpty());
         return this;
     }

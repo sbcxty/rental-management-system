@@ -5,8 +5,6 @@ import com.gudosnest.frontend.theme.Theme;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.JPanel;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
 
 /**
  * The row of stat cards at the top of a page: equal cards side by side, or two per row when the
@@ -22,12 +20,13 @@ public class StatRow extends JPanel {
     public StatRow() {
         setOpaque(false);
         setLayout(layout);
-        addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentResized(ComponentEvent e) {
-                updateColumns();
-            }
-        });
+    }
+
+    /** Chooses one row or two as soon as the row gets its width (see CardGrid.setBounds). */
+    @Override
+    public void setBounds(int x, int y, int width, int height) {
+        super.setBounds(x, y, width, height);
+        updateColumns();
     }
 
     public void addCard(StatCard card) {

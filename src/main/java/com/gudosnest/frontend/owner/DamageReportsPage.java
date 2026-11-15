@@ -140,10 +140,10 @@ public class DamageReportsPage extends BasePage {
         add(controls, "gapbottom 16");
 
         table = AppTable.create(model);
-        AppTable.setColumnWidth(table, 0, 120);
+        AppTable.setColumnWidth(table, 0, 140);
         AppTable.setColumnWidth(table, 1, 180);
         AppTable.setColumnWidth(table, 2, 200);
-        AppTable.setColumnWidth(table, 3, 240);
+        AppTable.setColumnWidth(table, 3, 200);
         AppTable.setColumnWidth(table, 4, 120);
         AppTable.setColumnWidth(table, 5, 120);
         RowTableModel.onRowClick(table, model, r -> {
