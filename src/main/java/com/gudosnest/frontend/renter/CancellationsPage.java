@@ -157,7 +157,7 @@ public class CancellationsPage extends BasePage {
         card.add(agree, "gapbottom 20");
 
         JPanel footer = Ui.transparent("insets 0, fillx", "[grow][]");
-        footer.add(Ui.iconLabel("Step 1 of 1 · The cancellation takes effect immediately", "refresh-ccw",
+        footer.add(Ui.iconLabel("Your stay is cancelled right away. This can't be undone.", "info",
                 Fonts.caption(), Colors.TEXT_MUTED), "wmin 0");
         AppButton submit = new AppButton("Cancel this stay", AppButton.Style.PRIMARY).withIcon("calendar-x");
         submit.addActionListener(e -> submit(understood, (String) reasons.getSelectedItem(), notes.getText()));
@@ -383,7 +383,8 @@ public class CancellationsPage extends BasePage {
     /**
      * Draws each stay in the reservation dropdown on two lines (property and unit; dates, reference
      * and total), never wider than the field: long text is cut with "…", so the open list lines up
-     * with the field instead of spilling over the page. The closed field shows one line.
+     * with the field instead of spilling over the page. The closed field shows one line, centred
+     * vertically in the field.
      */
     private static ListCellRenderer<Option> stayRenderer(JComboBox<Option> combo) {
         MigLayout layout = new MigLayout("insets 6 12 6 12, gap 0, wrap 1", "[grow,fill]");
@@ -393,7 +394,7 @@ public class CancellationsPage extends BasePage {
         name.setFont(Fonts.bodyMedium());
         details.setFont(Fonts.caption());
         cell.add(name, "wmin 0");
-        cell.add(details, "wmin 0");
+        cell.add(details, "wmin 0, hidemode 3");   // hidden in the closed field, so it takes no space
         return (list, value, index, selected, focused) -> {
             boolean closed = index < 0;
             if (value == null) {
@@ -406,7 +407,8 @@ public class CancellationsPage extends BasePage {
                 details.setText(dates + " · " + Formats.ref(b.getId(), b.getCreatedAt()) + " · " + Formats.money(b.getTotal()));
             }
             details.setVisible(!closed);
-            layout.setLayoutConstraints(closed ? "insets 0 4 0 4, gap 0, wrap 1" : "insets 6 12 6 12, gap 0, wrap 1");
+            layout.setLayoutConstraints(closed ? "insets 0 4 0 4, gap 0, wrap 1, aligny center"
+                    : "insets 6 12 6 12, gap 0, wrap 1");
             boolean highlight = selected && !closed;
             cell.setOpaque(!closed);
             cell.setBackground(highlight ? list.getSelectionBackground() : list.getBackground());
