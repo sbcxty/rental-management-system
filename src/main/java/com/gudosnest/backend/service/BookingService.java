@@ -31,6 +31,7 @@ public class BookingService {
 
     private final BookingRepository bookings = new BookingRepository();
     private final MoneyRepository money = new MoneyRepository();
+    private final DamageService damage = new DamageService();
     private final Clock clock;
 
     public BookingService() {
@@ -106,6 +107,7 @@ public class BookingService {
      * Returns the new booking.
      */
     public Booking book(int renterId, Unit unit, LocalDate checkIn, LocalDate checkOut, int guests, String requests) {
+        damage.checkCanBook(renterId);      // an overdue damage report pauses booking
         Price price = quote(unit, checkIn, checkOut, guests);
         LocalDateTime in = checkIn.atTime(CHECK_IN_TIME);
         LocalDateTime out = checkOut.atTime(CHECK_OUT_TIME);

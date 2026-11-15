@@ -166,7 +166,7 @@ public class PaymentsPage extends BasePage {
                 default -> BookingReviewDialog.show(this, portal, b);
             }
         } else if ("Damage fee".equals(r.kind())) {
-            DamageReport report = portal.owner.damageReports(portal.user().getId()).stream()
+            DamageReport report = portal.damage.forOwner(portal.user().getId()).stream()
                     .filter(d -> d.booking().getId() == r.bookingId() && "charged".equals(d.status()))
                     .filter(d -> d.resolvedAt() == null || r.date() == null || d.resolvedAt().equals(r.date()))
                     .findFirst().orElse(null);

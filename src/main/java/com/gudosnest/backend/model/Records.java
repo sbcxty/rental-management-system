@@ -52,14 +52,39 @@ public final class Records {
         }
     }
 
-    /** A damage report filed by an owner against a booking. */
+    /**
+     * A damage report filed by an owner against a booking. The renter pays it; "charged" in the
+     * database means paid. An unpaid report is overdue {@link #PAY_WITHIN_HOURS} hours after filing.
+     */
     public record DamageReport(int id, Booking booking, String description, String photoPath,
                                BigDecimal requestedFee, String status, LocalDateTime createdAt,
                                LocalDateTime resolvedAt) {
+
+        /** Hours the renter has to pay before their account can't book. */
+        public static final int PAY_WITHIN_HOURS = 48;
+
+        public boolean isOpen() {
+            return "open".equals(status);
+        }
+
+        public boolean isPaid() {
+            return "charged".equals(status);
+        }
+
+        /** When the renter must pay by. */
+        public LocalDateTime dueAt() {
+            return createdAt.plusHours(PAY_WITHIN_HOURS);
+        }
+
+        /** Still unpaid after the 48 hours. */
+        public boolean isOverdue(LocalDateTime now) {
+            return isOpen() && now.isAfter(dueAt());
+        }
+
         public String statusLabel() {
             return switch (status) {
-                case "open" -> "Open";
-                case "charged" -> "Charged";
+                case "open" -> isOverdue(LocalDateTime.now()) ? "Overdue" : "Awaiting payment";
+                case "charged" -> "Paid";
                 default -> "Dismissed";
             };
         }

@@ -224,7 +224,7 @@ Note: `totalValue()` is written and works the same way, but no screen calls it y
 
 **Where to find it:**
 - `src/main/java/com/gudosnest/backend/structures/SortedSearch.java`, lines 36–61 (`equalRange` at lines 42–46, `firstAtLeast` at lines 49–61).
-- Used in `src/main/java/com/gudosnest/frontend/owner/DamageReportsPage.java`, line 173. The reports are sorted by booking id at line 64.
+- Used in `src/main/java/com/gudosnest/frontend/owner/DamageReportsPage.java`, line 176. The reports are sorted by booking id at line 65.
 
 **Code snippet:** `high` starts one past the end, because the answer can be "after every element". The loop keeps `low` as the first index that might still be the answer.
 

@@ -10,14 +10,15 @@ import com.gudosnest.frontend.shared.MessagesPage;
 
 import java.util.List;
 
-/** The renter's portal: browse and book, booking history, messages, cancellations. */
+/** The renter's portal: browse and book, booking history, messages, cancellations, damage reports. */
 public class RenterPortal extends Portal {
 
     private static final List<Sidebar.Item> MENU = List.of(
             new Sidebar.Item("browse", "Browse", "search"),
             new Sidebar.Item("history", "Booking history", "history"),
             new Sidebar.Item("messages", "Messages", "message-square"),
-            new Sidebar.Item("cancellations", "Cancellations", "calendar-x"));
+            new Sidebar.Item("cancellations", "Cancellations", "calendar-x"),
+            new Sidebar.Item("damage", "Damage reports", "triangle-alert"));
 
     public RenterPortal(MainWindow window, User user) {
         super(window, user);
@@ -29,6 +30,7 @@ public class RenterPortal extends Portal {
             case "history" -> new BookingHistoryPage(this);
             case "messages" -> new MessagesPage(this);
             case "cancellations" -> new CancellationsPage(this, null);
+            case "damage" -> new RenterDamagePage(this);
             default -> new BrowsePage(this);
         };
     }
@@ -38,6 +40,12 @@ public class RenterPortal extends Portal {
         BasePage page = new CancellationsPage(this, bookingId);
         page.reload();
         shellShow("cancellations", page);
+    }
+
+    /** A dot on Damage reports while any report is unpaid. */
+    @Override
+    protected void refreshOtherBadges() {
+        sidebar().setUnread("damage", damage.forRenter(user().getId()).stream().anyMatch(r -> r.isOpen()));
     }
 
     @Override

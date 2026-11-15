@@ -6,6 +6,7 @@ import com.gudosnest.backend.model.Booking;
 import com.gudosnest.backend.model.User;
 import com.gudosnest.backend.service.BookingService;
 import com.gudosnest.backend.service.BrowseService;
+import com.gudosnest.backend.service.DamageService;
 import com.gudosnest.backend.service.FinanceService;
 import com.gudosnest.backend.service.MessageService;
 import com.gudosnest.backend.service.OwnerService;
@@ -34,6 +35,7 @@ public abstract class Portal {
     // Services every page uses (each one is stateless, so one per portal is enough)
     public final BookingService bookings = new BookingService();
     public final OwnerService owner = new OwnerService();
+    public final DamageService damage = new DamageService();
     public final FinanceService finance = new FinanceService();
     public final MessageService messages = new MessageService();
     public final BrowseService browse = new BrowseService();
@@ -131,13 +133,18 @@ public abstract class Portal {
         }
     }
 
-    /** Updates the unread dot on Messages. */
+    /** Updates the unread dot on Messages, and any dots the portal adds (see {@link #refreshOtherBadges}). */
     public void refreshBadges() {
         try {
             sidebar.setUnread("messages", messages.hasUnread(user.getId(), kind()));
+            refreshOtherBadges();
         } catch (DataException e) {
             sidebar.setUnread("messages", false);
         }
+    }
+
+    /** Portal-specific dots on other menu items. None by default. */
+    protected void refreshOtherBadges() {
     }
 
     public User user() {

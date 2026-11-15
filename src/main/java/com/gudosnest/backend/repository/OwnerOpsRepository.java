@@ -49,15 +49,25 @@ public class OwnerOpsRepository {
 
     // ---------------------------------------------------------------------- damage reports
 
+    /** Reports on the owner's properties, newest first. */
     public List<DamageReport> damageReports(int ownerId) {
+        return damageReportsWhere("p.owner_id = ?", ownerId);
+    }
+
+    /** Reports filed on the renter's stays, newest first. */
+    public List<DamageReport> damageReportsForRenter(int renterId) {
+        return damageReportsWhere("b.renter_id = ?", renterId);
+    }
+
+    private List<DamageReport> damageReportsWhere(String condition, int id) {
         return Db.list(BookingRepository.SELECT.replace("FROM Bookings b",
                         ", d.report_id, d.description, d.photo_path, d.requested_fee, d.report_status,"
                                 + " d.created_at AS report_created, d.resolved_at FROM DamageReports d"
                                 + " JOIN Bookings b ON b.booking_id = d.booking_id")
-                        + " WHERE p.owner_id = ? ORDER BY d.created_at DESC",
+                        + " WHERE " + condition + " ORDER BY d.created_at DESC",
                 rs -> new DamageReport(rs.getInt("report_id"), BookingRepository.map(rs), rs.getString("description"),
                         rs.getString("photo_path"), rs.getBigDecimal("requested_fee"), rs.getString("report_status"),
-                        Db.dateTime(rs, "report_created"), Db.dateTime(rs, "resolved_at")), ownerId);
+                        Db.dateTime(rs, "report_created"), Db.dateTime(rs, "resolved_at")), id);
     }
 
     public Optional<DamageReport> damageReport(int reportId, int ownerId) {

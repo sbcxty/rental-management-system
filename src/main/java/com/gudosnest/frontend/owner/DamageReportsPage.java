@@ -5,7 +5,6 @@ import com.gudosnest.backend.model.Records.DamageReport;
 import com.gudosnest.backend.structures.SortedSearch;
 import com.gudosnest.frontend.components.AppButton;
 import com.gudosnest.frontend.components.AppTable;
-import com.gudosnest.frontend.components.Badge;
 import com.gudosnest.frontend.components.Formats;
 import com.gudosnest.frontend.components.PageHeader;
 import com.gudosnest.frontend.components.RowTableModel;
@@ -15,6 +14,7 @@ import com.gudosnest.frontend.components.TabBar;
 import com.gudosnest.frontend.components.Ui;
 import com.gudosnest.frontend.portal.BasePage;
 import com.gudosnest.frontend.portal.Portal;
+import com.gudosnest.frontend.shared.DamageUi;
 import com.formdev.flatlaf.util.UIScale;
 
 import javax.swing.JPanel;
@@ -24,18 +24,19 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.Dimension;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
 
 /**
  * Damage the owner found after a stay: totals, status tabs, a search and a table of reports.
- * "File report" opens a new report; a row opens the report to charge or dismiss it (open) or to
- * see its receipt (charged). Renters never see this page or the reports.
+ * "File report" opens a new report, which the renter then pays from their portal. A row opens the
+ * report to dismiss it (unpaid) or see its receipt (paid).
  */
 public class DamageReportsPage extends BasePage {
 
-    private static final String[] TABS = {"All", "Open", "Charged", "Dismissed"};
+    private static final String[] TABS = {"All", "Awaiting payment", "Paid", "Dismissed"};
 
     private int tab;
     private Integer propertyId;
@@ -57,14 +58,14 @@ public class DamageReportsPage extends BasePage {
     protected void build() {
         int ownerId = portal.user().getId();
         List<Property> properties = portal.owner.properties(ownerId);
-        reports = portal.owner.damageReports(ownerId).stream()
+        reports = portal.damage.forOwner(ownerId).stream()
                 .filter(r -> propertyId == null || r.booking().getPropertyId() == propertyId)
                 .sorted(Comparator.comparing(DamageReport::createdAt).reversed())
                 .toList();
         byBooking = reports.stream().sorted(Comparator.comparingInt(r -> r.booking().getId())).toList();
 
         PageHeader header = new PageHeader("Damage reports");
-        header.setSubtitle("Damage found after a stay. Click a report to review it.");
+        header.setSubtitle("Damage found after a stay. Renters pay within " + DamageReport.PAY_WITHIN_HOURS + " hours.");
         PropertyFilter filter = new PropertyFilter(properties, propertyId);
         filter.onChange(() -> {
             propertyId = filter.selectedId();
@@ -74,21 +75,23 @@ public class DamageReportsPage extends BasePage {
         AppButton file = new AppButton("File report", AppButton.Style.PRIMARY).withIcon("plus");
         file.addActionListener(e -> {
             if (DamageReportDialog.file(this, portal, propertyId)) {
-                tab = 1;                        // show the new report under Open
+                tab = 1;                        // show the new report under Awaiting payment
                 reload();
             }
         });
         header.addAction(file);
         add(header, "gapbottom 24");
 
+        LocalDateTime now = LocalDateTime.now();
         List<DamageReport> open = reports.stream().filter(inTab(1)).toList();
-        List<DamageReport> charged = reports.stream().filter(inTab(2)).toList();
+        List<DamageReport> paid = reports.stream().filter(inTab(2)).toList();
+        long overdue = open.stream().filter(r -> r.isOverdue(now)).count();
         long dismissed = reports.stream().filter(inTab(3)).count();
         StatRow stats = new StatRow();
-        stats.addCard(stat("Open reports", "triangle-alert", String.valueOf(open.size()),
-                open.isEmpty() ? "Nothing waiting" : "Charge or dismiss each one"));
-        stats.addCard(stat("Fees to decide", "clock", Formats.money(sum(open)), "Requested on open reports"));
-        stats.addCard(stat("Charged", "wallet", Formats.money(sum(charged)), "Paid as damage fees"));
+        stats.addCard(stat("Awaiting payment", "clock", String.valueOf(open.size()),
+                open.isEmpty() ? "Nothing waiting" : overdue + " overdue"));
+        stats.addCard(stat("Unpaid fees", "triangle-alert", Formats.money(sum(open)), "On reports awaiting payment"));
+        stats.addCard(stat("Paid", "wallet", Formats.money(sum(paid)), "Received as damage fees"));
         stats.addCard(stat("Dismissed", "x", String.valueOf(dismissed), "Closed without a fee"));
         add(stats, "gapbottom 24");
 
@@ -157,8 +160,8 @@ public class DamageReportsPage extends BasePage {
 
     private static Predicate<DamageReport> inTab(int tab) {
         return r -> switch (tab) {
-            case 1 -> "open".equals(r.status());
-            case 2 -> "charged".equals(r.status());
+            case 1 -> r.isOpen();
+            case 2 -> r.isPaid();
             case 3 -> "dismissed".equals(r.status());
             default -> true;
         };
@@ -196,28 +199,14 @@ public class DamageReportsPage extends BasePage {
         tableHolder.repaint();
     }
 
-    /** Open = waiting (Primary tint), Charged = green, Dismissed = grey. */
-    static Badge.Tone tone(DamageReport r) {
-        return switch (r.status()) {
-            case "open" -> Badge.Tone.NEUTRAL;
-            case "charged" -> Badge.Tone.SUCCESS;
-            default -> Badge.Tone.MUTED;
-        };
-    }
-
     private static Object[] toRow(DamageReport r) {
         return new Object[]{
                 new AppTable.TwoLine(Formats.date(r.createdAt()), Formats.time(r.createdAt())),
                 new AppTable.TwoLine(r.booking().getRenterName(), Formats.ref(r.booking().getId(), r.booking().getCreatedAt())),
                 new AppTable.TwoLine(r.booking().getPropertyName(), r.booking().getUnitLabel()),
-                firstLine(r.description()),
+                DamageUi.oneLine(r.description()),
                 Formats.money(r.requestedFee()),
-                new AppTable.Pill(r.statusLabel(), tone(r))
+                DamageUi.pill(r)
         };
-    }
-
-    /** The description on one line (the table cell cuts it with "…" when it is too long). */
-    private static String firstLine(String text) {
-        return text.replaceAll("\\s+", " ").trim();
     }
 }

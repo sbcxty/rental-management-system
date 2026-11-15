@@ -4,7 +4,6 @@ import com.gudosnest.backend.database.Db;
 import com.gudosnest.backend.model.Booking;
 import com.gudosnest.backend.model.Item;
 import com.gudosnest.backend.model.Property;
-import com.gudosnest.backend.model.Records.DamageReport;
 import com.gudosnest.backend.model.Records.PaymentRow;
 import com.gudosnest.backend.model.Records.RefundRow;
 import com.gudosnest.backend.model.Unit;
@@ -21,7 +20,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-/** Owner actions on properties, units, inventory, refunds and damage reports. */
+/** Owner actions on properties, units, inventory and refunds. Damage reports are in DamageService. */
 public class OwnerService {
 
     private final PropertyRepository properties = new PropertyRepository();
@@ -236,80 +235,5 @@ public class OwnerService {
 
     public List<PaymentRow> payments(int ownerId) {
         return money.paymentRows(ownerId);
-    }
-
-    // ---------------------------------------------------------------------- damage reports
-
-    public List<DamageReport> damageReports(int ownerId) {
-        return ops.damageReports(ownerId);
-    }
-
-    /** Longest damage description the owner can write. */
-    public static final int MAX_DAMAGE_DESCRIPTION = 1000;
-
-    /** Bookings a report can be filed against: the stay has started (staying, check-out due, completed). */
-    public List<Booking> reportableBookings(List<Booking> ownerBookings) {
-        LocalDateTime now = LocalDateTime.now();
-        return ownerBookings.stream()
-                .filter(b -> isReportable(b, now))
-                .sorted((a, b) -> b.getCheckOut().compareTo(a.getCheckOut()))
-                .toList();
-    }
-
-    private static boolean isReportable(Booking b, LocalDateTime now) {
-        return switch (b.getStage(now)) {
-            case STAYING, CHECKOUT_DUE, COMPLETED -> true;
-            default -> false;
-        };
-    }
-
-    public void fileDamageReport(int ownerId, Booking booking, String description, String photoPath, BigDecimal fee) {
-        if (booking == null) {
-            throw new RuleException("Choose the booking the damage happened during.");
-        }
-        if (booking.getOwnerId() != ownerId) {
-            throw new RuleException("That booking is on another owner's property.");
-        }
-        if (!isReportable(booking, LocalDateTime.now())) {
-            throw new RuleException("Damage can only be reported on a stay that has started or finished.");
-        }
-        if (description == null || description.isBlank()) {
-            throw new RuleException("Describe the damage.");
-        }
-        if (description.trim().length() > MAX_DAMAGE_DESCRIPTION) {
-            throw new RuleException("Keep the description to " + MAX_DAMAGE_DESCRIPTION + " characters or fewer.");
-        }
-        if (fee == null || fee.signum() <= 0) {
-            throw new RuleException("Enter the fee to charge (above ₱0.00).");
-        }
-        ops.insertDamageReport(booking.getId(), description.trim(), photoPath, fee, LocalDateTime.now().withNano(0));
-    }
-
-    /** Charges the renter: creates a paid damage-fee payment and records the income. */
-    public void chargeDamage(int ownerId, DamageReport report) {
-        DamageReport r = openReport(ownerId, report.id());
-        LocalDateTime now = LocalDateTime.now().withNano(0);
-        Db.transaction(() -> {
-            int paymentId = money.insertPaidPayment(r.booking().getId(), r.requestedFee(), "damage_fee",
-                    ReceiptPaths.damageFee(r.id()), now);
-            ops.chargeDamageReport(r.id(), paymentId, now);
-            money.insertTransaction(r.booking().getPropertyId(), paymentId, "damage_fee_income", r.requestedFee(), now,
-                    "Damage report #" + r.id());
-            return null;
-        });
-    }
-
-    public void dismissDamage(int ownerId, DamageReport report) {
-        openReport(ownerId, report.id());
-        ops.dismissDamageReport(report.id(), LocalDateTime.now().withNano(0));
-    }
-
-    private DamageReport openReport(int ownerId, int reportId) {
-        DamageReport r = ops.damageReport(reportId, ownerId)
-                .orElseThrow(() -> new RuleException("That report no longer exists."));
-        if (!"open".equals(r.status())) {
-            throw new RuleException("This report has already been resolved.");
-        }
-        return r;
     }
 }

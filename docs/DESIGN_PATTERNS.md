@@ -116,7 +116,7 @@ public final class DatabaseConnection {
 
 **Where to find it:**
 - `src/main/java/com/gudosnest/frontend/portal/BasePage.java`, lines 26–40: `build()` is abstract (line 27) and `reload()` is `final` (line 30) and calls `build()`.
-- Every page fills in `build()`, for example `src/main/java/com/gudosnest/frontend/owner/NeedsAttentionPage.java`, line 50, and `src/main/java/com/gudosnest/frontend/owner/DamageReportsPage.java`, line 57.
+- Every page fills in `build()`, for example `src/main/java/com/gudosnest/frontend/owner/NeedsAttentionPage.java`, line 50, and `src/main/java/com/gudosnest/frontend/owner/DamageReportsPage.java`, line 58.
 
 
 **Code snippet:** Look at `reload()`: clear, call the page's own `build()`, show an error if it fails, then repaint. Pages only write `build()`.
@@ -320,7 +320,7 @@ Note: line 276 (automatic full refund) runs when an owner rejects or cancels a b
 **Where to find it:**
 - `src/main/java/com/gudosnest/backend/service/BookingService.java`, lines 19–25 (the comment and class). For example `reject(...)` at lines 208–217 and `approve(...)` at lines 187–206. The renter's booking dialog uses it too: `quote(...)` for the live price and `book(...)` to pay (`src/main/java/com/gudosnest/frontend/renter/BookDialog.java`, lines 215 and 291).
 - The screen calls it in `src/main/java/com/gudosnest/frontend/owner/BookingReviewDialog.java`, lines 80, 88, 106 and 121.
-- `OwnerService` is a facade in the same way: `chargeDamage(...)` (`src/main/java/com/gudosnest/backend/service/OwnerService.java`, line 289) adds the damage fee payment, marks the report charged and records the income in one transaction. The Damage report dialog only calls `portal.owner.chargeDamage(...)` (`src/main/java/com/gudosnest/frontend/owner/DamageReportDialog.java`, line 261).
+- `DamageService` is a facade in the same way, shared by both portals: `pay(...)` (`src/main/java/com/gudosnest/backend/service/DamageService.java`, lines 115–129) adds the damage fee payment, marks the report paid and records the owner's income in one transaction. The renter's dialog only calls `portal.damage.pay(...)` (`src/main/java/com/gudosnest/frontend/renter/PayDamageDialog.java`, line 69). `BookingService.book` asks it whether the renter is suspended (`BookingService.java`, line 110).
 
 
 **Code snippet:** Look at how one call to `reject` changes the booking status and makes a refund inside one database transaction. The dialog only calls `portal.bookings.reject(...)`.

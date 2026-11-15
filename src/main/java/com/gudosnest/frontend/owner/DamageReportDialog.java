@@ -2,23 +2,20 @@ package com.gudosnest.frontend.owner;
 
 import com.gudosnest.backend.model.Booking;
 import com.gudosnest.backend.model.Records.DamageReport;
-import com.gudosnest.backend.service.OwnerService;
-import com.gudosnest.backend.service.ReceiptPaths;
+import com.gudosnest.backend.service.DamageService;
 import com.gudosnest.backend.service.RuleException;
 import com.gudosnest.frontend.components.AppButton;
 import com.gudosnest.frontend.components.AppDialog;
-import com.gudosnest.frontend.components.Badge;
 import com.gudosnest.frontend.components.Card;
 import com.gudosnest.frontend.components.Formats;
 import com.gudosnest.frontend.components.ImageUtil;
 import com.gudosnest.frontend.components.MoneyInput;
-import com.gudosnest.frontend.components.Receipt;
-import com.gudosnest.frontend.components.ReceiptDialog;
 import com.gudosnest.frontend.components.Ui;
 import com.gudosnest.frontend.components.WheelScroll;
 import com.gudosnest.frontend.components.Widgets;
 import com.gudosnest.frontend.portal.Portal;
 import com.gudosnest.frontend.shared.BookingUi;
+import com.gudosnest.frontend.shared.DamageUi;
 import com.gudosnest.frontend.theme.Colors;
 import com.gudosnest.frontend.theme.Fonts;
 import net.miginfocom.swing.MigLayout;
@@ -45,14 +42,13 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * Damage reports: file a new one against a stay, and open one to charge or dismiss it. Follow-up
- * steps (the confirmation, "Damage fee charged", the receipt) are next pages of the same dialog.
+ * Owner side of damage reports: file a new one against a stay, and open one to dismiss it or see
+ * its receipt. Follow-up steps (the confirmation, the receipt) are next pages of the same dialog.
  */
 final class DamageReportDialog {
 
-    /** Dialog width, and the width wrapped text keeps inside it (the width less the 24px insets and room for a scrollbar). */
-    private static final int WIDTH = 560;
-    private static final int TEXT_WIDTH = WIDTH - 48 - 16;
+    private static final int WIDTH = DamageUi.DIALOG_WIDTH;
+    private static final int TEXT_WIDTH = DamageUi.TEXT_WIDTH;
 
     private DamageReportDialog() {
     }
@@ -65,7 +61,7 @@ final class DamageReportDialog {
      */
     static boolean file(Component parent, Portal portal, Integer propertyId) {
         int ownerId = portal.user().getId();
-        List<Booking> stays = portal.owner.reportableBookings(portal.bookings.forOwner(ownerId));
+        List<Booking> stays = portal.damage.reportableBookings(portal.bookings.forOwner(ownerId));
         if (stays.isEmpty()) {
             AppDialog.info(parent, "There are no stays to report on yet. A report can be filed once a stay has started.");
             return false;
@@ -73,8 +69,8 @@ final class DamageReportDialog {
         boolean[] filed = {false};
         AppDialog dialog = new AppDialog(parent, "File damage report");
         JPanel body = dialog.getBody();
-        body.add(Widgets.wrap("Pick a stay that has started or finished. Renters don't see damage reports;"
-                + " you charge or dismiss the report afterwards.", Fonts.body(), Colors.TEXT_MUTED, TEXT_WIDTH),
+        body.add(Widgets.wrap("Pick a stay that has started or finished. The renter sees the report and has "
+                + DamageReport.PAY_WITHIN_HOURS + " hours to pay it.", Fonts.body(), Colors.TEXT_MUTED, TEXT_WIDTH),
                 "wmin 0, gapbottom 8");
 
         JComboBox<Booking> stay = new JComboBox<>(stays.toArray(new Booking[0]));
@@ -84,12 +80,12 @@ final class DamageReportDialog {
         body.add(Ui.field("Stay", stay), "wmin 0, gapbottom 8");
 
         // Label and counter above the text, 4px apart like Ui.field
-        JLabel counter = Ui.caption("0 / " + OwnerService.MAX_DAMAGE_DESCRIPTION);
+        JLabel counter = Ui.caption("0 / " + DamageService.MAX_DESCRIPTION);
         JPanel descriptionField = Ui.transparent("insets 0, gap 0, fillx, wrap 2", "[grow][]");
         descriptionField.add(Ui.label("What was damaged", Fonts.bodyMedium(), Colors.TEXT));
         descriptionField.add(counter, "aligny bottom");
         JTextArea description = Ui.textArea(4);
-        limit(description, counter, OwnerService.MAX_DAMAGE_DESCRIPTION);
+        limit(description, counter, DamageService.MAX_DESCRIPTION);
         JScrollPane descriptionScroll = WheelScroll.install(new JScrollPane(description));
         descriptionField.add(descriptionScroll, "span 2, growx, h 88!, wmin 0, gaptop 4");
         body.add(descriptionField, "wmin 0, gapbottom 8");
@@ -105,7 +101,7 @@ final class DamageReportDialog {
         save.addActionListener(e -> {
             boolean ok = BookingReviewDialog.run(dialog, () -> {
                 BigDecimal amount = MoneyInput.parse(fee.getText(), "Fee to charge");
-                portal.owner.fileDamageReport(ownerId, (Booking) stay.getSelectedItem(), description.getText(),
+                portal.damage.file(ownerId, (Booking) stay.getSelectedItem(), description.getText(),
                         photo.save(), amount);
             });
             if (ok) {
@@ -223,11 +219,24 @@ final class DamageReportDialog {
 
     // ---------------------------------------------------------------------------------- review
 
-    /** Opens a report: charge or dismiss it while open, or see its receipt once charged. Returns true if it changed. */
+    /**
+     * Opens a report. Unpaid: the owner can dismiss it (the renter pays it from their portal).
+     * Paid: its receipt. Returns true if it changed.
+     */
     static boolean review(Component parent, Portal portal, DamageReport report) {
         boolean[] changed = {false};
         AppDialog dialog = new AppDialog(parent, "Damage report");
-        details(dialog.getBody(), report);
+        JPanel body = dialog.getBody();
+        DamageUi.details(body, report, true);
+        if (report.isOpen()) {
+            String note = report.isOverdue(LocalDateTime.now())
+                    ? "Overdue: " + report.booking().getRenterName() + " can't book until this is paid or you dismiss it."
+                    : "The renter pays this from their portal. If it is still unpaid after "
+                    + DamageReport.PAY_WITHIN_HOURS + " hours, they can't book until it is paid.";
+            Card box = Widgets.tintBox(new MigLayout("insets 12 16 12 16, fillx", "[grow,fill]"));
+            box.add(Widgets.wrap(note, Fonts.caption(), Colors.TEXT, TEXT_WIDTH - 32), "wmin 0");
+            body.add(box, "gaptop 8");
+        }
 
         int ownerId = portal.user().getId();
         Booking b = report.booking();
@@ -238,113 +247,33 @@ final class DamageReportDialog {
         });
         dialog.addLeftButton(message);
 
-        switch (report.status()) {
-            case "open" -> {
-                AppButton dismiss = new AppButton("Dismiss", AppButton.Style.OUTLINED);
-                dismiss.addActionListener(e -> dialog.confirmPage("Dismiss this report?",
-                        "The report closes without a fee and " + b.getRenterName()
-                                + " is not charged. This can't be undone.",
-                        "Dismiss report", AppButton.Style.DANGER, () -> {
-                            if (BookingReviewDialog.run(dialog, () -> portal.owner.dismissDamage(ownerId, report))) {
-                                changed[0] = true;
-                                dialog.dispose();
-                            } else {
-                                dialog.previousPage();
-                            }
-                        }));
-                AppButton charge = new AppButton("Charge " + Formats.money(report.requestedFee()), AppButton.Style.PRIMARY);
-                charge.addActionListener(e -> dialog.confirmPage("Charge the damage fee?",
-                        b.getRenterName() + " is charged " + Formats.money(report.requestedFee())
-                                + ". It is recorded as a paid damage fee and added to this property's income."
-                                + " This can't be undone.",
-                        "Charge fee", AppButton.Style.PRIMARY, () -> {
-                            if (BookingReviewDialog.run(dialog, () -> portal.owner.chargeDamage(ownerId, report))) {
-                                changed[0] = true;
-                                chargedPage(dialog, portal, report.id());
-                            } else {
-                                dialog.previousPage();
-                            }
-                        }));
-                dialog.addButton(dismiss);
-                dialog.addButton(charge);
-                dialog.getRootPane().setDefaultButton(charge);
-            }
-            case "charged" -> {
-                AppButton receipt = new AppButton("View receipt", AppButton.Style.OUTLINED).withIcon("receipt");
-                receipt.addActionListener(e -> showReceipt(dialog, report));
-                dialog.addButton(receipt);
-                dialog.addCloseButton("Close");
-            }
-            default -> dialog.addCloseButton("Close");
+        if (report.isOpen()) {
+            dialog.addCloseButton("Close");
+            AppButton dismiss = new AppButton("Dismiss report", AppButton.Style.DANGER);
+            dismiss.addActionListener(e -> dialog.confirmPage("Dismiss this report?",
+                    "The report closes and " + b.getRenterName() + " won't be asked to pay "
+                            + Formats.money(report.requestedFee()) + ". This can't be undone.",
+                    "Dismiss report", AppButton.Style.DANGER, () -> {
+                        if (BookingReviewDialog.run(dialog, () -> portal.damage.dismiss(ownerId, report.id()))) {
+                            changed[0] = true;
+                            dialog.dispose();
+                        } else {
+                            dialog.previousPage();
+                        }
+                    }));
+            dialog.addButton(dismiss);
+        } else if (report.isPaid()) {
+            AppButton receipt = new AppButton("View receipt", AppButton.Style.OUTLINED).withIcon("receipt");
+            receipt.addActionListener(e -> DamageUi.showReceipt(dialog, report));
+            dialog.addButton(receipt);
+            dialog.addCloseButton("Close");
+        } else {
+            dialog.addCloseButton("Close");
         }
         dialog.showDialog(WIDTH);
         if (changed[0]) {
             portal.refreshBadges();
         }
         return changed[0];
-    }
-
-    /** "Damage fee charged": no way back to the open report, the receipt is one click away. */
-    private static void chargedPage(AppDialog dialog, Portal portal, int reportId) {
-        DamageReport done = portal.owner.damageReports(portal.user().getId()).stream()
-                .filter(r -> r.id() == reportId).findFirst().orElse(null);
-        if (done == null) {
-            dialog.dispose();
-            return;
-        }
-        Receipt.forDamageFee(done, paidAt(done)).saveQuietly(ReceiptPaths.damageFee(done.id()));
-
-        JPanel body = dialog.replacePage("Damage fee charged");
-        details(body, done);
-        AppButton receipt = new AppButton("View receipt", AppButton.Style.TEXT).withIcon("receipt");
-        receipt.addActionListener(e -> showReceipt(dialog, done));
-        dialog.addLeftButton(receipt);
-        AppButton ok = new AppButton("Done", AppButton.Style.PRIMARY);
-        ok.addActionListener(e -> dialog.dispose());
-        dialog.addButton(ok);
-        dialog.getRootPane().setDefaultButton(ok);
-        dialog.refit();
-    }
-
-    private static void showReceipt(AppDialog dialog, DamageReport report) {
-        ReceiptDialog.show(dialog, Receipt.forDamageFee(report, paidAt(report)), "damage-fee-" + report.id() + ".png");
-    }
-
-    private static LocalDateTime paidAt(DamageReport r) {
-        return r.resolvedAt() == null ? LocalDateTime.now() : r.resolvedAt();
-    }
-
-    /** Place, renter and status, the photo (if any), the stay and fee, then the description. */
-    private static void details(JPanel body, DamageReport r) {
-        Booking b = r.booking();
-        JPanel titleRow = Ui.transparent("insets 0, fillx, gap 12", "[grow][]");
-        titleRow.add(Ui.label(BookingUi.place(b), Fonts.cardTitle(), Colors.TEXT), "wmin 0");
-        titleRow.add(new Badge(r.statusLabel(), DamageReportsPage.tone(r)), "aligny center");
-        body.add(titleRow, "wmin 0");
-        body.add(Ui.muted(b.getRenterName() + " · " + Formats.ref(b.getId(), b.getCreatedAt())), "wmin 0, gapbottom 8");
-
-        if (r.photoPath() != null && ImageUtil.load(r.photoPath()) != null) {
-            body.add(new Widgets.Photo(r.photoPath(), 12, true), "h 200!, wmin 0, gapbottom 8");
-        }
-
-        Card summary = new Card(new MigLayout("insets 16, gap 0 8, fillx, wrap 1", "[grow,fill]"));
-        summary.add(Ui.row("Stay", BookingUi.dates(b) + " · " + Formats.nights(b.getNights())));
-        summary.add(Ui.row("Filed", Formats.dateTime(r.createdAt())));
-        if (r.resolvedAt() != null) {
-            summary.add(Ui.row("charged".equals(r.status()) ? "Charged" : "Dismissed", Formats.dateTime(r.resolvedAt())));
-        }
-        summary.add(Ui.divider(), "gaptop 4");
-        JPanel total = Ui.transparent("insets 0, fillx", "[grow][right]");
-        total.add(Ui.label(switch (r.status()) {
-            case "charged" -> "Fee charged";
-            case "dismissed" -> "Fee requested (not charged)";
-            default -> "Fee to charge";
-        }, Fonts.bodyBold(), Colors.TEXT));
-        total.add(Ui.label(Formats.money(r.requestedFee()), Fonts.sectionTitle(), Colors.PRIMARY));
-        summary.add(total);
-        body.add(summary, "gapbottom 8");
-
-        body.add(Ui.label("What was damaged", Fonts.captionMedium(), Colors.TEXT_MUTED));
-        body.add(Widgets.wrap(r.description(), Fonts.body(), Colors.TEXT, TEXT_WIDTH), "wmin 0");
     }
 }

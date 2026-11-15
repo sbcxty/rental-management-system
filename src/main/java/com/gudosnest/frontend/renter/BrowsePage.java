@@ -88,6 +88,12 @@ public class BrowsePage extends BasePage {
         header.addAction(count);
         add(header, "gapbottom 24");
 
+        int overdue = portal.damage.overdue(portal.user().getId()).size();
+        if (overdue > 0) {
+            add(com.gudosnest.frontend.shared.DamageUi.suspendedBanner(overdue, () -> portal.navigate("damage")),
+                    "gapbottom 24");
+        }
+
         add(searchCard(), "gapbottom 24");
         results.removeAll();
         add(results, "growx");
