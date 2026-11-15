@@ -123,7 +123,20 @@ INSERT INTO Bookings (booking_id, renter_id, unit_id, created_at, expires_at, ch
 (8828, 3, 9, @now - INTERVAL 60 DAY, @now - INTERVAL 58 DAY, TIMESTAMP(@d - INTERVAL 45 DAY, '14:00'), TIMESTAMP(@d - INTERVAL 42 DAY, '11:00'), 3,
        NULL, 'completed', 9800, 1200, 0, 30600, NULL, NULL, NULL, TIMESTAMP(@d - INTERVAL 42 DAY, '10:35')),
 (8829, 7, 11, @now - INTERVAL 40 DAY, @now - INTERVAL 38 DAY, TIMESTAMP(@d - INTERVAL 25 DAY, '14:00'), TIMESTAMP(@d - INTERVAL 23 DAY, '11:00'), 2,
-       NULL, 'completed', 3200, 500, 0, 6900, NULL, NULL, NULL, TIMESTAMP(@d - INTERVAL 23 DAY, '10:50'));
+       NULL, 'completed', 3200, 500, 0, 6900, NULL, NULL, NULL, TIMESTAMP(@d - INTERVAL 23 DAY, '10:50')),
+-- Recent stays at The Stone Courtyard Villa, so the owner has several renters to file a damage
+-- report against: two staying now, three checked out in the last 7 days. (Ids start at 8831 because
+-- payment 30 is the damage fee below; payment id = booking id - 8800.)
+(8831, 3, 3, @now - INTERVAL 15 DAY, @now - INTERVAL 13 DAY, TIMESTAMP(@d - INTERVAL 2 DAY, '14:00'), TIMESTAMP(@d + INTERVAL 2 DAY, '11:00'), 3,
+       NULL, 'approved', 3400, 600, 0, 14200, NULL, NULL, NULL, NULL),
+(8832, 6, 4, @now - INTERVAL 12 DAY, @now - INTERVAL 10 DAY, TIMESTAMP(@d - INTERVAL 1 DAY, '14:00'), TIMESTAMP(@d + INTERVAL 3 DAY, '11:00'), 3,
+       NULL, 'approved', 4200, 800, 0, 17600, NULL, NULL, NULL, NULL),
+(8833, 5, 3, @now - INTERVAL 18 DAY, @now - INTERVAL 16 DAY, TIMESTAMP(@d - INTERVAL 6 DAY, '14:00'), TIMESTAMP(@d - INTERVAL 3 DAY, '11:00'), 2,
+       NULL, 'completed', 3400, 600, 0, 10800, NULL, NULL, NULL, TIMESTAMP(@d - INTERVAL 3 DAY, '10:40')),
+(8834, 7, 4, @now - INTERVAL 16 DAY, @now - INTERVAL 14 DAY, TIMESTAMP(@d - INTERVAL 5 DAY, '14:00'), TIMESTAMP(@d - INTERVAL 2 DAY, '11:00'), 4,
+       NULL, 'completed', 4200, 800, 0, 13400, NULL, NULL, NULL, TIMESTAMP(@d - INTERVAL 2 DAY, '10:30')),
+(8835, 8, 2, @now - INTERVAL 21 DAY, @now - INTERVAL 19 DAY, TIMESTAMP(@d - INTERVAL 7 DAY, '14:00'), TIMESTAMP(@d - INTERVAL 4 DAY, '11:00'), 2,
+       NULL, 'completed', 2800, 500, 0, 8900, NULL, NULL, NULL, TIMESTAMP(@d - INTERVAL 4 DAY, '10:45'));
 
 -- One rental payment per booking, paid when booked (pay first, owner approves after).
 INSERT INTO Payments (payment_id, booking_id, amount, receipt_url, payment_type, payment_status, payment_date)
