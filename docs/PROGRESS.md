@@ -4,6 +4,7 @@ Phase 1 (setup, theme, components, schema) and Phase 2 (login / sign up, portal 
 Phase 4 (owner portal) is in progress, then Phase 3 (renter portal), then Phase 5 (docs and polish).
 
 Each item: write it → `./mvnw clean compile` (fix errors in that file) → commit.
+The business rules are in `BUSINESS_RULES.md`: when a rule changes, update that file in the same commit.
 The build passes: pages not built yet are placeholders ("Coming soon"). See `TODO.md` in this folder for what is left.
 
 ## Phase 4 – Owner portal
@@ -62,3 +63,4 @@ The build passes: pages not built yet are placeholders ("Coming soon"). See `TOD
 - The property dialog also has "Message host", which opens a conversation without a booking (allowed since 2026-11-11).
 - Filled buttons (`AppButton` PRIMARY / SECONDARY / DANGER) looked greyed out when they were a dialog's default button (the one Enter presses), because FlatLaf paints default buttons with its own colours. `AppButton` now gives default buttons the same colours. This also fixes the Save buttons in the unit and item dialogs.
 - The long-stay discount (10% off the nights for 7+ nights, `Price.LongStayDiscount`) stays app-wide; owners can't change it. The unit fields (unit dialog, and Add property for a house) show a note about it under the rates, built from the same constants.
+- Cancellations: the reservation dropdown shows each stay on two lines (property and unit; dates, reference, total) and is never wider than the field, so the open list lines up under it instead of spilling over the page.

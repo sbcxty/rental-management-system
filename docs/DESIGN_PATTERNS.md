@@ -276,7 +276,7 @@ And `build()` checks the required values before making the object:
 - Used in `src/main/java/com/gudosnest/backend/service/BookingService.java`, lines 161, 169 and 276.
 
 
-Note: line 276 (automatic full refund) runs when an owner rejects or cancels a booking, or a pending booking expires. Line 169 picks a tier when a renter cancels an approved booking on the Cancellations page (`src/main/java/com/gudosnest/frontend/renter/CancellationsPage.java`, lines 181 and 201).
+Note: line 276 (automatic full refund) runs when an owner rejects or cancels a booking, or a pending booking expires. Line 169 picks a tier when a renter cancels an approved booking on the Cancellations page (`src/main/java/com/gudosnest/frontend/renter/CancellationsPage.java`, lines 184 and 204).
 
 **Second use: Browse categories.** `src/main/java/com/gudosnest/backend/service/BrowseService.java`, lines 24–65: the `Category` enum. Each pill (All homes, Whole houses, Multi-unit, Available now) is a constant with its own `matches(property)`. `search(...)` calls `category::matches` at line 122 without checking which pill was picked.
 

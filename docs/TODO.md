@@ -1,6 +1,6 @@
 # Gudo's Nest – TODO
 
-What is left to build. Keep this in step with `PROGRESS.md` (same folder).
+What is left to build. Keep this in step with `PROGRESS.md` (same folder). The rules every screen must follow are in `BUSINESS_RULES.md`.
 
 ## Placeholder pages (show only a header and "Coming soon")
 
