@@ -115,19 +115,23 @@ public final class Receipt {
 
     /**
      * The receipt as a component for the screen. It draws the shapes and text straight onto the
-     * screen (no picture in between), so it is sharp at any display scaling.
+     * screen (no picture in between), so it is sharp at any display scaling and at any width.
      */
     public JComponent view() {
         JComponent view = new JComponent() {
             @Override
             protected void paintComponent(java.awt.Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
+                // In a dialog narrower than the receipt (for example when its scrollbar shows),
+                // draw a little smaller instead of making the dialog scroll sideways.
+                double fit = Math.min(1.0, getWidth() / (double) WIDTH);
+                g2.scale(fit, fit);
                 draw(g2);
                 g2.dispose();
             }
         };
         view.setPreferredSize(new Dimension(WIDTH, height()));
-        view.setMinimumSize(view.getPreferredSize());
+        view.setMinimumSize(new Dimension(WIDTH / 2, height() / 2));
         return view;
     }
 
