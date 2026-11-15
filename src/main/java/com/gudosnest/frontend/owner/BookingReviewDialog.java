@@ -145,7 +145,7 @@ public final class BookingReviewDialog {
         page.add(Widgets.wrap("The renter is refunded in full, automatically. Tell them why "
                 + "you're cancelling; they'll see this reason.", Fonts.body(), Colors.TEXT), "wmin 0");
         JTextArea reason = Ui.textArea(4);
-        page.add(Ui.fieldFree("Reason", new JScrollPane(reason)));
+        page.add(Ui.fieldFree("Reason", com.gudosnest.frontend.components.WheelScroll.install(new JScrollPane(reason))));
         JLabel error = Ui.error("Enter a reason for the renter.");
         error.setVisible(false);
         page.add(error, "hidemode 3");

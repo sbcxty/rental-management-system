@@ -137,7 +137,7 @@ public class PaymentsPage extends BasePage {
         String amount = (r.isRefund() ? "−" : "") + Formats.money(r.amount());
         Badge.Tone tone = switch (r.status()) {
             case "Requested" -> Badge.Tone.NEUTRAL;
-            case "Rejected" -> Badge.Tone.MUTED;
+            case "Rejected" -> Badge.Tone.WARNING;
             case "Refunded" -> Badge.Tone.STRONG;
             default -> Badge.Tone.INFO;
         };

@@ -85,7 +85,53 @@ public class DateField extends JButton {
             popup.setVisible(false);
             setValue(day);
         }));
-        popup.show(this, 0, getHeight() + 4);
+        java.awt.Point at = popupLocation(popup.getPreferredSize());
+        popup.show(this, at.x, at.y);
+    }
+
+    /** Space kept between the calendar and the edges of the app window (and the screen). */
+    private static final int EDGE_MARGIN = 16;
+
+    /**
+     * Where the calendar goes, relative to this field: below it, or above it when there's no room
+     * below, moved sideways if needed, and always at least EDGE_MARGIN inside the app window and the
+     * screen, so it never touches their edges.
+     */
+    private java.awt.Point popupLocation(java.awt.Dimension size) {
+        int margin = com.formdev.flatlaf.util.UIScale.scale(EDGE_MARGIN);
+        int gap = com.formdev.flatlaf.util.UIScale.scale(4);
+        java.awt.Rectangle area = usableArea();
+        java.awt.Point field = getLocationOnScreen();
+        int top = area.y + margin;
+        int bottom = area.y + area.height - margin;
+        int left = area.x + margin;
+        int right = area.x + area.width - margin;
+
+        int y = field.y + getHeight() + gap;                       // below
+        if (y + size.height > bottom) {
+            int above = field.y - gap - size.height;
+            y = above >= top ? above : Math.max(top, bottom - size.height);
+        }
+        int x = Math.max(left, Math.min(field.x, right - size.width));
+        return new java.awt.Point(x - field.x, y - field.y);
+    }
+
+    /** The app window's bounds on screen, trimmed to the screen's usable area (without the taskbar). */
+    private java.awt.Rectangle usableArea() {
+        java.awt.GraphicsConfiguration gc = getGraphicsConfiguration();
+        java.awt.Rectangle screen = gc.getBounds();
+        java.awt.Insets insets = getToolkit().getScreenInsets(gc);
+        screen = new java.awt.Rectangle(screen.x + insets.left, screen.y + insets.top,
+                screen.width - insets.left - insets.right, screen.height - insets.top - insets.bottom);
+        java.awt.Window w = javax.swing.SwingUtilities.getWindowAncestor(this);
+        while (w != null && w.getOwner() != null) {
+            w = w.getOwner();
+        }
+        if (w == null || !w.isShowing()) {
+            return screen;
+        }
+        java.awt.Rectangle window = w.getBounds().intersection(screen);
+        return window.isEmpty() ? screen : window;
     }
 
     /** One month grid with previous/next month buttons. */
@@ -145,8 +191,11 @@ public class DateField extends JButton {
                 month = month.plusMonths(delta);
                 build();
                 JPopupMenu popup = (JPopupMenu) javax.swing.SwingUtilities.getAncestorOfClass(JPopupMenu.class, this);
-                if (popup != null) {
-                    popup.pack();   // a month can need one more row of weeks
+                if (popup != null && popup.isShowing()) {
+                    // A month can need one more row of weeks: resize, and keep it clear of the edges
+                    java.awt.Point at = popupLocation(popup.getPreferredSize());
+                    popup.setVisible(false);
+                    popup.show(DateField.this, at.x, at.y);
                 }
             });
             return b;

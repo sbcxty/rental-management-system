@@ -58,10 +58,16 @@ public class BookingsPage extends BasePage {
             propertyId = filter.selectedId();
             reload();
         });
+        JTextField search = Ui.searchField("Renter, property or Ref #GN-…");
+        search.setPreferredSize(new java.awt.Dimension(com.formdev.flatlaf.util.UIScale.scale(220),
+                search.getPreferredSize().height));
+        header.addAction(search);
         header.addAction(filter);
         add(header, "gapbottom 24");
 
-        JPanel controls = Ui.transparent("insets 0, fillx", "[][grow][]");
+        // The tabs get the row to themselves; with the search beside them the page was wider than
+        // the window and ran into its right edge.
+        JPanel controls = Ui.transparent("insets 0, fillx", "[]");
         TabBar tabs = new TabBar(TABS);
         for (int i = 0; i < TABS.length; i++) {
             tabs.setCount(i, (int) bookings.stream().filter(inTab(i)).count());
@@ -72,7 +78,6 @@ public class BookingsPage extends BasePage {
             refreshTable();
         });
         controls.add(tabs);
-        JTextField search = Ui.searchField("Renter, property or Ref #GN-…");
         search.setText(query);
         search.getDocument().addDocumentListener(new DocumentListener() {
             public void insertUpdate(DocumentEvent e) {
@@ -92,7 +97,6 @@ public class BookingsPage extends BasePage {
                 refreshTable();
             }
         });
-        controls.add(search, "cell 2 0, w 280!, h 40!");
         add(controls, "gapbottom 16");
 
         table = AppTable.create(model);

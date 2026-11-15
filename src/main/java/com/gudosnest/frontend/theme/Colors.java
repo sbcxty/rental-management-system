@@ -35,6 +35,10 @@ public final class Colors {
     public static final Color BLUE_TINT = new Color(0xE4EEF3);      // light Light Blue fill
     public static final Color SURFACE_HOVER = new Color(0xF6F4F8);  // row / item hover on white
 
+    public static final Color SUCCESS_TINT = new Color(0xE3F1E6);  // Completed pill fill
+    public static final Color SUCCESS = new Color(0x2F6B3F);       // Completed pill text
+    public static final Color WARNING_TINT = new Color(0xF7EBD9);  // Cancelled / Rejected pill fill
+    public static final Color WARNING = new Color(0x8A5A1F);       // Cancelled / Rejected pill text
     public static final Color TABLE_HEADER = new Color(0xF7F5F9);  // light tint behind table headers
 
     // Sidebar (light, as in the Stitch designs; Burgundy logo square)

@@ -146,7 +146,7 @@ public class CancellationsPage extends BasePage {
         card.add(labelRow("Additional context (optional)", counter), "gapbottom 6");
         JTextArea notes = Ui.textArea(4);
         limit(notes, counter);
-        JScrollPane notesScroll = new JScrollPane(notes);
+        JScrollPane notesScroll = com.gudosnest.frontend.components.WheelScroll.install(new JScrollPane(notes));
         card.add(notesScroll, "h 105!, wmin 0, gapbottom 16");
 
         Card agree = Widgets.tintBox(new MigLayout("insets 10 14 10 14, fillx", "[grow,fill]"));

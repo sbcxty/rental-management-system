@@ -35,7 +35,9 @@ public final class BookingUi {
             case PENDING -> Badge.Tone.NEUTRAL;
             case UPCOMING -> Badge.Tone.INFO;
             case STAYING, CHECKOUT_DUE -> Badge.Tone.STRONG;
-            default -> Badge.Tone.MUTED;
+            case COMPLETED -> Badge.Tone.SUCCESS;
+            case CANCELLED, REJECTED -> Badge.Tone.WARNING;
+            case EXPIRED -> Badge.Tone.MUTED;
         };
     }
 

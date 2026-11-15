@@ -163,15 +163,18 @@ public final class Ui {
     }
 
     /**
-     * Vertical scroll area with the page background and smooth wheel speed.
-     * The content always matches the visible width, so it reflows when the sidebar expands.
+     * Vertical scroll area with the page background; the wheel and touchpad work anywhere over it
+     * (see WheelScroll). The content matches the visible width, so it reflows when the sidebar
+     * expands. Content that can't get any narrower scrolls sideways instead of running past the
+     * edge, so the page keeps its side padding.
      */
     public static JScrollPane scroll(JComponent content) {
-        JScrollPane scroll = new JScrollPane(new WidthTrackingPanel(content));
+        JScrollPane scroll = WheelScroll.install(new JScrollPane(new WidthTrackingPanel(content)));
         scroll.setBorder(BorderFactory.createEmptyBorder());
         scroll.getViewport().setBackground(Colors.PAGE);
         scroll.getVerticalScrollBar().setUnitIncrement(16);
-        scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scroll.getHorizontalScrollBar().setUnitIncrement(16);
         return scroll;
     }
 
@@ -190,7 +193,7 @@ public final class Ui {
         return panel;
     }
 
-    /** Fills the scroll area's width (no horizontal scrolling) and scrolls only vertically. */
+    /** Fills the scroll area's width and scrolls vertically; scrolls sideways only below the content's minimum width. */
     private static final class WidthTrackingPanel extends JPanel implements Scrollable {
         WidthTrackingPanel(JComponent content) {
             super(new BorderLayout());
@@ -215,7 +218,7 @@ public final class Ui {
 
         @Override
         public boolean getScrollableTracksViewportWidth() {
-            return true;
+            return getParent() == null || getParent().getWidth() >= getMinimumSize().width;
         }
 
         @Override

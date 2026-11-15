@@ -95,7 +95,7 @@ final class UnitDialog {
             guestsField.add(Ui.label("Maximum guests", Fonts.bodyMedium(), Colors.TEXT), "gapbottom 4");
             guestsField.add(guests, "h 40!");
             panel.add(guestsField, "span 2");
-            panel.add(Ui.fieldFree("Description (shown to renters)", new JScrollPane(description)), "span 2");
+            panel.add(Ui.fieldFree("Description (shown to renters)", com.gudosnest.frontend.components.WheelScroll.install(new JScrollPane(description))), "span 2");
             panel.add(Widgets.wrap("Example: Ground floor · 1 King bed · En-suite bath", Fonts.caption(),
                     Colors.TEXT_MUTED), "span 2, wmin 0");
         }

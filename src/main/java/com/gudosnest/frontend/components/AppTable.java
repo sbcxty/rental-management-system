@@ -75,7 +75,7 @@ public final class AppTable {
     /** Puts the table in a card with a border and no extra scroll border. */
     public static Card inCard(JTable table) {
         Card card = new Card(new MigLayout("insets 1, fill", "[grow,fill]", "[grow,fill]"));
-        JScrollPane scroll = new JScrollPane(table);
+        JScrollPane scroll = WheelScroll.install(new JScrollPane(table));
         scroll.setBorder(BorderFactory.createEmptyBorder());
         scroll.getViewport().setBackground(Colors.CARD);
         scroll.getVerticalScrollBar().setUnitIncrement(16);

@@ -20,7 +20,9 @@ public class Badge extends JLabel {
         NEUTRAL(Colors.PRIMARY_TINT, Colors.PRIMARY),   // pending, awaiting approval, counts
         INFO(Colors.BLUE_TINT, Colors.BURGUNDY),        // upcoming, available, good
         STRONG(Colors.PRIMARY, Colors.TEXT_ON_DARK),    // occupied, highlighted
-        MUTED(Colors.PAGE, Colors.NEUTRAL);             // completed, cancelled, rejected, expired
+        SUCCESS(Colors.SUCCESS_TINT, Colors.SUCCESS),   // completed
+        WARNING(Colors.WARNING_TINT, Colors.WARNING),   // cancelled, rejected
+        MUTED(Colors.PAGE, Colors.NEUTRAL);             // expired, other finished states
 
         final Color background;
         final Color foreground;
