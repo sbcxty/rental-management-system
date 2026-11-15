@@ -4,7 +4,6 @@ What is left to build. Keep this in step with `PROGRESS.md` (same folder). The r
 
 ## Placeholder pages (show only a header and "Coming soon")
 
-- **Finances** – `src/main/java/com/gudosnest/frontend/owner/FinancesPage.java`. Show income, expenses and profit per property, with an "Add expense" dialog. Read the amount with `MoneyInput.parse`.
 - **Booking history** – `src/main/java/com/gudosnest/frontend/renter/BookingHistoryPage.java`. List the renter's past and upcoming bookings with their status and receipts.
 
 ## Broken or missing
