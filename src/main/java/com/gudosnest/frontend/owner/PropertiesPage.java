@@ -77,7 +77,7 @@ public class PropertiesPage extends BasePage {
         add(grid);
     }
 
-    /** "Properties 6 · Bookable units 24 (A whole house counts as 1.) · Occupied now 9 of 24" */
+    /** "Properties 6 · Bookable units 24 · Occupied now 9 of 24" */
     private JComponent summary(List<Property> shown) {
         int units = shown.stream().mapToInt(p -> p.getUnits().size()).sum();
         long occupied = shown.stream().mapToLong(Property::getOccupiedCount).sum();
@@ -87,7 +87,6 @@ public class PropertiesPage extends BasePage {
         row.add(Ui.caption("•"), "gapx 8 8");
         row.add(Ui.label("Bookable units", Fonts.bodyBold(), Colors.TEXT));
         row.add(new Badge(String.valueOf(units), Badge.Tone.NEUTRAL));
-        row.add(Ui.caption("(A whole house counts as 1.)"));
         row.add(Ui.caption("•"), "gapx 8 8");
         row.add(Ui.label("Occupied now", Fonts.bodyBold(), Colors.TEXT));
         row.add(new Badge(occupied + " of " + units, Badge.Tone.NEUTRAL));
@@ -114,7 +113,7 @@ public class PropertiesPage extends BasePage {
         body.add(facts, "gapbottom 8");
 
         // A button, not a link: buttons keep their own click, so this doesn't also open the card
-        AppButton inventory = new AppButton("Open inventory", AppButton.Style.TEXT).withIcon("arrow-right");
+        AppButton inventory = new AppButton("Open Inventory", AppButton.Style.TEXT).withIcon("arrow-right");
         inventory.setHorizontalTextPosition(SwingConstants.LEFT);
         inventory.addActionListener(e -> openInventory(p));
         body.add(inventory, "growx 0, gapleft -16");

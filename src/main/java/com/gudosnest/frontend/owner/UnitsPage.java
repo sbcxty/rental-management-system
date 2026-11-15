@@ -79,8 +79,7 @@ public class UnitsPage extends BasePage {
         List<Unit> units = property.getUnits();
         long occupied = units.stream().filter(Unit::isOccupied).count();
         StatRow stats = new StatRow();
-        stats.addCard(stat("Total units", "building-2", String.valueOf(units.size()),
-                property.isHouse() ? "A whole house counts as 1" : null));
+        stats.addCard(stat("Total units", "building-2", String.valueOf(units.size()), null));
         stats.addCard(stat("Occupied", "users", String.valueOf(occupied), null));
         stats.addCard(stat("Vacant", "house", String.valueOf(units.size() - occupied), null));
         stats.addCard(stat("Items needing attention", "triangle-alert", String.valueOf(tree.needsAttentionCount()),
@@ -203,7 +202,8 @@ public class UnitsPage extends BasePage {
         card.add(photo, "h 180!, wmin 0");
 
         JPanel body = Ui.transparent("insets 20 24 20 24, gap 0, fillx, wrap 1", "[grow,fill]");
-        JPanel title = Ui.transparent("insets 0, gap 0, fillx", "[grow,fill][][][]");
+        // 8px between the name and the first icon, 6px between the edit / duplicate / delete icons
+        JPanel title = Ui.transparent("insets 0, gap 0, fillx", "[grow,fill]8[]6[]6[]");
         title.add(Ui.label(unit.getName(), Fonts.cardTitle(), Colors.TEXT), "wmin 0");
         title.add(iconButton("pencil", property.isHouse() ? "Edit rates" : "Edit unit", () -> {
             if (UnitDialog.edit(this, portal, property, unit)) {
@@ -254,9 +254,7 @@ public class UnitsPage extends BasePage {
 
         InventoryTree inventory = inventoryByUnit.get(unit.getName());
         int attention = inventory == null ? 0 : inventory.needsAttentionCount();
-        int items = inventory == null ? 0 : inventory.itemCount();
-        AppButton open = new AppButton("Open inventory (" + items + (items == 1 ? " item)" : " items)"),
-                AppButton.Style.PRIMARY).withIcon("arrow-right");
+        AppButton open = new AppButton("Open Inventory", AppButton.Style.PRIMARY).withIcon("arrow-right");
         open.setHorizontalTextPosition(SwingConstants.LEFT);
         open.addActionListener(e -> portal.open(new InventoryPage(portal, propertyId, unit.getId())));
         body.add(open, "h 40!");

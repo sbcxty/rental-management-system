@@ -111,10 +111,8 @@ public final class BookingReviewDialog {
                     }
                 });
                 dialog.addButton(cancel);
-                dialog.addCloseButton("Close");
             }
             case STAYING, CHECKOUT_DUE -> {
-                dialog.addCloseButton("Close");
                 AppButton complete = new AppButton("Mark as completed", AppButton.Style.PRIMARY);
                 complete.addActionListener(e -> {
                     if (AppDialog.confirm(dialog, "Mark this stay as completed? The unit becomes available again.",
@@ -125,7 +123,9 @@ public final class BookingReviewDialog {
                 });
                 dialog.addButton(complete);
             }
-            default -> dialog.addCloseButton("Close");
+            default -> {
+                // Nothing to do: the window's X or Esc closes it
+            }
         }
         dialog.showDialog(640);
         if (changed[0]) {
