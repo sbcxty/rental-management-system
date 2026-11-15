@@ -78,7 +78,7 @@ public class DamageService {
 
     private static boolean isReportable(Booking b, LocalDateTime now) {
         return switch (b.getStage(now)) {
-            case STAYING, CHECKOUT_DUE -> true;
+            case STAYING -> true;
             case COMPLETED -> !now.isAfter(b.getCheckOut().plusDays(REPORT_WITHIN_DAYS));
             default -> false;
         };

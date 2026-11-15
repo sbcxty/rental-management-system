@@ -76,10 +76,11 @@ A booking starts as **Pending** and ends as Completed, Cancelled, Rejected or Ex
 | Pending | Renter cancels | Cancelled (full automatic refund) |
 | Approved, before check-in | Renter cancels | Cancelled (refund tier, see below) |
 | Approved, before check-in | Owner cancels | Cancelled (full automatic refund, income reversed) |
-| Approved, after check-in time | Renter confirms check-out, or owner marks it completed | Completed (unit unoccupied again) |
+| Approved, check-out time reached | Automatic (checked when the app opens, when a page loads, and every 3 minutes) | Completed (unit unoccupied again) |
+| Approved, during the stay | Renter confirms an early check-out, or owner marks it completed | Completed (unit unoccupied again) |
 
 - Statuses are brought up to date when the app opens and whenever a page or booking list loads.
-- A unit is **occupied** from the check-in time of an approved booking until that stay is completed.
+- A unit is **occupied** from the check-in time of an approved booking until its check-out time (or until the stay is completed early). There is no "Check-out due" status.
 - Rejected and expired bookings appear under the owner's Cancelled tab.
 
 ## Cancellations and refunds
@@ -104,7 +105,7 @@ refund in full. Code: `RefundPolicy` (Strategy), `BookingService.cancelByRenter`
 
 | Area | Rule |
 |---|---|
-| Damage reports | The owner files one against a stay that is under way (staying now or check-out due) or that was completed no more than 7 days after its check-out (`DamageService.REPORT_WITHIN_DAYS`). The File report dialog picks the property first, then the renter, listing only those stays, with a description of up to 1,000 characters, a fee above ₱0.00 and an optional photo (copied to `uploads/damage`). A booking can have more than one report. The renter sees the report on their Damage reports page and pays it (a paid damage fee payment, its receipt and income on the owner's property); the owner can dismiss it while it is unpaid. Each happens once and asks for confirmation. Code: `DamageService` |
+| Damage reports | The owner files one against a stay that is under way (staying now) or that was completed no more than 7 days after its check-out (`DamageService.REPORT_WITHIN_DAYS`). The File report dialog picks the property first, then the renter, listing only those stays, with a description of up to 1,000 characters, a fee above ₱0.00 and an optional photo (copied to `uploads/damage`). A booking can have more than one report. The renter sees the report on their Damage reports page and pays it (a paid damage fee payment, its receipt and income on the owner's property); the owner can dismiss it while it is unpaid. Each happens once and asks for confirmation. Code: `DamageService` |
 | Damage payment deadline | The renter has 48 hours from filing to pay. An unpaid report after that is Overdue and **suspends** the renter: they can still log in, pay, message and see their stays, but can't make new bookings (`BookingService.book` refuses, Browse shows a banner). The suspension isn't stored: it lifts as soon as no report is overdue (paid, even late, or dismissed). Code: `DamageService.checkCanBook` |
 | Rental income | Recorded when the owner approves a booking; refunds are recorded as refund transactions |
 | Expenses | Added by the owner per property: Maintenance, Supplies or Utilities, an amount above ₱0.00, a date not in the future, a note up to 255 characters. Code: `FinanceService` |
@@ -116,6 +117,7 @@ refund in full. Code: `RefundPolicy` (Strategy), `BookingService.cancelByRenter`
 
 | Date | Decision |
 |---|---|
+| Nov 15, 2026 | Stays complete automatically at check-out time (Task 6); "Check-out due" removed; Confirm check-out / Mark as completed are for early check-out |
 | Nov 15, 2026 | Damage can be reported during a stay or up to 7 days after check-out; File report picks property, then renter |
 | Nov 15, 2026 | Renters now see damage reports and pay them (pay only, no dispute; questions go through Messages). Unpaid after 48 hours = can't book until paid or dismissed. The owner no longer charges a report; they can dismiss it |
 | Nov 15, 2026 | Damage reports: only stays that have started or finished (now also checked in `OwnerService`), description up to 1,000 characters, optional photo |

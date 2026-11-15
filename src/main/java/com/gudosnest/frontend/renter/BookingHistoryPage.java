@@ -44,7 +44,7 @@ public class BookingHistoryPage extends BasePage {
         ALL("All", EnumSet.allOf(Booking.Stage.class)),
         PENDING("Pending", EnumSet.of(Booking.Stage.PENDING)),
         UPCOMING("Upcoming", EnumSet.of(Booking.Stage.UPCOMING)),
-        STAYING("Staying", EnumSet.of(Booking.Stage.STAYING, Booking.Stage.CHECKOUT_DUE)),
+        STAYING("Staying", EnumSet.of(Booking.Stage.STAYING)),
         COMPLETED("Completed", EnumSet.of(Booking.Stage.COMPLETED)),
         // Rejected and expired bookings sit with cancelled ones, as on the owner's Bookings page
         CANCELLED("Cancelled", EnumSet.of(Booking.Stage.CANCELLED, Booking.Stage.REJECTED, Booking.Stage.EXPIRED));

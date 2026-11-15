@@ -90,13 +90,13 @@ public final class RenterBookingDialog {
                     dialog.addButton(cancel);
                 }
             }
-            case STAYING, CHECKOUT_DUE -> {
+            case STAYING -> {
+                // The stay completes by itself at check-out time; this is for leaving early
                 AppButton checkout = new AppButton("Confirm check-out", AppButton.Style.PRIMARY);
-                String note = b.getStage() == Booking.Stage.STAYING
-                        ? "Check-out is due " + Formats.dateTime(b.getCheckOut()) + ". Confirm only once you have left; "
-                        + "the stay is then completed and the unit is free for the next guest."
-                        : "The stay is completed and the unit is free for the next guest. This can't be undone.";
-                checkout.addActionListener(e -> dialog.confirmPage("Confirm your check-out?", note,
+                String note = "Your stay ends automatically at check-out, " + Formats.dateTime(b.getCheckOut())
+                        + ". Confirm now only if you have already left; the stay is then completed and the "
+                        + "unit is free for the next guest. This can't be undone.";
+                checkout.addActionListener(e -> dialog.confirmPage("Check out early?", note,
                         "Confirm check-out", AppButton.Style.PRIMARY, () -> {
                             if (run(dialog, () -> portal.bookings.confirmCheckout(b.getId(), renterId))) {
                                 changed[0] = true;

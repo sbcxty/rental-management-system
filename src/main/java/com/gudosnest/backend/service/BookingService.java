@@ -91,13 +91,17 @@ public class BookingService {
     // ---------------------------------------------------------------------- housekeeping
 
     /**
-     * Brings statuses up to date. Run when the app opens and whenever a booking list loads:
+     * Brings statuses up to date. Run when the app opens, whenever a page opens, and every few
+     * minutes from a timer (see Portal):
      *  - pending bookings past their 48 hours (or past check-in) expire, with an automatic full refund;
+     *  - approved stays whose check-out time has passed are completed automatically;
      *  - units with a guest checked in become occupied, others unoccupied.
+     * Safe to run any number of times. Returns true if anything changed.
      */
-    public void refreshStatuses() {
+    public boolean refreshStatuses() {
         LocalDateTime now = now();
-        for (int id : bookings.expiredPendingIds(now)) {
+        List<Integer> expired = bookings.expiredPendingIds(now);
+        for (int id : expired) {
             Db.transaction(() -> {
                 Booking b = byId(id);
                 bookings.setStatus(id, BookingStatus.EXPIRED);
@@ -105,7 +109,9 @@ public class BookingService {
                 return null;
             });
         }
-        bookings.refreshOccupancy(now);
+        // Completing ended stays and freeing their units are saved together, or not at all
+        int changed = Db.transaction(() -> bookings.completeEnded(now) + bookings.refreshOccupancy(now));
+        return !expired.isEmpty() || changed > 0;
     }
 
     // ------------------------------------------------------------------------- renter
@@ -262,6 +268,9 @@ public class BookingService {
 
     private void complete(Booking b) {
         LocalDateTime now = now();
+        if (b.getStatus() == BookingStatus.COMPLETED) {
+            throw new RuleException("This stay is already completed; it ended at check-out time.");
+        }
         if (b.getStatus() != BookingStatus.APPROVED || now.isBefore(b.getCheckIn())) {
             throw new RuleException("Only a stay that has started can be completed.");
         }
