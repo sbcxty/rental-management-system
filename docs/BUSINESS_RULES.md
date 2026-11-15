@@ -10,7 +10,7 @@ Every account is a Renter, an Owner, or both, chosen at sign-up. Code: `AuthServ
 
 | Rule | Value |
 |---|---|
-| Sign-up needs | Full name (up to 100 characters), a valid email, a password of at least 8 characters, and at least one account type |
+| Sign-up needs | Full name (up to 100 characters), a valid email, a password of at least 8 characters containing a letter, a number and a symbol, and at least one account type |
 | Email | One account per email address |
 | Suspended accounts | Can't log in |
 | Two-role users | Open the Owner portal after login and can switch portals from the sidebar |

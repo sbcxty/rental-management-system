@@ -141,7 +141,7 @@ public class AuthScreen extends JPanel {
         JTextField name = Ui.textField("Your full name");
         JTextField email = Ui.textField("name@example.com");
         JPasswordField password = passwordField();
-        password.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "At least " + AuthService.MIN_PASSWORD_LENGTH + " characters");
+        password.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, AuthService.PASSWORD_HINT);
         form.add(Ui.field("Full name", name), "gapbottom 16");
         form.add(Ui.field("Email address", email), "gapbottom 16");
         form.add(Ui.field("Password", password), "gapbottom 20");

@@ -6,7 +6,7 @@
 --
 -- Seed dates are relative to the moment you run this file (NOW()), so every case
 -- (pending with hours left, expired, check-in today, refund tiers...) works whenever
--- you test. All demo accounts use the password: password123
+-- you test. All demo accounts use the password: password123!
 -- =====================================================================================
 
 DROP DATABASE IF EXISTS gudos_nest;

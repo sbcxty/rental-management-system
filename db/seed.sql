@@ -6,7 +6,7 @@ USE gudos_nest;
 
 SET @now = NOW();
 SET @d = CURDATE();
-SET @pw = '$2a$10$6kxLt4t8KWa4Yb421ytUFOl99JWAsiBycxB0R7YWLbjci7mURN0z2';   -- password123
+SET @pw = '$2a$10$gAoaNbhw5CbCa3WcjsMPsObi3EBpVbsQjXq1JX.ON3OXUQL..FpHK';   -- password123!
 
 -- Users: Elena is owner AND renter (tests portal switching); Marco is owner only.
 INSERT INTO Users (user_id, full_name, email, password_hash, is_owner, is_renter, created_at) VALUES

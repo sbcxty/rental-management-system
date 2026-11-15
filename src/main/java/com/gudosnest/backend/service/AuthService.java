@@ -10,6 +10,7 @@ import java.util.regex.Pattern;
 public class AuthService {
 
     public static final int MIN_PASSWORD_LENGTH = 8;
+    public static final String PASSWORD_HINT = MIN_PASSWORD_LENGTH + "+ characters with a letter, number and symbol";
     private static final Pattern EMAIL = Pattern.compile("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
 
     private final UserRepository users = new UserRepository();
@@ -45,6 +46,9 @@ public class AuthService {
         if (password.length() < MIN_PASSWORD_LENGTH) {
             throw new RuleException("Password must be at least " + MIN_PASSWORD_LENGTH + " characters.");
         }
+        if (!isStrongEnough(password)) {
+            throw new RuleException("Password must contain at least one letter, one number and one symbol.");
+        }
         if (!owner && !renter) {
             throw new RuleException("Choose at least one account type: Renter, Owner, or both.");
         }
@@ -52,5 +56,21 @@ public class AuthService {
             throw new RuleException("An account with this email already exists. Log in instead.");
         }
         return users.insert(name, cleanEmail, BCrypt.hashpw(password, BCrypt.gensalt()), owner, renter);
+    }
+
+    /** True when the password has at least one letter, one digit and one symbol (anything else, not a space). */
+    static boolean isStrongEnough(String password) {
+        boolean letter = false, digit = false, symbol = false;
+        for (int i = 0; i < password.length(); i++) {
+            char c = password.charAt(i);
+            if (Character.isLetter(c)) {
+                letter = true;
+            } else if (Character.isDigit(c)) {
+                digit = true;
+            } else if (!Character.isWhitespace(c)) {
+                symbol = true;
+            }
+        }
+        return letter && digit && symbol;
     }
 }
