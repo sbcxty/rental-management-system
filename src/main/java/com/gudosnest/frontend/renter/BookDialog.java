@@ -31,7 +31,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import java.awt.Component;
-import java.awt.Dimension;
+import java.awt.Container;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -68,7 +68,7 @@ final class BookDialog {
     private final JTextField requests = Ui.textField("Special requests (optional)");
     private final JLabel rate = Ui.label("", Fonts.sectionTitle(), Colors.TEXT);
     private final JLabel about = Widgets.wrap("", Fonts.body(), Colors.TEXT);
-    private final JPanel breakdown = new Breakdown();
+    private final JPanel breakdown = Ui.transparent("insets 0, gap 0 6, fillx, wrap 1", "[grow,fill]");
     private final AppButton reserve = new AppButton("Reserve", AppButton.Style.PRIMARY).withIcon("credit-card");
 
     private Booking open(Component parent, Portal portal, Property p, LocalDate in, LocalDate out,
@@ -227,6 +227,28 @@ final class BookDialog {
         }
         breakdown.revalidate();
         breakdown.repaint();
+        fitToContent();
+    }
+
+    /**
+     * Once dates are picked the price gains lines (nights, cleaning fee, discount, total), so the open
+     * dialog takes the height its content needs (and gives it back when the dates are cleared), then
+     * centres itself again on the app window.
+     */
+    private void fitToContent() {
+        if (!dialog.isShowing()) {
+            return;     // showDialog() sizes and centres it the first time
+        }
+        // MigLayout keeps the sizes it measured until its panel is invalidated, and Swing skips panels
+        // that are already marked invalid; so mark every panel from the price up to the dialog.
+        for (Container c = breakdown; c != null; c = c.getParent()) {
+            c.invalidate();
+        }
+        int height = dialog.getPreferredSize().height;
+        if (height != dialog.getHeight()) {
+            dialog.setSize(dialog.getWidth(), height);
+            dialog.setLocationRelativeTo(dialog.getOwner());
+        }
     }
 
     /** The price lines (nights, cleaning fee, weekly discount), a divider, and the total. */
@@ -239,33 +261,6 @@ final class BookDialog {
         total.add(Ui.label("Total", Fonts.bodyBold(), Colors.TEXT));
         total.add(Ui.label(Formats.money(totalAmount), Fonts.sectionTitle(), Colors.TEXT));
         target.add(total);
-    }
-
-    /**
-     * The price breakdown, always as tall as its longest form (nights, cleaning fee and discount, then
-     * the total). The dialog is sized when it opens, so picking dates fills space that is already
-     * there instead of making the dialog taller and pushing it off centre.
-     */
-    private static final class Breakdown extends JPanel {
-        private static final String LAYOUT = "insets 0, gap 0 6, fillx, wrap 1";
-        private final int tallest;
-
-        Breakdown() {
-            super(new MigLayout(LAYOUT, "[grow,fill]"));
-            setOpaque(false);
-            JPanel sample = new JPanel(new MigLayout(LAYOUT, "[grow,fill]"));
-            BigDecimal any = BigDecimal.ONE;
-            fillBreakdown(sample, List.of(new Price.Line("Nights", any, false),
-                    new Price.Line("Cleaning fee", any, false), new Price.Line("Discount", any, true)), any);
-            tallest = sample.getPreferredSize().height;
-        }
-
-        @Override
-        public Dimension getPreferredSize() {
-            Dimension size = super.getPreferredSize();
-            size.height = Math.max(size.height, tallest);
-            return size;
-        }
     }
 
     /** Asks once more with the full amount, then pays and saves the booking (pending). */
