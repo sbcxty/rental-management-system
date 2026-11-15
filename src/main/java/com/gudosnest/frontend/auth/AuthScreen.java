@@ -10,7 +10,6 @@ import com.gudosnest.frontend.components.Ui;
 import com.gudosnest.frontend.components.Widgets;
 import com.gudosnest.frontend.theme.Colors;
 import com.gudosnest.frontend.theme.Fonts;
-import com.gudosnest.frontend.theme.Icons;
 import com.gudosnest.frontend.theme.Theme;
 import net.miginfocom.swing.MigLayout;
 
@@ -20,12 +19,11 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
+import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import java.awt.Cursor;
 import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.function.Consumer;
@@ -43,35 +41,20 @@ public class AuthScreen extends JPanel {
     private final UnderlineTab logInTab = new UnderlineTab("Log in");
 
     public AuthScreen(Consumer<User> onSuccess) {
-        super(new MigLayout("insets 0, fill, gap 0", "[50%,fill][50%,fill]", "[grow,fill]"));
+        // Both halves share one size group so they stay equal; the form scrolls when it is taller
+        // than the window, so switching to the longer Sign up form never resizes the art.
+        super(new MigLayout("insets 0, fill, gap 0", "[grow,fill,sg half][grow,fill,sg half]", "[grow,fill]"));
         this.onSuccess = onSuccess;
         setBackground(Colors.CARD);
-        add(artPanel());
-        add(formPanel());
+        add(artPanel(), "wmin 0, hmin 0");
+        add(formScroll(), "wmin 0, hmin 0");
         showLogIn();
     }
 
     private JComponent artPanel() {
-        JPanel art = new JPanel(new MigLayout("insets 48 56 48 56, fill, gap 0, wrap 1", "[grow,fill]", "[][][grow]"));
+        JPanel art = new JPanel(new MigLayout("insets 48 56 48 56, fill, gap 0, wrap 1", "[grow,fill]", "[grow]"));
         art.setBackground(new java.awt.Color(0xF1EEF4));
         art.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, Colors.BORDER));
-
-        JPanel brand = Ui.transparent("insets 0, gap 12", "[][]");
-        JLabel logo = new JLabel(Icons.get("house", 20, Colors.TEXT_ON_DARK), SwingConstants.CENTER) {
-            @Override
-            protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(Colors.BURGUNDY);
-                int arc = com.formdev.flatlaf.util.UIScale.scale(10);
-                g2.fillRoundRect(0, 0, getWidth(), getHeight(), arc, arc);
-                g2.dispose();
-                super.paintComponent(g);
-            }
-        };
-        brand.add(logo, "w 40!, h 40!");
-        brand.add(Ui.label("Gudo's Nest", Fonts.logo().deriveFont(24f), Colors.TEXT));
-        art.add(brand);
 
         JPanel middle = Ui.transparent("insets 0, gap 0, wrap 1, fill", "[grow,fill]");
         JLabel headline = Ui.label("One app for renters and owners", Fonts.sectionTitle(), Colors.TEXT);
@@ -83,6 +66,12 @@ public class AuthScreen extends JPanel {
         middle.add(new LoginArt(), "grow, push, hmin 240, wmin 200");
         art.add(middle, "grow");
         return art;
+    }
+
+    private JComponent formScroll() {
+        JScrollPane scroll = Ui.scroll(formPanel());
+        scroll.getViewport().setBackground(Colors.CARD);
+        return scroll;
     }
 
     private JComponent formPanel() {
