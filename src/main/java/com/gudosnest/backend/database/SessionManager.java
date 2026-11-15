@@ -3,8 +3,8 @@ package com.gudosnest.backend.database;
 import com.gudosnest.backend.model.User;
 
 // PATTERN: Singleton
-// Remembers who is logged in and which portal they are using, so every screen
-// reads the same current user.
+// Remembers who is logged in and which portal they are using. MainWindow writes it at
+// log in, portal switch and log out; Portal.create() reads it to open the right portal.
 public final class SessionManager {
 
     public enum Portal { RENTER, OWNER }
@@ -40,13 +40,5 @@ public final class SessionManager {
 
     public Portal getCurrentPortal() {
         return currentPortal;
-    }
-
-    public void setCurrentPortal(Portal portal) {
-        this.currentPortal = portal;
-    }
-
-    public boolean isLoggedIn() {
-        return currentUser != null;
     }
 }

@@ -12,6 +12,7 @@ import com.gudosnest.frontend.components.Formats;
 import com.gudosnest.frontend.components.PageHeader;
 import com.gudosnest.frontend.components.Segmented;
 import com.gudosnest.frontend.components.Ui;
+import com.gudosnest.frontend.components.WheelScroll;
 import com.gudosnest.frontend.components.Widgets;
 import com.gudosnest.frontend.portal.BasePage;
 import com.gudosnest.frontend.portal.Portal;
@@ -27,8 +28,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import javax.swing.text.AbstractDocument;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
@@ -104,7 +103,7 @@ public class CancellationsPage extends BasePage {
                 .findFirst().orElse(cancellable.get(0));
         selectedId = first.getId();
 
-        JPanel columns = Ui.transparent("insets 0, gap 24, fillx", "[grow 58,fill][grow 42,fill]");
+        JPanel columns = Ui.transparent("insets 0, gap 24, fillx", "[0:0,grow,fill][0:0,grow,fill]");
         columns.add(formCard(cancellable, first), "aligny top, wmin 0");
         summary = Ui.transparent("insets 0, gap 16, fillx, wrap 1", "[grow,fill]");
         renderSummary(first);
@@ -144,7 +143,7 @@ public class CancellationsPage extends BasePage {
         card.add(labelRow("Additional context (optional)", counter), "gapbottom 6");
         JTextArea notes = Ui.textArea(4);
         limit(notes, counter);
-        JScrollPane notesScroll = com.gudosnest.frontend.components.WheelScroll.install(new JScrollPane(notes));
+        JScrollPane notesScroll = WheelScroll.install(new JScrollPane(notes));
         card.add(notesScroll, "h 105!, wmin 0, gapbottom 16");
 
         Card agree = Widgets.tintBox(new MigLayout("insets 10 14 10 14, fillx", "[grow,fill]"));
@@ -152,11 +151,11 @@ public class CancellationsPage extends BasePage {
         understood.setFont(Fonts.captionMedium());
         understood.setOpaque(false);
         agree.add(understood, "wmin 0");
-        card.add(agree, "gapbottom 20");
+        card.add(agree, "gapbottom 24");
 
         JPanel footer = Ui.transparent("insets 0, fillx", "[grow][]");
         footer.add(Ui.iconLabel("Cancelled automatically", "info",
-                Fonts.caption(), Colors.TEXT_MUTED), "wmin 0");
+                Fonts.caption(), Colors.TEXT_MUTED), "growx, wmin 0");
         AppButton submit = new AppButton("Cancel this stay", AppButton.Style.PRIMARY).withIcon("calendar-x");
         submit.addActionListener(e -> submit(understood, (String) reasons.getSelectedItem(), notes.getText()));
         footer.add(submit);
@@ -333,7 +332,7 @@ public class CancellationsPage extends BasePage {
 
     private static JComponent labelRow(String left, Object right) {
         JPanel row = Ui.transparent("insets 0, fillx", "[grow][]");
-        row.add(Ui.label(left, Fonts.bodyMedium(), Colors.TEXT));
+        row.add(Ui.label(left, Fonts.bodyMedium(), Colors.TEXT), "growx");
         if (right instanceof JComponent c) {
             row.add(c);
         } else if (right instanceof String s) {
@@ -357,25 +356,8 @@ public class CancellationsPage extends BasePage {
                 }
             }
         });
-        area.getDocument().addDocumentListener(new DocumentListener() {
-            private void update() {
-                counter.setText(area.getText().length() + " / " + MAX_CONTEXT);
-            }
-
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                update();
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                update();
-            }
-
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                update();
-            }
+        Ui.onTextChange(area, () -> {
+            counter.setText(area.getText().length() + " / " + MAX_CONTEXT);
         });
     }
 

@@ -4,8 +4,6 @@ import com.gudosnest.frontend.theme.Colors;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
-import javax.swing.JComponent;
-import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.geom.RoundRectangle2D;
@@ -175,34 +173,6 @@ public final class ImageUtil {
         File target = new File(folder, java.util.UUID.randomUUID() + extension);
         java.nio.file.Files.copy(source.toPath(), target.toPath());
         return folderPath + "/" + target.getName();
-    }
-
-    /** Draws a Swing component into a PNG file (receipts are saved this way). */
-    public static void saveAsPng(JComponent component, File file) throws IOException {
-        component.setSize(component.getPreferredSize());
-        component.doLayout();
-        layoutTree(component);
-        BufferedImage image = new BufferedImage(component.getWidth(), component.getHeight(), BufferedImage.TYPE_INT_RGB);
-        Graphics2D g = image.createGraphics();
-        quality(g);
-        g.setColor(Color.WHITE);
-        g.fillRect(0, 0, image.getWidth(), image.getHeight());
-        component.printAll(g);
-        g.dispose();
-        File parent = file.getAbsoluteFile().getParentFile();
-        if (parent != null && !parent.exists() && !parent.mkdirs()) {
-            throw new IOException("Could not create folder " + parent);
-        }
-        ImageIO.write(image, "png", file);
-    }
-
-    private static void layoutTree(java.awt.Container container) {
-        container.doLayout();
-        for (java.awt.Component child : container.getComponents()) {
-            if (child instanceof java.awt.Container c) {
-                layoutTree(c);
-            }
-        }
     }
 
     private static void quality(Graphics2D g) {

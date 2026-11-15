@@ -20,8 +20,6 @@ public final class Theme {
     public static final int S = 8;
     public static final int M = 16;
     public static final int L = 24;
-    public static final int XL = 32;
-    public static final int XXL = 48;
 
     public static final int CONTROL_HEIGHT = 40;
     public static final int RADIUS = 12;          // cards and dialogs
@@ -49,7 +47,9 @@ public final class Theme {
         UIManager.put("Button.focusedBorderColor", Colors.PRIMARY);
         UIManager.put("Button.default.borderWidth", 0);
         UIManager.put("Component.disabledBorderColor", Colors.BORDER);
-        UIManager.put("TextComponent.background", Colors.CARD);
+        UIManager.put("TextField.background", Colors.CARD);
+        UIManager.put("PasswordField.background", Colors.CARD);
+        UIManager.put("TextArea.background", Colors.CARD);
         UIManager.put("TextField.margin", new Insets(8, 12, 8, 12));
         UIManager.put("PasswordField.margin", new Insets(8, 12, 8, 12));
         UIManager.put("TextArea.margin", new Insets(8, 12, 8, 12));

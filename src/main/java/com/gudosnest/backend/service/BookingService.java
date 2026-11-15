@@ -223,7 +223,6 @@ public class BookingService {
             }
             return null;
         });
-        bookings.refreshOccupancy(now);
         return overlapping;
     }
 
@@ -274,8 +273,12 @@ public class BookingService {
         if (b.getStatus() != BookingStatus.APPROVED || now.isBefore(b.getCheckIn())) {
             throw new RuleException("Only a stay that has started can be completed.");
         }
-        bookings.complete(b.getId(), now);
-        bookings.refreshOccupancy(now);
+        // The stay and its unit change together: completed and unoccupied, or neither
+        Db.transaction(() -> {
+            bookings.complete(b.getId(), now);
+            bookings.refreshOccupancy(now);
+            return null;
+        });
     }
 
     private Booking ownedPending(int bookingId, int ownerId) {
@@ -286,8 +289,9 @@ public class BookingService {
         if (b.getStatus() != BookingStatus.PENDING) {
             throw new RuleException("This booking is no longer pending.");
         }
-        if (!now().isBefore(b.getExpiresAt())) {
-            throw new RuleException("The 48 hours to respond have passed, so this booking has expired and was refunded.");
+        LocalDateTime now = now();
+        if (!now.isBefore(b.getExpiresAt()) || !now.isBefore(b.getCheckIn())) {
+            throw new RuleException("The time to respond has passed, so this booking has expired and was refunded.");
         }
         return b;
     }

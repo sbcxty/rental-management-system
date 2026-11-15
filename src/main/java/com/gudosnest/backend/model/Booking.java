@@ -30,11 +30,6 @@ public class Booking {
         public String label() {
             return label;
         }
-
-        /** Bookings that are finished one way or another. */
-        public boolean isClosed() {
-            return this == COMPLETED || this == CANCELLED || this == REJECTED || this == EXPIRED;
-        }
     }
 
     private final int id;
@@ -134,10 +129,6 @@ public class Booking {
 
     public long getNights() {
         return ChronoUnit.DAYS.between(checkIn.toLocalDate(), checkOut.toLocalDate());
-    }
-
-    public BigDecimal getNightsSubtotal() {
-        return nightlyRate.multiply(BigDecimal.valueOf(getNights()));
     }
 
     public boolean hasRefund() {

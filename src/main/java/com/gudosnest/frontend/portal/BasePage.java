@@ -13,6 +13,9 @@ import javax.swing.JPanel;
  * Every portal page: page padding and background, a {@link #reload()} that rebuilds the page from
  * the database, and {@link #act} to run an action and show its error (if any) to the person.
  */
+// PATTERN: Template Method
+// reload() is final and always runs the same steps: clear the page, call build(), show an error
+// message if loading failed, repaint. Each page only fills in build().
 public abstract class BasePage extends JPanel {
 
     protected final Portal portal;

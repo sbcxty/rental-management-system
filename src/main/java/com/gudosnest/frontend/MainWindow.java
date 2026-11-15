@@ -49,7 +49,7 @@ public class MainWindow extends JFrame {
         } catch (DataException ignored) {
             // the pages will show the database problem
         }
-        Portal portal = Portal.create(this, user, kind);
+        Portal portal = Portal.create(this);
         setContentPane(portal.build());
         revalidate();
         repaint();

@@ -5,14 +5,14 @@ import java.math.BigDecimal;
 /** One bookable space: the whole house, or one room/suite of a multi-unit property. */
 public class Unit {
 
-    private int id;
-    private int propertyId;
+    private final int id;
+    private final int propertyId;
     private String name;
-    private String description;
-    private int capacity;
-    private BigDecimal dailyRate;
-    private BigDecimal cleaningFee;
-    private boolean occupied;
+    private final String description;
+    private final int capacity;
+    private final BigDecimal dailyRate;
+    private final BigDecimal cleaningFee;
+    private final boolean occupied;
 
     public Unit(int id, int propertyId, String name, String description, int capacity,
                 BigDecimal dailyRate, BigDecimal cleaningFee, boolean occupied) {
@@ -68,22 +68,6 @@ public class Unit {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public void setCapacity(int capacity) {
-        this.capacity = capacity;
-    }
-
-    public void setDailyRate(BigDecimal dailyRate) {
-        this.dailyRate = dailyRate;
-    }
-
-    public void setCleaningFee(BigDecimal cleaningFee) {
-        this.cleaningFee = cleaningFee;
     }
 
     @Override

@@ -151,13 +151,4 @@ public class BarChart extends JComponent {
         }
         return 10 * magnitude;
     }
-
-    /** Small legend dot + text used beside two-series charts. */
-    public static Color incomeColor() {
-        return Colors.PRIMARY;
-    }
-
-    public static Color expenseColor() {
-        return SECOND_BAR;
-    }
 }

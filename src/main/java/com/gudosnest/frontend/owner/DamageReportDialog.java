@@ -27,8 +27,6 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.text.AbstractDocument;
 import javax.swing.text.AttributeSet;
@@ -168,22 +166,8 @@ final class DamageReportDialog {
                 replace(fb, offset, 0, text, attrs);
             }
         });
-        area.getDocument().addDocumentListener(new DocumentListener() {
-            public void insertUpdate(DocumentEvent e) {
-                update();
-            }
-
-            public void removeUpdate(DocumentEvent e) {
-                update();
-            }
-
-            public void changedUpdate(DocumentEvent e) {
-                update();
-            }
-
-            private void update() {
-                counter.setText(area.getDocument().getLength() + " / " + max);
-            }
+        Ui.onTextChange(area, () -> {
+            counter.setText(area.getDocument().getLength() + " / " + max);
         });
     }
 

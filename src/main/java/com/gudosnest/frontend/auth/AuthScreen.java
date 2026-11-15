@@ -80,7 +80,7 @@ public class AuthScreen extends JPanel {
     private JComponent formPanel() {
         JPanel right = new JPanel(new MigLayout("insets 48, fill", "[center]", "[center]"));
         right.setBackground(Colors.CARD);
-        JPanel column = Ui.transparent("insets 0, gap 0, wrap 1", "[440!,fill]");
+        JPanel column = Ui.transparent("insets 0, gap 0, wrap 1", "[320:440:440,fill]");
 
         JPanel tabs = Ui.transparent("insets 0, gap 0, fillx", "[50%,fill][50%,fill]");
         tabs.add(signUpTab);

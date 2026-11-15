@@ -22,10 +22,6 @@ public class MoneyRepository {
                 + " VALUES (?, ?, ?, ?, 'paid', ?)", bookingId, amount, receiptPath, type, at);
     }
 
-    public void setPaymentReceipt(int paymentId, String receiptPath) {
-        Db.update("UPDATE Payments SET receipt_url = ? WHERE payment_id = ?", receiptPath, paymentId);
-    }
-
     /** Everything paid in or out on the owner's properties, newest first. */
     public List<PaymentRow> paymentRows(int ownerId) {
         String joins = """
@@ -51,17 +47,6 @@ public class MoneyRepository {
                 rs.getString(6).equals("house") ? Property.Type.HOUSE.label() : rs.getString(7),
                 rs.getString(8), rs.getBigDecimal(9), Db.dateTime(rs, "dt"), rs.getString(11),
                 Db.integer(rs, "refund_id")), ownerId, ownerId);
-    }
-
-    /** A damage-fee payment (for its receipt). */
-    public Optional<PaymentRow> damagePayment(int paymentId) {
-        return Db.one("SELECT pay.payment_id, b.booking_id, b.created_at, r.full_name, p.property_name, pay.amount,"
-                + " pay.payment_date FROM Payments pay JOIN Bookings b ON b.booking_id = pay.booking_id"
-                + " JOIN Users r ON r.user_id = b.renter_id JOIN Units u ON u.unit_id = b.unit_id"
-                + " JOIN Properties p ON p.property_id = u.property_id WHERE pay.payment_id = ?",
-                rs -> new PaymentRow(rs.getInt(1), rs.getInt(2), Db.dateTime(rs, "created_at"), rs.getString(4),
-                        rs.getString(5), "", "Damage fee", rs.getBigDecimal(6), Db.dateTime(rs, "payment_date"),
-                        "Paid", null), paymentId);
     }
 
     // ------------------------------------------------------------------------------- refunds
@@ -112,10 +97,10 @@ public class MoneyRepository {
     public List<Transaction> transactions(int ownerId, Integer propertyId) {
         String sql = "SELECT t.*, p.property_name FROM FinancialTransactions t"
                 + " JOIN Properties p ON p.property_id = t.property_id WHERE p.owner_id = ?"
-                + (propertyId == null ? "" : " AND p.property_id = " + propertyId.intValue())
+                + " AND (? IS NULL OR p.property_id = ?)"
                 + " ORDER BY t.transaction_date DESC, t.transaction_id DESC";
         return Db.list(sql, rs -> new Transaction(rs.getInt("transaction_id"), rs.getInt("property_id"),
                 rs.getString("property_name"), rs.getString("transaction_type"), rs.getBigDecimal("amount"),
-                Db.dateTime(rs, "transaction_date"), rs.getString("note")), ownerId);
+                Db.dateTime(rs, "transaction_date"), rs.getString("note")), ownerId, propertyId, propertyId);
     }
 }

@@ -23,7 +23,6 @@ import javax.swing.JPanel;
 import javax.swing.ListCellRenderer;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.function.Function;
@@ -95,8 +94,8 @@ public final class BookingUi {
 
     /** Check-in / Check-out / Duration / Guests in a tinted strip. */
     public static JComponent stayStrip(Booking b) {
-        Card strip = Widgets.tintBox(new MigLayout("insets 14 16 14 16, gap 24, fillx",
-                "[grow,fill][grow,fill][grow,fill][grow,fill]"));
+        Card strip = Widgets.tintBox(new MigLayout("insets 16, gap 16, fillx",
+                "[grow,fill][grow,fill][][]"));   // the two dates share the spare width
         strip.add(stat("Check-in", Formats.time(b.getCheckIn()) + ", " + Formats.date(b.getCheckIn())));
         strip.add(stat("Check-out", Formats.time(b.getCheckOut()) + ", " + Formats.date(b.getCheckOut())));
         strip.add(stat("Duration", Formats.nights(b.getNights())));
@@ -105,7 +104,7 @@ public final class BookingUi {
     }
 
     private static JComponent stat(String label, String value) {
-        JPanel p = Ui.transparent("insets 0, gap 0, wrap 1", "[]");
+        JPanel p = Ui.transparent("insets 0, gap 0, wrap 1, fillx", "[grow,fill]");
         p.add(Ui.caption(label));
         p.add(Ui.label(value, Fonts.bodyMedium(), Colors.TEXT), "wmin 0");
         return p;
@@ -181,11 +180,6 @@ public final class BookingUi {
     public static void showRefundReceipt(Component parent, Booking b, LocalDateTime processedAt) {
         ReceiptDialog.show(parent, Receipt.forRefund(b, processedAt),
                 "refund-" + Formats.refCode(b.getId(), b.getCreatedAt()) + ".png");
-    }
-
-    /** Label that shows money paid or refunded on list rows. */
-    public static JLabel amountLabel(BigDecimal amount) {
-        return Ui.label(Formats.money(amount), Fonts.bodyBold(), Colors.TEXT);
     }
 
     /**

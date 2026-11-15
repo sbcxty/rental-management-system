@@ -7,7 +7,6 @@ import com.gudosnest.backend.model.Records.DamageReport;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 /** Inventory items and damage reports: the owner's day-to-day records. */
 public class OwnerOpsRepository {
@@ -68,10 +67,6 @@ public class OwnerOpsRepository {
                 rs -> new DamageReport(rs.getInt("report_id"), BookingRepository.map(rs), rs.getString("description"),
                         rs.getString("photo_path"), rs.getBigDecimal("requested_fee"), rs.getString("report_status"),
                         Db.dateTime(rs, "report_created"), Db.dateTime(rs, "resolved_at")), id);
-    }
-
-    public Optional<DamageReport> damageReport(int reportId, int ownerId) {
-        return damageReports(ownerId).stream().filter(r -> r.id() == reportId).findFirst();
     }
 
     public void insertDamageReport(int bookingId, String description, String photoPath, BigDecimal fee, LocalDateTime at) {

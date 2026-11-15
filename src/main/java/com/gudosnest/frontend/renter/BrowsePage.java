@@ -33,8 +33,6 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import java.awt.Cursor;
 import java.time.LocalDate;
 import java.util.List;
@@ -103,17 +101,17 @@ public class BrowsePage extends BasePage {
     // ------------------------------------------------------------------------ search card
 
     private JComponent searchCard() {
-        Card card = new Card(new MigLayout("insets 16 16 14 16, gap 0, fillx, wrap 1", "[grow,fill]"));
+        Card card = new Card(new MigLayout("insets 16, gap 0, fillx, wrap 1", "[grow,fill]"));
 
         JPanel inputs = Ui.transparent("insets 0, gap 12, fillx", "[grow 36,fill][grow 22,fill][grow 22,fill][][]");
         inputs.add(Ui.field("Location", location), "wmin 0");
         inputs.add(Ui.field("Check-in", checkIn), "wmin 0");
         inputs.add(Ui.field("Check-out", checkOut), "wmin 0");
-        inputs.add(Ui.fieldFree("Guests", guests), "aligny bottom");
+        inputs.add(Ui.field("Guests", guests));
         AppButton search = new AppButton("Search", AppButton.Style.PRIMARY).withIcon("search");
         search.addActionListener(e -> runSearch(true));
         inputs.add(search, "aligny bottom, h 40!");
-        card.add(inputs, "gapbottom 14");
+        card.add(inputs, "gapbottom 16");
 
         JPanel pills = Ui.transparent("insets 0, fillx, gap 8",
                 "[]".repeat(Category.values().length) + "push[]");
@@ -150,44 +148,28 @@ public class BrowsePage extends BasePage {
     private void installSuggestions() {
         JPopupMenu popup = new JPopupMenu();
         popup.setFocusable(false);
-        location.getDocument().addDocumentListener(new DocumentListener() {
-            private void changed() {
-                String typed = location.getText().strip();
-                popup.setVisible(false);
-                popup.removeAll();
-                if (typed.isEmpty() || !location.isShowing()) {
-                    return;
-                }
-                for (String word : suggestions.startingWith(typed, 6)) {
-                    if (word.equalsIgnoreCase(typed)) {
-                        continue;
-                    }
-                    JMenuItem item = new JMenuItem(word, Icons.get("map-pin", 14, Colors.NEUTRAL));
-                    item.addActionListener(e -> {
-                        location.setText(word);
-                        runSearch(true);
-                    });
-                    popup.add(item);
-                }
-                if (popup.getComponentCount() > 0) {
-                    popup.setPopupSize(location.getWidth(), popup.getPreferredSize().height);
-                    popup.show(location, 0, location.getHeight());
-                    location.requestFocusInWindow();
-                }
+        Ui.onTextChange(location, () -> {
+            String typed = location.getText().strip();
+            popup.setVisible(false);
+            popup.removeAll();
+            if (typed.isEmpty() || !location.isShowing()) {
+                return;
             }
-
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                changed();
+            for (String word : suggestions.startingWith(typed, 6)) {
+                if (word.equalsIgnoreCase(typed)) {
+                    continue;
+                }
+                JMenuItem item = new JMenuItem(word, Icons.get("map-pin", 14, Colors.NEUTRAL));
+                item.addActionListener(e -> {
+                    location.setText(word);
+                    runSearch(true);
+                });
+                popup.add(item);
             }
-
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                changed();
-            }
-
-            @Override
-            public void changedUpdate(DocumentEvent e) {
+            if (popup.getComponentCount() > 0) {
+                popup.setPopupSize(location.getWidth(), popup.getPreferredSize().height);
+                popup.show(location, 0, location.getHeight());
+                location.requestFocusInWindow();
             }
         });
     }
@@ -238,7 +220,7 @@ public class BrowsePage extends BasePage {
                 () -> reserve(p, fitting));
         card.add(new Widgets.Photo(p.getCoverImage(), 12, false), "h 155!, wmin 0");
 
-        JPanel body = Ui.transparent("insets 14 16 14 16, gap 0, fillx, wrap 1", "[grow,fill]");
+        JPanel body = Ui.transparent("insets 16, gap 0, fillx, wrap 1", "[grow,fill]");
         JPanel top = Ui.transparent("insets 0, gap 8, fillx", "[grow,fill][]");
         top.add(Ui.iconLabel(p.getLocation(), "map-pin", Fonts.caption(), Colors.TEXT_MUTED), "wmin 0");
         top.add(availability(p), "aligny center");

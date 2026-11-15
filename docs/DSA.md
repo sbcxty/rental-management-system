@@ -1,402 +1,135 @@
 # Data structures and algorithms in Gudo's Nest
 
-This page lists the data structures and algorithms (DSA) that are actually used in the code.
-All paths start at the project root. Line numbers match the code as of the commit that added this file.
-In the time complexities, **n** means the number of items in the structure unless the entry says otherwise.
+To find one in the code, search for `// DSA:`. The hand-written structures are in
+`src/main/java/com/gudosnest/backend/structures/`. `n` = number of items stored.
 
-## Index
+| # | Structure / algorithm | Class | Used for | Speed |
+|---|---|---|---|---|
+| 1 | Priority queue (heap) | `AttentionQueue` | Owner's "Needs attention": most urgent first | add O(log n) |
+| 2 | TreeMap (sorted map) | `AvailabilityCalendar` | Is a unit free on these dates? | O(log n) |
+| 3 | TreeMap by month | `FinanceService.monthly` | Dashboard chart, months in order | O(log n) per line |
+| 4 | Tree + recursion | `InventoryTree` | Inventory totals: property → units → items | O(n) |
+| 5 | Binary search | `SortedSearch` | Find a booking by its reference number | O(log n) |
+| 6 | Stack | `PortalShell.history` | The Back link | O(1) |
+| 7 | HashMap | `ImageUtil` cache, `BrowseService.Catalog` | Photos loaded once; one calendar per unit | O(1) |
+| 8 | Trie (prefix tree) | `Trie` | Location suggestions while typing | O(length typed) |
+| 9 | Circular doubly linked list | `ImageRing` | Photo carousel: next / previous wrap around | O(1) |
 
-| Name | File path | Line numbers |
-|---|---|---|
-| Priority queue (binary heap) | `src/main/java/com/gudosnest/backend/structures/AttentionQueue.java` | 9–43 |
-| TreeMap for overlapping dates | `src/main/java/com/gudosnest/backend/structures/AvailabilityCalendar.java` | 9–53 |
-| HashMap of TreeMaps (Browse availability) | `src/main/java/com/gudosnest/backend/service/BrowseService.java` | 97–104 |
-| TreeMap for months in order | `src/main/java/com/gudosnest/backend/service/FinanceService.java` | 89–111 |
-| Tree with recursion | `src/main/java/com/gudosnest/backend/structures/InventoryTree.java` | 9–73 |
-| Binary search | `src/main/java/com/gudosnest/backend/structures/SortedSearch.java` | 6–34 |
-| Binary search for a range (lower bound) | `src/main/java/com/gudosnest/backend/structures/SortedSearch.java` | 36–61 |
-| Stack (back navigation) | `src/main/java/com/gudosnest/frontend/components/PortalShell.java` | 22–61 |
-| HashMap cache | `src/main/java/com/gudosnest/frontend/components/ImageUtil.java` | 31–62 |
-| Trie | `src/main/java/com/gudosnest/backend/structures/Trie.java` | 8–55 |
-| Circular doubly linked list | `src/main/java/com/gudosnest/backend/structures/ImageRing.java` | 5–92 |
+## 1. Priority queue (`AttentionQueue`)
 
----
-
-## 1. Priority queue (binary heap)
-
-**What it is:** A priority queue always gives you the "smallest" item first, no matter what order items went in. Java's `PriorityQueue` keeps the items in a binary heap, a tree stored in an array where every parent is smaller than its children.
-
-**Where to find it:**
-- `src/main/java/com/gudosnest/backend/structures/AttentionQueue.java`, lines 9–43. The heap is made at line 21, ordered by `dueAt`.
-- Filled and read in `src/main/java/com/gudosnest/frontend/owner/Attention.java`, lines 39–56 (`add` at lines 45 and 52, `inOrder()` at line 56).
-
-
-**Code snippet:** Look at the comparator (earliest `dueAt` first) and at `inOrder()`, which polls a copy so the original queue isn't emptied.
-
-`src/main/java/com/gudosnest/backend/structures/AttentionQueue.java`, lines 21–25:
+A heap always keeps the smallest item at the top. Here "smallest" = earliest deadline.
 
 ```java
-    private final PriorityQueue<Entry<T>> heap = new PriorityQueue<>(Comparator.comparing(Entry::dueAt));
-
-    public void add(LocalDateTime dueAt, T value) {
-        heap.add(new Entry<>(dueAt, value));
-    }
+private final PriorityQueue<Entry<T>> heap = new PriorityQueue<>(Comparator.comparing(Entry::dueAt));
+public void add(LocalDateTime dueAt, T value) { heap.add(new Entry<>(dueAt, value)); }   // O(log n)
 ```
 
-`src/main/java/com/gudosnest/backend/structures/AttentionQueue.java`, lines 35–43:
+**Why:** the list mixes pending bookings (due when their 48 hours end) and refund requests (due by how long
+the renter has waited). The heap gives them back most urgent first without sorting the whole list each
+time. Used by `frontend/owner/Attention.java`.
+
+## 2. TreeMap for overlapping dates (`AvailabilityCalendar`)
+
+A TreeMap keeps its keys sorted. Each unit's approved stays are stored by check-in time.
 
 ```java
-    /** All items, most urgent first. Uses a copy, so the queue itself is left as it was. */
-    public List<T> inOrder() {
-        PriorityQueue<Entry<T>> copy = new PriorityQueue<>(heap);
-        List<T> result = new ArrayList<>(copy.size());
-        while (!copy.isEmpty()) {
-            result.add(copy.poll().value());
-        }
-        return result;
-    }
+Map.Entry<...> before = byStart.floorEntry(start);     // last stay starting at or before the new check-in
+// overlaps if that stay ends after the new check-in
+byStart.subMap(start, false, end, false)               // stays that start during the new stay: all overlap
 ```
 
-**What it's used for in the app:** The owner's "Needs attention" list puts the most urgent item on top: pending bookings by their 48-hour deadline and refund requests by how long the renter has waited.
+**Why:** to check new dates we only look at the neighbours of the new stay, not at every booking:
+O(log n) instead of O(n). It works because approved stays of one unit never overlap each other.
+Used by `BookingService.book`, `approve` and Browse.
 
-**Time complexity:**
-- `add`: O(log n), because the new item moves up at most the height of the heap.
-- `inOrder()`: O(n log n), because it copies the heap and then polls n times at O(log n) each.
-
----
-
-## 2. TreeMap for overlapping dates
-
-**What it is:** A `TreeMap` is a map that keeps its keys sorted (inside it's a red-black tree, a self-balancing binary search tree). Because the keys are sorted, it can quickly find "the closest key before this one" (`floorEntry`) or "all keys between these two" (`subMap`).
-
-**Where to find it:**
-- `src/main/java/com/gudosnest/backend/structures/AvailabilityCalendar.java`, lines 9–53. The map is at line 25, `overlapping(...)` at lines 32–49.
-- Built in `src/main/java/com/gudosnest/backend/service/BookingService.java`, lines 63–70 (`calendarFor`), and used for checks at lines 73, 112 and 191.
-- Browse keeps one calendar per unit in a `HashMap` (unit id → calendar): `src/main/java/com/gudosnest/backend/service/BrowseService.java`, lines 97–104 (built from one query in `catalog`) and lines 138–142 (`isFree`, used by `fittingUnits` at lines 131–136).
-
-
-**Code snippet:** Look at `floorEntry(start)` (the last stay that began before the new one) and `subMap(start, end)` (the stays that begin during the new one).
-
-`src/main/java/com/gudosnest/backend/structures/AvailabilityCalendar.java`, lines 32–49:
+## 3. TreeMap for months (`FinanceService.monthly`)
 
 ```java
-    public List<T> overlapping(LocalDateTime start, LocalDateTime end) {
-        List<T> result = new ArrayList<>();
-        Map.Entry<LocalDateTime, List<Stay<T>>> before = byStart.floorEntry(start);
-        if (before != null) {
-            for (Stay<T> stay : before.getValue()) {
-                if (stay.end().isAfter(start)) {
-                    result.add(stay.value());
-                }
-            }
-        }
-        // Stays that start strictly inside the new stay (the floor key itself was handled above)
-        for (List<Stay<T>> stays : byStart.subMap(start, false, end, false).values()) {
-            for (Stay<T> stay : stays) {
-                result.add(stay.value());
-            }
-        }
-        return result;
-    }
+TreeMap<YearMonth, BigDecimal[]> months = new TreeMap<>();    // month -> {income, expenses}
+for (YearMonth m = first; !m.isAfter(last); m = m.plusMonths(1)) months.put(m, zeros);
+for (Transaction t : ledger) months.get(YearMonth.from(t.date()))...add(t.amount());
 ```
 
-**What it's used for in the app:** Before a booking is approved, the app checks that the unit's dates are still free, so two approved stays never overlap. Line 191 runs when an owner presses Approve; line 73 shows a renter whether the unit is free while they pick dates in the booking dialog (`src/main/java/com/gudosnest/frontend/renter/BookDialog.java`, line 216), and line 112 checks again when they pay. On Browse, searching with dates hides every unit whose calendar has an approved stay on those dates.
+**Why:** the keys stay in calendar order whatever order the ledger lines arrive in, and months with no
+activity still appear as zero. This feeds the Dashboard bar chart.
 
-**Time complexity:** O(log n + k) per check, where k is the number of overlapping stays found: `floorEntry` and `subMap` each take O(log n) to find their place in the tree. (Building the calendar first takes O(n log n) for n approved stays.) On Browse, finding a unit's calendar in the `HashMap` is O(1) on average, so a search over u units costs O(u log n) with no extra database queries.
+## 4. Tree with recursion (`InventoryTree`)
 
----
-
-## 3. TreeMap for months in order
-
-**What it is:** The same sorted map as above, used here so the months always come out in calendar order.
-
-**Where to find it:**
-- `src/main/java/com/gudosnest/backend/service/FinanceService.java`, lines 89–111 (`monthly(...)`), map made at line 95.
-- Used by the dashboard chart in `src/main/java/com/gudosnest/frontend/owner/DashboardPage.java`, line 133.
-
-
-**Code snippet:** Look at how every month gets a zero slot first, then each ledger line adds to its month. Reading `entrySet()` gives the months in order.
-
-`src/main/java/com/gudosnest/backend/service/FinanceService.java`, lines 94–111:
+A property node has unit nodes as children; each node holds its items.
 
 ```java
-    public List<Month> monthly(List<Transaction> ledger, YearMonth last, int count) {
-        TreeMap<YearMonth, BigDecimal[]> months = new TreeMap<>();
-        YearMonth first = last.minusMonths(count - 1L);
-        for (YearMonth m = first; !m.isAfter(last); m = m.plusMonths(1)) {
-            months.put(m, new BigDecimal[]{BigDecimal.ZERO, BigDecimal.ZERO});
-        }
-        for (Transaction t : ledger) {
-            BigDecimal[] slot = months.get(YearMonth.from(t.date()));
-            if (slot == null) {
-                continue;
-            }
-            slot[0] = slot[0].add(incomeEffect(t));
-            if (t.isExpense()) {
-                slot[1] = slot[1].add(t.amount());
-            }
-        }
-        return months.entrySet().stream().map(e -> new Month(e.getKey(), e.getValue()[0], e.getValue()[1])).toList();
-    }
+public BigDecimal totalValue() {
+    BigDecimal total = BigDecimal.ZERO;
+    for (Item item : items) total = total.add(item.getTotalValue());           // this node
+    for (InventoryTree child : children) total = total.add(child.totalValue()); // recursive step
+    return total;
+}
 ```
 
-**What it's used for in the app:** The "Income per month" bar chart on the owner dashboard, with empty months still shown as zero.
+**Why:** the same method gives the value of one unit or of the whole property. The base case is a node
+with no children. Built in `OwnerService.inventory`, shown on the Inventory page.
 
-**Time complexity:** O(t log m), where t is the number of ledger lines and m the number of months: each line does one `get` on a tree of m months.
+## 5. Binary search (`SortedSearch`)
 
----
-
-## 4. Tree with recursion
-
-**What it is:** A tree is a structure where each node can have child nodes. Recursion means a method calls itself: to total a node, it adds its own items and then asks each child for its total.
-
-**Where to find it:**
-- `src/main/java/com/gudosnest/backend/structures/InventoryTree.java`, lines 9–73: `totalValue()` (lines 46–55), `itemCount()` (lines 58–64), `needsAttentionCount()` (lines 67–73).
-- Built in `src/main/java/com/gudosnest/backend/service/OwnerService.java`, lines 140–150 (property → units → items).
-- Used in `src/main/java/com/gudosnest/frontend/owner/UnitsPage.java`, lines 86, 256 and 257, and `src/main/java/com/gudosnest/frontend/owner/InventoryPage.java`, line 67.
-
-
-**Code snippet:** Look at the line marked `// recursive step`: the method calls itself on each child.
-
-`src/main/java/com/gudosnest/backend/structures/InventoryTree.java`, lines 45–55:
+Bookings are loaded sorted by id (`ORDER BY b.booking_id`). Typing `GN-2026-8815` searches for id 8815.
 
 ```java
-    /** Value of everything in this node and below: quantity × unit price, summed recursively. */
-    public BigDecimal totalValue() {
-        BigDecimal total = BigDecimal.ZERO;
-        for (Item item : items) {
-            total = total.add(item.getTotalValue());
-        }
-        for (InventoryTree child : children) {
-            total = total.add(child.totalValue());   // recursive step
-        }
-        return total;
-    }
+while (low <= high) {
+    int mid = (low + high) >>> 1;
+    int value = key.applyAsInt(sorted.get(mid));
+    if (value == target) return mid;
+    else if (value < target) low = mid + 1;       // throw away the lower half
+    else high = mid - 1;                          // throw away the upper half
+}
 ```
 
-**What it's used for in the app:** On the Units page, the "Items needing attention" stat and each unit card's item count. The same code works for one unit or a whole property.
+**Why:** each step halves the list: 1,000 bookings need about 10 steps, not 1,000. The list must be
+sorted. `equalRange` runs two binary searches to find every row with the same key (all damage reports of
+one booking). Used by owner Bookings, renter Booking history and Damage reports.
 
-**Time complexity:** O(n), where n is the number of nodes plus items: the recursion visits each node and each item once.
-
-Note: `totalValue()` is written and works the same way, but no screen calls it yet.
-
----
-
-## 5. Binary search
-
-**What it is:** Binary search finds a value in a **sorted** list by checking the middle, then throwing away the half that can't contain it, and repeating. Each step halves what's left.
-
-**Where to find it:**
-- `src/main/java/com/gudosnest/backend/structures/SortedSearch.java`, lines 6–34 (`binarySearch` at lines 19–34).
-- Used in `src/main/java/com/gudosnest/frontend/owner/BookingsPage.java`, line 142. The list is sorted by id first at lines 53–56.
-- Used in `src/main/java/com/gudosnest/frontend/renter/BookingHistoryPage.java`, line 192 (renter's Booking history). The list is sorted by id first at lines 84–86.
-
-
-**Code snippet:** Look at `low`, `high` and `mid`: if the middle value is too small, search the right half (`low = mid + 1`), otherwise the left half.
-
-`src/main/java/com/gudosnest/backend/structures/SortedSearch.java`, lines 19–34:
+## 6. Stack (`PortalShell`)
 
 ```java
-    public static <T> int binarySearch(List<T> sorted, int target, ToIntFunction<T> key) {
-        int low = 0;
-        int high = sorted.size() - 1;
-        while (low <= high) {
-            int mid = (low + high) >>> 1;      // unsigned shift avoids int overflow on huge lists
-            int value = key.applyAsInt(sorted.get(mid));
-            if (value == target) {
-                return mid;
-            } else if (value < target) {
-                low = mid + 1;
-            } else {
-                high = mid - 1;
-            }
-        }
-        return -1;
-    }
+private final Deque<BasePage> history = new ArrayDeque<>();
+history.push(current);      // opening Units from Properties
+history.pop();              // Back: returns the page we came from
 ```
 
-**What it's used for in the app:** On the owner's Bookings page and the renter's Booking history, typing a reference like "GN-2026-8815" finds that booking by its id.
+**Why:** Back must return pages in reverse order (last in, first out): Inventory → Units → Properties.
+Choosing a sidebar item clears the stack.
 
-**Time complexity:** O(log n), because each step halves the part of the list still being searched. (Sorting the list when the page loads is O(n log n), done once per load, not once per search.)
+## 7. HashMap
 
-### 5b. Binary search for a range (Damage reports)
+A HashMap finds a value by its key in about one step.
 
-**What it is:** The same halving search, but it looks for the *first position* whose key is at least the target (a "lower bound"). Running it for `target` and for `target + 1` gives where a run of equal keys starts and ends, so it finds **every** match, not just one.
+- `frontend/components/ImageUtil.java`: `path → image` cache, so each photo is read from disk once.
+- `BrowseService.catalog`: `unit id → AvailabilityCalendar`. One query loads every approved stay; each
+  search is then a map lookup plus a calendar lookup, with no database query per unit.
 
-**Where to find it:**
-- `src/main/java/com/gudosnest/backend/structures/SortedSearch.java`, lines 36–61 (`equalRange` at lines 42–46, `firstAtLeast` at lines 49–61).
-- Used in `src/main/java/com/gudosnest/frontend/owner/DamageReportsPage.java`, line 176. The reports are sorted by booking id at line 65.
+## 8. Trie (`Trie`)
 
-**Code snippet:** `high` starts one past the end, because the answer can be "after every element". The loop keeps `low` as the first index that might still be the answer.
-
-`src/main/java/com/gudosnest/backend/structures/SortedSearch.java`, lines 42–61:
+Words are stored letter by letter; words with the same beginning share the same path.
 
 ```java
-    public static <T> List<T> equalRange(List<T> sorted, int target, ToIntFunction<T> key) {
-        int from = firstAtLeast(sorted, target, key);
-        int to = firstAtLeast(sorted, target + 1L, key);
-        return sorted.subList(from, to);
-    }
-
-    /** Index of the first element whose key is at least {@code target} (size() if none). */
-    private static <T> int firstAtLeast(List<T> sorted, long target, ToIntFunction<T> key) {
-        int low = 0;
-        int high = sorted.size();             // the answer can be one past the end
-        while (low < high) {
-            int mid = (low + high) >>> 1;
-            if (key.applyAsInt(sorted.get(mid)) < target) {
-                low = mid + 1;
-            } else {
-                high = mid;
-            }
-        }
-        return low;
-    }
+for (char c : prefix.toLowerCase().toCharArray()) {
+    node = node.children.get(c);          // walk down one letter at a time
+    if (node == null) return List.of();   // nothing starts with this
+}
+collect(node, result, limit);             // every word below this node (recursion)
 ```
 
-**What it's used for in the app:** On the owner's Damage reports page, typing a reference like "GN-2026-8815" shows every report filed on that booking (one stay can have more than one report), which plain `binarySearch` couldn't do because it stops at the first match it meets.
+**Why:** typing "ta" walks two letters and lists Tagaytay, ... The time depends on how many letters were
+typed, not on how many places exist. Children are in a TreeMap, so suggestions are alphabetical.
+Built in `BrowseService.catalog`, used by the Location box on Browse.
 
-**Time complexity:** O(log n) for the two searches, plus k for the k reports returned (`subList` is a view, so nothing is copied).
+## 9. Circular doubly linked list (`ImageRing`)
 
----
-
-## 6. Stack (back navigation)
-
-**What it is:** A stack is "last in, first out", like a pile of plates: you only add or take from the top. Here it's an `ArrayDeque` used with `push` and `pop`.
-
-**Where to find it:**
-- `src/main/java/com/gudosnest/frontend/components/PortalShell.java`, lines 22–61: the stack at line 26, `push` at lines 46–51, `back` (pop) at lines 54–61, and `history.clear()` at line 40.
-- Called from `src/main/java/com/gudosnest/frontend/portal/Portal.java`, lines 108–115 (`open` and `back`). Pages use it, for example `src/main/java/com/gudosnest/frontend/owner/PropertiesPage.java`, line 99 (open a property's units) and `src/main/java/com/gudosnest/frontend/owner/InventoryPage.java`, line 81 (Back link).
-
-
-**Code snippet:** Look at `history.push(current)` when going deeper and `history.pop()` when pressing Back.
-
-`src/main/java/com/gudosnest/frontend/components/PortalShell.java`, lines 45–61:
+Each node knows its `next` and `prev`; the last node's `next` is the first node.
 
 ```java
-    /** Opens a page on top of the current one; {@link #back()} returns to the current one. */
-    public void push(BasePage page) {
-        if (current != null) {
-            history.push(current);
-        }
-        display(page);
-    }
-
-    /** Returns to the previous page and reloads it so it shows any changes made meanwhile. */
-    public void back() {
-        if (history.isEmpty()) {
-            return;
-        }
-        BasePage previous = history.pop();
-        previous.reload();
-        display(previous);
-    }
+public T next()     { current = current.next; ... }    // from the last photo this lands on the first
+public T previous() { current = current.prev; ... }
 ```
 
-**What it's used for in the app:** Drilling down Properties → Units → Inventory, then pressing "Back" returns to exactly the page you came from, in reverse order.
-
-**Time complexity:** O(1) for push and pop, because `ArrayDeque` only touches the top end.
-
----
-
-## 7. HashMap cache
-
-**What it is:** A `HashMap` stores key → value pairs and finds a key in about one step by turning it into a number (its hash). A cache keeps results you already worked out so you don't do the slow work again.
-
-**Where to find it:**
-- `src/main/java/com/gudosnest/frontend/components/ImageUtil.java`, lines 31–62: the map at line 32, the lookup at lines 39–41, and storing at line 60.
-- Used by `src/main/java/com/gudosnest/frontend/components/Widgets.java`, line 54 (property photos on cards).
-
-
-**Code snippet:** Look at the `containsKey` check: if the photo was loaded before, it's returned at once without reading the disk.
-
-`src/main/java/com/gudosnest/frontend/components/ImageUtil.java`, lines 31–41:
-
-```java
-    // DSA: HashMap cache - each photo is read from disk once, then found by its path in O(1).
-    private static final Map<String, BufferedImage> CACHE = new HashMap<>();
-
-    /** Loads an image, or returns null if the file does not exist or cannot be read. */
-    public static BufferedImage load(String path) {
-        if (path == null || path.isBlank()) {
-            return null;
-        }
-        if (CACHE.containsKey(path)) {
-            return CACHE.get(path);
-        }
-```
-
-**What it's used for in the app:** Property photos appear on many cards and pages. Each photo file is read from disk only once.
-
-**Time complexity:** O(1) on average per lookup, because the hash points straight to the right bucket. (The first load of a photo still costs the disk read.)
-
----
-
-## 8. Trie (prefix tree)
-
-**What it is:** A trie stores words letter by letter in a tree, so all words that start with the same letters share the same path. To find words starting with "ta", you walk two letters down and collect everything below.
-
-**Where to find it:** `src/main/java/com/gudosnest/backend/structures/Trie.java`, lines 8–55 (`insert` at lines 23–29, `startingWith` at lines 32–43, recursive `collect` at lines 45–55).
-- Filled in `src/main/java/com/gudosnest/backend/service/BrowseService.java`, lines 86–95: every property name, location, and each part of a location ("Cavite" from "Tagaytay, Cavite").
-- Searched in `src/main/java/com/gudosnest/frontend/renter/BrowsePage.java`, line 155, on every key typed in the Location box.
-
-
-**Code snippet:** Look at the loop that walks one child per typed letter, then `collect` gathers every word under that node.
-
-`src/main/java/com/gudosnest/backend/structures/Trie.java`, lines 32–43:
-
-```java
-    public List<String> startingWith(String prefix, int limit) {
-        Node node = root;
-        for (char c : prefix.toLowerCase().toCharArray()) {
-            node = node.children.get(c);
-            if (node == null) {
-                return List.of();
-            }
-        }
-        List<String> result = new ArrayList<>();
-        collect(node, result, limit);
-        return result;
-    }
-```
-
-**What it's used for in the app:** Suggestions under the Browse Location box. Typing "ta" lists up to 6 places and property names starting with those letters, in alphabetical order; picking one runs the search.
-
-**Time complexity:** O(p + r) for `startingWith`, where p is the length of the typed prefix and r the number of nodes visited while collecting: walking down takes one step per letter.
-
----
-
-## 9. Circular doubly linked list (ImageRing)
-
-**What it is:** A linked list where each node points to both the next and previous node, and the last node points back to the first. "Next" on the last photo wraps around to the first with no index math.
-
-**Where to find it:** `src/main/java/com/gudosnest/backend/structures/ImageRing.java`, lines 5–92 (`add` at lines 33–49, `next` at lines 55–61, `previous` at lines 63–69). It's used by `src/main/java/com/gudosnest/frontend/components/Carousel.java` (lines 38 and 52). The renter's property dialog creates the carousel: `src/main/java/com/gudosnest/frontend/renter/BookDialog.java`, lines 123–124.
-
-
-**Code snippet:** Look at how a new node is linked between the old tail and the head, which keeps the ring closed.
-
-`src/main/java/com/gudosnest/backend/structures/ImageRing.java`, lines 33–49:
-
-```java
-    public void add(T value) {
-        Node<T> node = new Node<>(value);
-        if (head == null) {
-            node.next = node;
-            node.prev = node;
-            head = node;
-            current = node;
-            position = 1;
-        } else {
-            Node<T> tail = head.prev;
-            tail.next = node;
-            node.prev = tail;
-            node.next = head;
-            head.prev = node;
-        }
-        size++;
-    }
-```
-
-**What it's used for in the app:** The photo carousel's next and previous buttons when a renter opens a property from Browse. "Next" on the last photo goes back to the first.
-
-**Time complexity:** O(1) for `add`, `next` and `previous` (just pointer changes). `moveTo` (lines 72–80) is O(n) because it walks around the ring.
+**Why:** the carousel never checks "am I at the end?"; next and previous are always one step, O(1).
+Used by `frontend/components/Carousel.java`.

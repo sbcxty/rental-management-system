@@ -33,11 +33,6 @@ final class PropertyFilter extends JComboBox<PropertyFilter.Choice> {
         return c == null || c.property() == null ? null : c.property().getId();
     }
 
-    Property selectedProperty() {
-        Choice c = (Choice) getSelectedItem();
-        return c == null ? null : c.property();
-    }
-
     void onChange(Runnable action) {
         addActionListener(e -> action.run());
     }
