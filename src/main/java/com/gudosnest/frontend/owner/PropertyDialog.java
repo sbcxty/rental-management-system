@@ -148,7 +148,7 @@ final class PropertyDialog {
      * copied into uploads/ only when the property is saved, so cancelling leaves nothing behind.
      */
     private static final class PhotoList {
-        final JPanel panel = Ui.transparent("insets 0, gap 8", "");
+        final JPanel panel = Ui.transparent("insets 0, gap 8, wrap 3", "");
         private final List<String> paths;
 
         PhotoList(List<String> initial) {

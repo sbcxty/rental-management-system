@@ -155,7 +155,7 @@ public class CancellationsPage extends BasePage {
 
         JPanel footer = Ui.transparent("insets 0, fillx", "[grow][]");
         footer.add(Ui.iconLabel("Cancelled automatically", "info",
-                Fonts.caption(), Colors.TEXT_MUTED), "wmin 0");
+                Fonts.caption(), Colors.TEXT_MUTED), "growx, wmin 0");
         AppButton submit = new AppButton("Cancel this stay", AppButton.Style.PRIMARY).withIcon("calendar-x");
         submit.addActionListener(e -> submit(understood, (String) reasons.getSelectedItem(), notes.getText()));
         footer.add(submit);
@@ -332,7 +332,7 @@ public class CancellationsPage extends BasePage {
 
     private static JComponent labelRow(String left, Object right) {
         JPanel row = Ui.transparent("insets 0, fillx", "[grow][]");
-        row.add(Ui.label(left, Fonts.bodyMedium(), Colors.TEXT));
+        row.add(Ui.label(left, Fonts.bodyMedium(), Colors.TEXT), "growx");
         if (right instanceof JComponent c) {
             row.add(c);
         } else if (right instanceof String s) {

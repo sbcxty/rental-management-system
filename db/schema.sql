@@ -26,7 +26,8 @@ CREATE TABLE Users (
     is_renter BOOLEAN NOT NULL DEFAULT TRUE,
     account_status ENUM('active','suspended') NOT NULL DEFAULT 'active',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CHECK (is_owner = TRUE OR is_renter = TRUE)
+    CHECK (is_owner = TRUE OR is_renter = TRUE),
+    CHECK (email LIKE '_%@_%._%')
 );
 
 CREATE TABLE Properties (
@@ -58,6 +59,7 @@ CREATE TABLE Units (
     daily_rate DECIMAL(10,2) NOT NULL CHECK (daily_rate > 0),
     cleaning_fee DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (cleaning_fee >= 0),
     unit_status ENUM('unoccupied','occupied') NOT NULL DEFAULT 'unoccupied',
+    UNIQUE (property_id, unit_name),                         -- no two units with the same name in a property
     FOREIGN KEY (property_id) REFERENCES Properties(property_id)
 );
 
@@ -100,6 +102,9 @@ CREATE TABLE Payments (
     payment_type ENUM('rental_payment','damage_fee') NOT NULL,
     payment_status ENUM('pending','paid') NOT NULL DEFAULT 'pending',
     payment_date DATETIME NULL,
+    -- Filled only for rental payments and UNIQUE, so a booking can't be paid for twice
+    -- (damage fees leave it NULL; a booking can have several of those)
+    rental_booking_id INT AS (IF(payment_type = 'rental_payment', booking_id, NULL)) STORED UNIQUE,
     CHECK (payment_status = 'pending' OR (payment_date IS NOT NULL AND receipt_url IS NOT NULL)),
     FOREIGN KEY (booking_id) REFERENCES Bookings(booking_id),
     INDEX idx_payments_booking (booking_id)
@@ -118,6 +123,7 @@ CREATE TABLE Refunds (
     refund_receipt_url TEXT NULL,
     CHECK (refund_status <> 'processed' OR (processed_at IS NOT NULL AND refund_receipt_url IS NOT NULL)),
     CHECK (refund_status <> 'rejected' OR reviewed_at IS NOT NULL),
+    CHECK (refund_status <> 'requested' OR processed_at IS NULL),
     FOREIGN KEY (payment_id) REFERENCES Payments(payment_id)
 );
 
@@ -145,6 +151,7 @@ CREATE TABLE Messages (
     sent_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     is_read BOOLEAN NOT NULL DEFAULT FALSE,
     CHECK (sender_id <> receiver_id),
+    CHECK (CHAR_LENGTH(message_text) BETWEEN 1 AND 1000),
     FOREIGN KEY (sender_id) REFERENCES Users(user_id),
     FOREIGN KEY (receiver_id) REFERENCES Users(user_id),
     FOREIGN KEY (booking_id) REFERENCES Bookings(booking_id),
@@ -177,6 +184,7 @@ CREATE TABLE DamageReports (
     resolved_at DATETIME NULL,
     CHECK (report_status <> 'charged' OR payment_id IS NOT NULL),
     CHECK (report_status = 'open' OR resolved_at IS NOT NULL),
+    CHECK (CHAR_LENGTH(description) BETWEEN 1 AND 1000),
     FOREIGN KEY (booking_id) REFERENCES Bookings(booking_id),
     FOREIGN KEY (payment_id) REFERENCES Payments(payment_id)
 );

@@ -54,7 +54,7 @@ frontend (Swing screens)  →  service (rules)  →  repository (SQL)  →  Db /
 | Transactions: several changes are saved together or not at all | `Db.transaction`, used by every multi-table action in the services |
 | Rules are checked in the service, not the screen | `BookingService`, `OwnerService`, `DamageService`, `FinanceService`, `AuthService` |
 | Ownership checks: you can only change your own bookings and properties | e.g. `BookingService.ownedPending`, `OwnerService.property` |
-| Database constraints: foreign keys, `CHECK`, `UNIQUE`, `ENUM` | `db/schema.sql` (e.g. check-out after check-in, one refund per payment, one account per email) |
+| Database constraints: foreign keys, `CHECK`, `UNIQUE`, `ENUM` | `db/schema.sql`: check-out after check-in, one account per email, one refund per payment, one rental payment per booking, no two units with the same name in a property, messages and damage descriptions 1 to 1,000 characters |
 | Parameterised SQL (`?`) for everything a person types | `Db.prepare` |
 | Passwords stored only as BCrypt hashes | `AuthService` |
 | Price snapshot: a booking keeps the rate it was made with | `Bookings.nightly_rate`, `cleaning_fee`, `discount_amount`, `total_amount` |
