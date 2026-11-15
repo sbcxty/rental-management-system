@@ -50,17 +50,20 @@ public final class Widgets {
                 return;
             }
             int scaledArc = UIScale.scale(arc);
-            if (cached == null || cached.getWidth() != w || cached.getHeight() != h) {
+            java.awt.Graphics2D g2 = (java.awt.Graphics2D) g;
+            if (ImageUtil.needsRedraw(cached, g2, w, h)) {
                 BufferedImage src = ImageUtil.load(path);
                 if (roundBottom) {
-                    cached = ImageUtil.cover(src, w, h, scaledArc);
+                    cached = ImageUtil.coverSharp(g2, src, w, h, scaledArc);
                 } else {
                     // Round the top only: draw it rounded but taller, then cut off the bottom corners
-                    BufferedImage tall = ImageUtil.cover(src, w, h + scaledArc, scaledArc);
-                    cached = tall.getSubimage(0, 0, w, h);
+                    BufferedImage tall = ImageUtil.coverSharp(g2, src, w, h + scaledArc, scaledArc);
+                    double s = ImageUtil.deviceScale(g2);
+                    cached = tall.getSubimage(0, 0, tall.getWidth(),
+                            Math.min(tall.getHeight(), Math.max(1, (int) Math.round(h * s))));
                 }
             }
-            g.drawImage(cached, 0, 0, null);
+            ImageUtil.drawSharp(g2, cached, w, h);
         }
     }
 

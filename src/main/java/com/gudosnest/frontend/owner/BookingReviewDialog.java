@@ -14,11 +14,13 @@ import com.gudosnest.frontend.theme.Colors;
 import com.gudosnest.frontend.theme.Fonts;
 import net.miginfocom.swing.MigLayout;
 
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import java.awt.Component;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * Everything an owner does with one booking happens here: approve or reject a pending booking,
@@ -74,14 +76,16 @@ public final class BookingReviewDialog {
         switch (b.getStage()) {
             case PENDING -> {
                 AppButton reject = new AppButton("Reject", AppButton.Style.DANGER);
-                reject.addActionListener(e -> {
-                    if (AppDialog.confirm(dialog, "Reject this booking? " + b.getRenterName() + " is refunded "
-                            + Formats.money(b.getTotal()) + " in full, automatically.", "Reject booking")
-                            && run(dialog, () -> portal.bookings.reject(b.getId(), ownerId))) {
-                        changed[0] = true;
-                        dialog.dispose();
-                    }
-                });
+                reject.addActionListener(e -> dialog.confirmPage("Reject this booking?",
+                        b.getRenterName() + " is refunded " + Formats.money(b.getTotal()) + " in full, automatically.",
+                        "Reject booking", AppButton.Style.DANGER, () -> {
+                            if (run(dialog, () -> portal.bookings.reject(b.getId(), ownerId))) {
+                                changed[0] = true;
+                                dialog.dispose();
+                            } else {
+                                dialog.previousPage();
+                            }
+                        }));
                 AppButton approve = new AppButton("Approve", AppButton.Style.PRIMARY);
                 approve.addActionListener(e -> {
                     List<Booking>[] rejected = new List[1];
@@ -101,26 +105,27 @@ public final class BookingReviewDialog {
             }
             case UPCOMING -> {
                 AppButton cancel = new AppButton("Cancel booking", AppButton.Style.DANGER);
-                cancel.addActionListener(e -> {
-                    String reason = askReason(dialog);
-                    if (reason != null && run(dialog, () -> portal.bookings.cancelByOwner(b.getId(), ownerId, reason))) {
+                cancel.addActionListener(e -> askReason(dialog, reason -> {
+                    if (run(dialog, () -> portal.bookings.cancelByOwner(b.getId(), ownerId, reason))) {
                         changed[0] = true;
                         dialog.dispose();
                         AppDialog.info(parent, "Booking cancelled. " + b.getRenterName() + " was refunded "
                                 + Formats.money(b.getTotal()) + " in full.");
                     }
-                });
+                }));
                 dialog.addButton(cancel);
             }
             case STAYING, CHECKOUT_DUE -> {
                 AppButton complete = new AppButton("Mark as completed", AppButton.Style.PRIMARY);
-                complete.addActionListener(e -> {
-                    if (AppDialog.confirm(dialog, "Mark this stay as completed? The unit becomes available again.",
-                            "Mark as completed") && run(dialog, () -> portal.bookings.markCompleted(b.getId(), ownerId))) {
-                        changed[0] = true;
-                        dialog.dispose();
-                    }
-                });
+                complete.addActionListener(e -> dialog.confirmPage("Mark this stay as completed?",
+                        "The unit becomes available again.", "Mark as completed", AppButton.Style.PRIMARY, () -> {
+                            if (run(dialog, () -> portal.bookings.markCompleted(b.getId(), ownerId))) {
+                                changed[0] = true;
+                                dialog.dispose();
+                            } else {
+                                dialog.previousPage();
+                            }
+                        }));
                 dialog.addButton(complete);
             }
             default -> {
@@ -134,27 +139,30 @@ public final class BookingReviewDialog {
         return changed[0];
     }
 
-    /** Asks the owner why they are cancelling. Returns null if they go back. */
-    private static String askReason(Component parent) {
-        AppDialog ask = new AppDialog(parent, "Cancel this booking?");
-        ask.getBody().add(Widgets.wrap("The renter is refunded in full, automatically. Tell them why "
+    /** Next page of the booking dialog: asks the owner why they are cancelling, then runs onReason. */
+    private static void askReason(AppDialog dialog, Consumer<String> onReason) {
+        JPanel page = dialog.nextPage("Cancel this booking?");
+        page.add(Widgets.wrap("The renter is refunded in full, automatically. Tell them why "
                 + "you're cancelling; they'll see this reason.", Fonts.body(), Colors.TEXT), "wmin 0");
         JTextArea reason = Ui.textArea(4);
-        ask.getBody().add(Ui.fieldFree("Reason", new JScrollPane(reason)));
-        String[] result = {null};
-        ask.addCloseButton("Go back");
+        page.add(Ui.fieldFree("Reason", new JScrollPane(reason)));
+        JLabel error = Ui.error("Enter a reason for the renter.");
+        error.setVisible(false);
+        page.add(error, "hidemode 3");
+        dialog.addBackButton("Go back");
         AppButton confirm = new AppButton("Cancel booking", AppButton.Style.DANGER);
         confirm.addActionListener(e -> {
             if (reason.getText().isBlank()) {
-                AppDialog.error(ask, "Enter a reason for the renter.");
+                error.setVisible(true);
+                page.revalidate();
+                reason.requestFocusInWindow();
                 return;
             }
-            result[0] = reason.getText().trim();
-            ask.dispose();
+            onReason.accept(reason.getText().trim());
         });
-        ask.addButton(confirm);
-        ask.showDialog(460);
-        return result[0];
+        dialog.addButton(confirm);
+        dialog.refit();
+        reason.requestFocusInWindow();
     }
 
     /** Runs an action and shows its error, if any. Returns true when it worked. */

@@ -59,14 +59,16 @@ public final class RefundReviewDialog {
 
         int ownerId = portal.user().getId();
         AppButton reject = new AppButton("Reject refund", AppButton.Style.DANGER);
-        reject.addActionListener(e -> {
-            if (AppDialog.confirm(dialog, "Reject this refund? " + b.getRenterName() + " will not get "
-                    + Formats.money(refund.amount()) + " back.", "Reject refund")
-                    && BookingReviewDialog.run(dialog, () -> portal.owner.rejectRefund(refund.refundId(), ownerId))) {
-                changed[0] = true;
-                dialog.dispose();
-            }
-        });
+        reject.addActionListener(e -> dialog.confirmPage("Reject this refund?",
+                b.getRenterName() + " will not get " + Formats.money(refund.amount()) + " back.",
+                "Reject refund", AppButton.Style.DANGER, () -> {
+                    if (BookingReviewDialog.run(dialog, () -> portal.owner.rejectRefund(refund.refundId(), ownerId))) {
+                        changed[0] = true;
+                        dialog.dispose();
+                    } else {
+                        dialog.previousPage();
+                    }
+                }));
         AppButton approve = new AppButton("Approve refund", AppButton.Style.PRIMARY);
         approve.addActionListener(e -> {
             if (BookingReviewDialog.run(dialog, () -> portal.owner.approveRefund(refund.refundId(), ownerId))) {

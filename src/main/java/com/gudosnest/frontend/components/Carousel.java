@@ -121,12 +121,11 @@ public class Carousel extends JPanel {
             g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
             String path = photos.current();
-            if (cachedImage == null || cachedImage.getWidth() != getWidth()
-                    || cachedImage.getHeight() != getHeight() || !java.util.Objects.equals(path, cachedPath)) {
-                cachedImage = ImageUtil.cover(ImageUtil.load(path), getWidth(), getHeight(), UIScale.scale(Theme.RADIUS + 4));
+            if (ImageUtil.needsRedraw(cachedImage, g2, getWidth(), getHeight()) || !java.util.Objects.equals(path, cachedPath)) {
+                cachedImage = ImageUtil.coverSharp(g2, ImageUtil.load(path), getWidth(), getHeight(), UIScale.scale(Theme.RADIUS + 4));
                 cachedPath = path;
             }
-            g2.drawImage(cachedImage, 0, 0, null);
+            ImageUtil.drawSharp(g2, cachedImage, getWidth(), getHeight());
 
             if (photos.size() > 1) {
                 drawRoundButton(g2, prevButton(), prevIcon);
@@ -180,10 +179,10 @@ public class Carousel extends JPanel {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             int arc = UIScale.scale(Theme.CONTROL_RADIUS);
-            if (image == null || image.getWidth() != getWidth() || image.getHeight() != getHeight()) {
-                image = ImageUtil.cover(ImageUtil.load(path), getWidth(), getHeight(), arc);
+            if (ImageUtil.needsRedraw(image, g2, getWidth(), getHeight())) {
+                image = ImageUtil.coverSharp(g2, ImageUtil.load(path), getWidth(), getHeight(), arc);
             }
-            g2.drawImage(image, 0, 0, null);
+            ImageUtil.drawSharp(g2, image, getWidth(), getHeight());
             if (photos.position() == position) {
                 float stroke = UIScale.scale(2f);
                 g2.setColor(Colors.PRIMARY);

@@ -9,7 +9,9 @@ import com.gudosnest.frontend.theme.Icons;
 
 import javax.imageio.ImageIO;
 import javax.swing.Icon;
+import javax.swing.JComponent;
 import java.awt.BasicStroke;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
@@ -93,13 +95,45 @@ public final class Receipt {
         details.add(new String[]{"Guests", Formats.guests(b.getGuests())});
     }
 
-    /** Draws the receipt at 2× so it stays sharp when saved or scaled. */
+    /** Pixel scale of the saved PNG: 3× (1560 px wide) so it prints sharply. */
+    private static final int FILE_SCALE = 3;
+
+    private int height() {
+        return 250 + details.size() * 24 + lines.size() * 28 + 90;
+    }
+
+    /** Draws the receipt into a PNG-ready image at 3×, so it stays sharp when saved or printed. */
     public BufferedImage render() {
-        int scale = 2;
-        int height = 250 + details.size() * 24 + lines.size() * 28 + 90;
-        BufferedImage img = new BufferedImage(WIDTH * scale, height * scale, BufferedImage.TYPE_INT_RGB);
+        int height = height();
+        BufferedImage img = new BufferedImage(WIDTH * FILE_SCALE, height * FILE_SCALE, BufferedImage.TYPE_INT_RGB);
         Graphics2D g = img.createGraphics();
-        g.scale(scale, scale);
+        g.scale(FILE_SCALE, FILE_SCALE);
+        draw(g);
+        g.dispose();
+        return img;
+    }
+
+    /**
+     * The receipt as a component for the screen. It draws the shapes and text straight onto the
+     * screen (no picture in between), so it is sharp at any display scaling.
+     */
+    public JComponent view() {
+        JComponent view = new JComponent() {
+            @Override
+            protected void paintComponent(java.awt.Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                draw(g2);
+                g2.dispose();
+            }
+        };
+        view.setPreferredSize(new Dimension(WIDTH, height()));
+        view.setMinimumSize(view.getPreferredSize());
+        return view;
+    }
+
+    /** Draws the receipt at 1× (WIDTH × height()); the caller scales g for other sizes. */
+    private void draw(Graphics2D g) {
+        int height = height();
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         g.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
@@ -151,8 +185,6 @@ public final class Receipt {
         g.setFont(Fonts.caption().deriveFont(11f));
         g.setColor(Colors.TEXT_MUTED);
         g.drawString("Keep this receipt for your records.", pad, y);
-        g.dispose();
-        return img;
     }
 
     private static void drawLine(Graphics2D g, String label, String value, int pad, int y, Font font) {

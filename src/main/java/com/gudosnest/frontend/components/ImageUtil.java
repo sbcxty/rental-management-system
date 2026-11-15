@@ -82,9 +82,51 @@ public final class ImageUtil {
         return out;
     }
 
-    /** Ready-to-use icon of a photo at a fixed size, with rounded corners. Missing photos get a placeholder. */
+    /**
+     * Ready-to-use icon of a photo at a fixed size, with rounded corners. Missing photos get a placeholder.
+     * It holds the photo at the common display scalings too, so Swing draws the sharp one instead of
+     * stretching the 100% picture (which looked blurry at 125%).
+     */
     public static ImageIcon photo(String path, int w, int h, int arc) {
-        return new ImageIcon(cover(load(path), w, h, arc));
+        BufferedImage src = load(path);
+        double[] scales = {1, 1.25, 1.5, 1.75, 2};
+        java.awt.Image[] variants = new java.awt.Image[scales.length];
+        for (int i = 0; i < scales.length; i++) {
+            variants[i] = cover(src, px(w, scales[i]), px(h, scales[i]), px(arc, scales[i]));
+        }
+        return new ImageIcon(new java.awt.image.BaseMultiResolutionImage(variants));
+    }
+
+    // ------------------------------------------------------------------- sharp photos at any display scaling
+    // Swing sizes are in "logical" pixels; at 125% display scaling each one covers 1.25 screen pixels.
+    // A photo cut at the logical size is stretched by 1.25 when drawn, which blurs it. So photos are
+    // cut at the real screen size (coverSharp) and drawn into the logical box (drawSharp), 1:1 on screen.
+
+    /** How many screen pixels one Swing pixel covers where g draws (1.25 at 125% display scaling). */
+    public static double deviceScale(Graphics2D g) {
+        return Math.max(1, g.getTransform().getScaleX());
+    }
+
+    /** cover() at the real screen size for w × h logical pixels. Draw the result with drawSharp. */
+    public static BufferedImage coverSharp(Graphics2D g, BufferedImage src, int w, int h, int arc) {
+        double s = deviceScale(g);
+        return cover(src, px(w, s), px(h, s), px(arc, s));
+    }
+
+    /** Draws an image from coverSharp into the w × h logical box at (0, 0). */
+    public static void drawSharp(Graphics2D g, java.awt.Image image, int w, int h) {
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+        g.drawImage(image, 0, 0, w, h, null);
+    }
+
+    /** True when a cached coverSharp image no longer matches w × h logical pixels on g's screen. */
+    public static boolean needsRedraw(BufferedImage cached, Graphics2D g, int w, int h) {
+        double s = deviceScale(g);
+        return cached == null || cached.getWidth() != px(w, s) || cached.getHeight() != px(h, s);
+    }
+
+    private static int px(int logical, double scale) {
+        return Math.max(1, (int) Math.round(logical * scale));
     }
 
     /** Flat placeholder (a simple house shape) for properties without photos. */

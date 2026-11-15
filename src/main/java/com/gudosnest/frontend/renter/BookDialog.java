@@ -108,10 +108,6 @@ final class BookDialog {
         checkOut.onChange(v -> refresh());
         refresh();
         dialog.showDialog(800);
-
-        if (made != null) {
-            showBooked(parent, made);
-        }
         return made;
     }
 
@@ -232,8 +228,8 @@ final class BookDialog {
 
     /**
      * Once dates are picked the price gains lines (nights, cleaning fee, discount, total), so the open
-     * dialog takes the height its content needs (and gives it back when the dates are cleared), then
-     * centres itself again on the app window.
+     * dialog takes the height its content needs (and gives it back when the dates are cleared), within
+     * AppDialog's size limits, then centres itself again on the app window.
      */
     private void fitToContent() {
         if (!dialog.isShowing()) {
@@ -244,11 +240,7 @@ final class BookDialog {
         for (Container c = breakdown; c != null; c = c.getParent()) {
             c.invalidate();
         }
-        int height = dialog.getPreferredSize().height;
-        if (height != dialog.getHeight()) {
-            dialog.setSize(dialog.getWidth(), height);
-            dialog.setLocationRelativeTo(dialog.getOwner());
-        }
+        dialog.pack();
     }
 
     /** The price lines (nights, cleaning fee, weekly discount), a divider, and the total. */
@@ -263,7 +255,7 @@ final class BookDialog {
         target.add(total);
     }
 
-    /** Asks once more with the full amount, then pays and saves the booking (pending). */
+    /** Asks once more with the full amount (next page of this dialog), then pays and saves the booking (pending). */
     private void reserve() {
         Unit unit = selectedUnit();
         LocalDate in = checkIn.getValue();
@@ -279,24 +271,24 @@ final class BookDialog {
                 + ",\n" + Formats.dateRange(in, out) + " (" + Formats.nights(out.toEpochDay() - in.toEpochDay())
                 + "), " + Formats.guests(guests.getValue()) + "?\n\nThe owner has " + BookingService.APPROVAL_HOURS
                 + " hours to approve. If they reject it or don't answer in time, you're refunded in full.";
-        if (!AppDialog.confirm(dialog, summary, "Confirm & pay")) {
-            return;
-        }
-        try {
-            Booking b = portal.bookings.book(portal.user().getId(), unit, in, out, guests.getValue(), requests.getText());
-            Receipt.forPayment(b).saveQuietly(ReceiptPaths.payment(b.getId(), b.getCreatedAt()));
-            made = b;
-            dialog.dispose();
-        } catch (RuleException | DataException e) {
-            AppDialog.error(dialog, e.getMessage());
-            refresh();
-        }
+        dialog.confirmPage("Confirm & pay", summary, "Confirm & pay", AppButton.Style.PRIMARY, () -> {
+            try {
+                Booking b = portal.bookings.book(portal.user().getId(), unit, in, out, guests.getValue(), requests.getText());
+                Receipt.forPayment(b).saveQuietly(ReceiptPaths.payment(b.getId(), b.getCreatedAt()));
+                made = b;
+                showBooked(b);
+            } catch (RuleException | DataException e) {
+                AppDialog.error(dialog, e.getMessage());
+                dialog.previousPage();
+                refresh();
+            }
+        });
     }
 
-    /** "Awaiting owner approval": the reference, the stay, what was paid, and the receipt. */
-    private void showBooked(Component parent, Booking b) {
-        AppDialog done = new AppDialog(parent, "Payment received");
-        JPanel body = done.getBody();
+    /** "Awaiting owner approval" (replaces the booking page; no way back): the reference, the stay, what was paid, and the receipt. */
+    private void showBooked(Booking b) {
+        AppDialog done = dialog;
+        JPanel body = done.replacePage("Payment received");
         body.add(Ui.label(b.getPropertyName(), Fonts.cardTitle(), Colors.TEXT));
         body.add(Ui.muted(b.getUnitLabel() + " · Reference " + Formats.refCode(b.getId(), b.getCreatedAt())),
                 "gapbottom 8");
@@ -317,6 +309,6 @@ final class BookDialog {
         ok.addActionListener(e -> done.dispose());
         done.addButton(ok);
         done.getRootPane().setDefaultButton(ok);
-        done.showDialog(560);
+        done.refit();
     }
 }
