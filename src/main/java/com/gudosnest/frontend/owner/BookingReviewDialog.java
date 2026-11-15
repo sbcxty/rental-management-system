@@ -70,7 +70,7 @@ public final class BookingReviewDialog {
             portal.openConversation(b.getRenterId(), b.getRenterName(), b);
         });
         dialog.addLeftButton(message);
-        AppButton receipt = new AppButton("View receipt", AppButton.Style.TEXT).withIcon("receipt").withControlHeight();
+        AppButton receipt = new AppButton("View receipt", AppButton.Style.TEXT).withIcon("receipt");
         receipt.addActionListener(e -> BookingUi.showPaymentReceipt(dialog, b));
         dialog.addLeftButton(receipt);
 
@@ -95,7 +95,7 @@ public final class BookingReviewDialog {
                         changed[0] = true;
                         dialog.dispose();
                         if (!rejected[0].isEmpty()) {
-                            AppDialog.info(parent, "Approved. " + rejected[0].size()
+                            AppDialog.info(parent, "Booking approved", rejected[0].size()
                                     + (rejected[0].size() == 1 ? " other pending booking overlapped these dates and was"
                                     : " other pending bookings overlapped these dates and were")
                                     + " rejected with a full refund.");
@@ -111,7 +111,7 @@ public final class BookingReviewDialog {
                     if (run(dialog, () -> portal.bookings.cancelByOwner(b.getId(), ownerId, reason))) {
                         changed[0] = true;
                         dialog.dispose();
-                        AppDialog.info(parent, "Booking cancelled. " + b.getRenterName() + " was refunded "
+                        AppDialog.info(parent, "Booking cancelled", b.getRenterName() + " was refunded "
                                 + Formats.money(b.getTotal()) + " in full.");
                     }
                 }));

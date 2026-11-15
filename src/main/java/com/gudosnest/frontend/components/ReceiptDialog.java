@@ -52,9 +52,9 @@ public final class ReceiptDialog {
                 }
                 try {
                     receipt.save(file);
-                    AppDialog.info(dialog, "Receipt saved to " + file.getAbsolutePath());
+                    AppDialog.info(dialog, "Receipt saved", "Saved to " + file.getAbsolutePath());
                 } catch (IOException ex) {
-                    AppDialog.error(dialog, "Could not save the receipt: " + ex.getMessage());
+                    AppDialog.error(dialog, "Couldn't save the receipt", ex.getMessage());
                 }
             }
         });

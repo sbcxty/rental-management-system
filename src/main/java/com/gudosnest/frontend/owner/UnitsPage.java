@@ -314,7 +314,7 @@ public class UnitsPage extends BasePage {
     }
 
     private void delete(Unit unit) {
-        if (AppDialog.confirm(this, "Delete " + unit.getName() + "? Its inventory is deleted too. "
+        if (AppDialog.confirm(this, "Delete " + unit.getName() + "?", "Its inventory is deleted too. "
                 + "Units with bookings can't be deleted.", "Delete unit")) {
             act(() -> portal.owner.deleteUnit(portal.user().getId(), unit), null);
         }

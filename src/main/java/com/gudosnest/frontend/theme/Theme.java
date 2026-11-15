@@ -67,6 +67,13 @@ public final class Theme {
         UIManager.put("PopupMenu.background", Colors.CARD);
         UIManager.put("MenuItem.selectionBackground", Colors.PRIMARY_TINT);
         UIManager.put("MenuItem.selectionForeground", Colors.TEXT);
+        // Menus (profile menu, location suggestions) get the same rounded corners as cards and inputs
+        UIManager.put("PopupMenu.borderCornerRadius", RADIUS);
+        UIManager.put("PopupMenu.borderInsets", new Insets(4, 4, 4, 4));
+        UIManager.put("MenuItem.selectionArc", CONTROL_RADIUS);
+        UIManager.put("MenuItem.margin", new Insets(6, 8, 6, 8));
+        UIManager.put("PopupMenuSeparator.stripeColor", Colors.BORDER);
+        UIManager.put("Separator.foreground", Colors.BORDER);
         UIManager.put("List.selectionBackground", Colors.PRIMARY_TINT);
         UIManager.put("List.selectionForeground", Colors.TEXT);
         UIManager.put("ComboBox.selectionBackground", Colors.PRIMARY_TINT);

@@ -69,7 +69,7 @@ final class DamageReportDialog {
         int ownerId = portal.user().getId();
         List<Booking> stays = portal.damage.reportableBookings(portal.bookings.forOwner(ownerId));
         if (stays.isEmpty()) {
-            AppDialog.info(parent, "No stays to report on. Damage can be reported during a stay or up to "
+            AppDialog.info(parent, "No stays to report on", "Damage can be reported during a stay or up to "
                     + DamageService.REPORT_WITHIN_DAYS + " days after check-out.");
             return false;
         }
@@ -228,7 +228,7 @@ final class DamageReportDialog {
             if (chooser.showOpenDialog(panel) == JFileChooser.APPROVE_OPTION) {
                 File f = chooser.getSelectedFile();
                 if (ImageUtil.load(f.getPath()) == null) {
-                    AppDialog.error(panel, f.getName() + " is not a picture this app can open (use JPG or PNG).");
+                    AppDialog.error(panel, "Can't use that file", f.getName() + " is not a picture this app can open (use JPG or PNG).");
                     return;
                 }
                 picked = f.getAbsolutePath();
