@@ -20,6 +20,7 @@ All paths start at the project root. Line numbers match the code as of the commi
 | Decorator | `src/main/java/com/gudosnest/backend/service/pricing/Price.java` | 8–125 |
 | Strategy | `src/main/java/com/gudosnest/backend/service/refund/RefundPolicy.java` | 9–93 |
 | Strategy | `src/main/java/com/gudosnest/backend/service/BrowseService.java` | 24–65 |
+| Strategy | `src/main/java/com/gudosnest/frontend/renter/BookingHistoryPage.java` | 39–63 |
 | Facade | `src/main/java/com/gudosnest/backend/service/BookingService.java` | 19–25 (whole class) |
 | Repository | `src/main/java/com/gudosnest/backend/repository/` (6 classes) | e.g. `BookingRepository.java` 16–46 |
 | Partial: Observer-style listener | `src/main/java/com/gudosnest/frontend/components/Sidebar.java` | 59–66 |
@@ -279,6 +280,8 @@ And `build()` checks the required values before making the object:
 Note: line 276 (automatic full refund) runs when an owner rejects or cancels a booking, or a pending booking expires. Line 169 picks a tier when a renter cancels an approved booking on the Cancellations page (`src/main/java/com/gudosnest/frontend/renter/CancellationsPage.java`, lines 184 and 204).
 
 **Second use: Browse categories.** `src/main/java/com/gudosnest/backend/service/BrowseService.java`, lines 24–65: the `Category` enum. Each pill (All homes, Whole houses, Multi-unit, Available now) is a constant with its own `matches(property)`. `search(...)` calls `category::matches` at line 122 without checking which pill was picked.
+
+**Third use: Booking history tabs.** `src/main/java/com/gudosnest/frontend/renter/BookingHistoryPage.java`, lines 39–63: the `Tab` enum. Each tab (All, Pending, Upcoming, Staying, Completed, Cancelled) is a constant holding the booking stages it shows, with its own `matches(booking)`. The table, the tab counts and the stat cards call `tab::matches` without a `switch` on the tab index.
 
 **Code snippet:** Look at how `forCancellation` returns a different class depending on the days left, and each class answers `quote(total)` its own way.
 

@@ -189,6 +189,7 @@ Note: `totalValue()` is written and works the same way, but no screen calls it y
 **Where to find it:**
 - `src/main/java/com/gudosnest/backend/structures/SortedSearch.java`, lines 6–34 (`binarySearch` at lines 19–34).
 - Used in `src/main/java/com/gudosnest/frontend/owner/BookingsPage.java`, line 142. The list is sorted by id first at lines 53–56.
+- Used in `src/main/java/com/gudosnest/frontend/renter/BookingHistoryPage.java`, line 192 (renter's Booking history). The list is sorted by id first at lines 84–86.
 
 
 **Code snippet:** Look at `low`, `high` and `mid`: if the middle value is too small, search the right half (`low = mid + 1`), otherwise the left half.
@@ -214,7 +215,7 @@ Note: `totalValue()` is written and works the same way, but no screen calls it y
     }
 ```
 
-**What it's used for in the app:** On the owner's Bookings page, typing a reference like "GN-2026-8815" finds that booking by its id.
+**What it's used for in the app:** On the owner's Bookings page and the renter's Booking history, typing a reference like "GN-2026-8815" finds that booking by its id.
 
 **Time complexity:** O(log n), because each step halves the part of the list still being searched. (Sorting the list when the page loads is O(n log n), done once per load, not once per search.)
 

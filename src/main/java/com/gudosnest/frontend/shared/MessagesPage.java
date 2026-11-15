@@ -8,7 +8,6 @@ import com.gudosnest.backend.model.Records.Contact;
 import com.gudosnest.backend.model.Records.Conversation;
 import com.gudosnest.backend.model.Records.Message;
 import com.gudosnest.frontend.components.AppButton;
-import com.gudosnest.frontend.components.AppDialog;
 import com.gudosnest.frontend.components.Avatar;
 import com.gudosnest.frontend.components.Badge;
 import com.gudosnest.frontend.components.Card;
@@ -21,6 +20,7 @@ import com.gudosnest.frontend.components.Widgets;
 import com.gudosnest.frontend.owner.BookingReviewDialog;
 import com.gudosnest.frontend.portal.BasePage;
 import com.gudosnest.frontend.portal.Portal;
+import com.gudosnest.frontend.renter.RenterBookingDialog;
 import com.gudosnest.frontend.renter.RenterPortal;
 import com.gudosnest.frontend.theme.Colors;
 import com.gudosnest.frontend.theme.Fonts;
@@ -534,34 +534,14 @@ public class MessagesPage extends BasePage {
         return card;
     }
 
-    /** Renter's read-only look at the stay: status, dates, payment, and the receipt. */
+    /**
+     * Renter's look at the stay: the same dialog as Booking history (receipts, cancel, check-out),
+     * without "Message host" since this conversation is already open.
+     */
     private void showStay(Booking b) {
-        AppDialog dialog = new AppDialog(this, "Booking " + Formats.refCode(b.getId(), b.getCreatedAt()));
-        JPanel body = dialog.getBody();
-
-        JPanel head = Ui.transparent("insets 0, gap 8, fillx", "[grow][]");
-        JPanel names = Ui.transparent("insets 0, gap 0, wrap 1", "[]");
-        names.add(Ui.label(b.getPropertyName(), Fonts.cardTitle(), Colors.TEXT));
-        names.add(Ui.muted(b.getUnitLabel() + " · " + b.getLocation()));
-        head.add(names);
-        head.add(BookingUi.badge(b), "aligny top");
-        body.add(head, "gapbottom 8");
-
-        body.add(BookingUi.banner(b, false), "gapbottom 4");
-        body.add(BookingUi.stayStrip(b), "gapbottom 4");
-        if (b.getSpecialRequests() != null) {
-            body.add(Ui.label("Special requests", Fonts.captionMedium(), Colors.TEXT_MUTED));
-            body.add(Widgets.wrap(b.getSpecialRequests(), Fonts.body(), Colors.TEXT), "wmin 0, gapbottom 4");
+        if (RenterBookingDialog.show(this, portal, b, false)) {
+            reload();
         }
-        body.add(Ui.label("Payment", Fonts.captionMedium(), Colors.TEXT_MUTED));
-        body.add(BookingUi.paymentSummary(b));
-
-        if (b.getPaidAt() != null) {
-            AppButton receipt = new AppButton("View receipt", AppButton.Style.TEXT).withIcon("receipt");
-            receipt.addActionListener(e -> BookingUi.showPaymentReceipt(dialog, b));
-            dialog.addLeftButton(receipt);
-        }
-        dialog.showDialog(640);
     }
 
     /** "Label ..... value" in a tinted box; the total is larger and on a stronger tint. */

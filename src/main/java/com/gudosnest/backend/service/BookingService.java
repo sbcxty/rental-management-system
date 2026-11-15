@@ -57,6 +57,20 @@ public class BookingService {
         return bookings.forRenter(renterId);
     }
 
+    /**
+     * When the refund on this renter's booking was paid back (for the refund receipt), or null if
+     * there is no refund or it hasn't been processed.
+     */
+    public LocalDateTime refundProcessedAt(Booking b, int renterId) {
+        if (b.getRenterId() != renterId) {
+            throw new RuleException("You can only see refunds on your own bookings.");
+        }
+        if (b.getRefundId() == null || !"processed".equals(b.getRefundStatus())) {
+            return null;
+        }
+        return money.refundById(b.getRefundId()).map(r -> r.processedAt()).orElse(null);
+    }
+
     public Booking byId(int bookingId) {
         return bookings.byId(bookingId).orElseThrow(() -> new RuleException("That booking no longer exists."));
     }
