@@ -86,6 +86,11 @@ public final class Theme {
         UIManager.put("CheckBox.icon.checkmarkColor", Colors.CARD);
         UIManager.put("CheckBox.icon.selectedBackground", Colors.PRIMARY);
         UIManager.put("CheckBox.icon.selectedBorderColor", Colors.PRIMARY);
+        // A clicked checkbox keeps keyboard focus, and FlatLaf's focused fill is near-white, which
+        // hid the white checkmark as soon as the mouse left. Keep a checked box filled when focused.
+        UIManager.put("CheckBox.icon.focusedSelectedBackground", Colors.PRIMARY);
+        UIManager.put("CheckBox.icon.focusedSelectedBorderColor", Colors.PRIMARY);
+        UIManager.put("CheckBox.icon.focusedCheckmarkColor", Colors.CARD);
         UIManager.put("OptionPane.background", Colors.CARD);
         UIManager.put("OptionPane.messageFont", Fonts.body());
     }
