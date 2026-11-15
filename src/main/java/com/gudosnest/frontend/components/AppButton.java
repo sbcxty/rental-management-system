@@ -25,6 +25,7 @@ public class AppButton extends JButton {
     public enum Style { PRIMARY, SECONDARY, INVERTED, OUTLINED, DANGER, TEXT }
 
     private final Style style;
+    private boolean controlHeight;
 
     public AppButton(String text, Style style) {
         super(text);
@@ -39,6 +40,15 @@ public class AppButton extends JButton {
     public AppButton withIcon(String iconName) {
         setIcon(Icons.get(iconName, 16, textColor()));
         setIconTextGap(Theme.S);
+        return this;
+    }
+
+    /**
+     * Gives a TEXT button the same height as the other buttons, for when it sits beside them
+     * (for example "View receipt" next to "Message renter"). Returns this for chaining.
+     */
+    public AppButton withControlHeight() {
+        controlHeight = true;
         return this;
     }
 
@@ -87,7 +97,7 @@ public class AppButton extends JButton {
     @Override
     public Dimension getPreferredSize() {
         Dimension size = super.getPreferredSize();
-        if (style != Style.TEXT) {
+        if (style != Style.TEXT || controlHeight) {
             size.height = Theme.CONTROL_HEIGHT;
         }
         return size;

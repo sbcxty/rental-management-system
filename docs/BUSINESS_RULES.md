@@ -98,7 +98,7 @@ refund in full. Code: `RefundPolicy` (Strategy), `BookingService.cancelByRenter`
 
 - After check-in time, nobody can cancel.
 - A renter's cancellation takes effect at once; only the refund waits for review.
-- Owner review: Approve processes the refund immediately; Reject means no refund. A refund can be reviewed once.
+- Owner review: Approve processes the refund immediately; Reject means no refund. A refund can be reviewed once. The owner can review it from Payments, Needs attention, or the cancelled booking's Refund button on Bookings; the cancellation fee applies the same way everywhere.
 
 ## Damage reports, finances and messages
 

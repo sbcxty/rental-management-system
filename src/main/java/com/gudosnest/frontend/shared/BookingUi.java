@@ -36,7 +36,7 @@ public final class BookingUi {
 
     public static Badge.Tone tone(Booking.Stage stage) {
         return switch (stage) {
-            case PENDING -> Badge.Tone.NEUTRAL;
+            case PENDING -> Badge.Tone.PENDING;
             case UPCOMING -> Badge.Tone.INFO;
             case STAYING, CHECKOUT_DUE -> Badge.Tone.STRONG;
             case COMPLETED -> Badge.Tone.SUCCESS;

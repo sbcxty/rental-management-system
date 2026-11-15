@@ -17,7 +17,8 @@ import java.awt.RenderingHints;
 public class Badge extends JLabel {
 
     public enum Tone {
-        NEUTRAL(Colors.PRIMARY_TINT, Colors.PRIMARY),   // pending, awaiting approval, counts
+        NEUTRAL(Colors.PRIMARY_TINT, Colors.PRIMARY),   // counts, labels
+        PENDING(Colors.PENDING_TINT, Colors.PENDING),   // pending bookings (yellow, unlike grey Expired)
         INFO(Colors.BLUE_TINT, Colors.BURGUNDY),        // upcoming, available, good
         STRONG(Colors.PRIMARY, Colors.TEXT_ON_DARK),    // occupied, highlighted
         SUCCESS(Colors.SUCCESS_TINT, Colors.SUCCESS),   // completed
