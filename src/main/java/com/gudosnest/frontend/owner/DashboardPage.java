@@ -46,6 +46,7 @@ public class DashboardPage extends BasePage {
 
     public DashboardPage(Portal portal) {
         super(portal);
+        ((MigLayout) getLayout()).setLayoutConstraints("insets 8 40 40 40, fillx, gap 0, wrap 1");
     }
 
     @Override
@@ -65,7 +66,7 @@ public class DashboardPage extends BasePage {
             reload();
         });
         header.addAction(filter);
-        add(header, "gapbottom 24");
+        add(header, "gapbottom 8");
 
         // Stats
         LocalDate today = LocalDate.now();
@@ -86,7 +87,7 @@ public class DashboardPage extends BasePage {
 
         JPanel row = Ui.transparent("insets 0, gap 24, fillx", "[grow 62,fill][grow 38,fill]");
         row.add(incomeCard(ledger), "aligny top");
-        JPanel right = Ui.transparent("insets 0, gap 24, wrap 1, fillx", "[grow,fill]");
+        JPanel right = Ui.transparent("insets 0, gap 20, wrap 1, fillx", "[grow,fill]");
         right.add(todayCard(bookings));
         right.add(attentionCard(bookings));
         row.add(right, "aligny top");
@@ -168,7 +169,7 @@ public class DashboardPage extends BasePage {
             values.add(m.income());
         }
         chart.setData(labels, values);
-        card.add(chart, "h 300!");
+        card.add(chart, "h 240!");
         return card;
     }
 
@@ -271,5 +272,10 @@ public class DashboardPage extends BasePage {
         row.add(chevron, "spany 2, wrap");
         row.add(Ui.caption(detail), "wmin 0, gapleft 20");
         return row;
+    }
+    
+    @Override
+    public boolean scrolls() {
+        return false;
     }
 }
