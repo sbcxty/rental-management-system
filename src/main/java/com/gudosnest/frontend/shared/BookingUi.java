@@ -71,6 +71,28 @@ public final class BookingUi {
         return hours < 1 ? "Respond within the hour" : "Respond within " + hours + "h";
     }
 
+    /** Reference text in one form for comparing: upper case, without "Ref", "#" or spaces. */
+    private static String refKey(String text) {
+        return text.toUpperCase().replace("REF", "").replace("#", "").replaceAll("\\s+", "");
+    }
+
+    /**
+     * True when a search looks like all or part of a booking reference: it starts with "GN",
+     * "Ref" or "#", or is only digits and dashes ("8815", "GN-2026-88"). Such a search covers every
+     * tab, since the renter or owner is looking for one booking.
+     */
+    public static boolean looksLikeReference(String query) {
+        String trimmed = query.trim().toUpperCase();
+        String key = refKey(query);
+        return !key.isEmpty() && (trimmed.startsWith("GN") || trimmed.startsWith("REF") || trimmed.startsWith("#")
+                || key.chars().allMatch(c -> Character.isDigit(c) || c == '-'));
+    }
+
+    /** True when the booking's reference contains the typed text, so partial references match as you type. */
+    public static boolean referenceContains(Booking b, String query) {
+        return refKey(Formats.refCode(b.getId(), b.getCreatedAt())).contains(refKey(query));
+    }
+
     /** Check-in / Check-out / Duration / Guests in a tinted strip. */
     public static JComponent stayStrip(Booking b) {
         Card strip = Widgets.tintBox(new MigLayout("insets 14 16 14 16, gap 24, fillx",

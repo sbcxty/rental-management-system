@@ -186,11 +186,17 @@ public class BookingHistoryPage extends BasePage {
     }
 
     private void refreshTable() {
-        int refId = query.isEmpty() ? -1 : SortedSearch.bookingIdFromReference(query);
-        if (refId >= 0) {
-            // A reference was typed: binary search the id-sorted list instead of scanning it
-            int index = SortedSearch.binarySearch(bookings, refId, Booking::getId);
-            shown = index < 0 ? List.of() : List.of(bookings.get(index));
+        boolean reference = BookingUi.looksLikeReference(query);
+        int refId = reference ? SortedSearch.bookingIdFromReference(query) : -1;
+        // A complete reference: binary search the id-sorted list instead of scanning it
+        int index = refId < 0 ? -1 : SortedSearch.binarySearch(bookings, refId, Booking::getId);
+        if (index >= 0) {
+            shown = List.of(bookings.get(index));
+        } else if (reference) {
+            // Part of a reference (still typing): every booking whose reference contains it, any tab
+            shown = bookings.stream().filter(b -> BookingUi.referenceContains(b, query))
+                    .sorted(Comparator.comparing(Booking::getCheckIn).reversed())
+                    .toList();
         } else {
             String q = query.toLowerCase();
             shown = bookings.stream().filter(tab::matches)
@@ -200,7 +206,7 @@ public class BookingHistoryPage extends BasePage {
                     .sorted(Comparator.comparing(Booking::getCheckIn).reversed())
                     .toList();
         }
-        emptyText = refId >= 0 ? "No booking with that reference."
+        emptyText = reference ? "No booking with that reference."
                 : bookings.isEmpty() ? "No bookings yet. Find a place on Browse."
                 : query.isEmpty() ? "No bookings here." : "No bookings match.";
         pager.setTotal(shown.size());
