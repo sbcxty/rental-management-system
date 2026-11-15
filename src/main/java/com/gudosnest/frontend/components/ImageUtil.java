@@ -154,19 +154,27 @@ public final class ImageUtil {
      * app keeps working if the original is moved or deleted. Returns the path to store.
      */
     public static String copyToUploads(File source) throws IOException {
+        return copyToUploads(source, UPLOADS_DIR);
+    }
+
+    /** Folder for photos attached to damage reports. */
+    public static final String DAMAGE_UPLOADS_DIR = "uploads/damage";
+
+    /** Same as {@link #copyToUploads(File)}, into another folder (relative to the project folder). */
+    public static String copyToUploads(File source, String folderPath) throws IOException {
         if (load(source.getPath()) == null) {
             throw new IOException(source.getName() + " is not a picture this app can open (use JPG or PNG).");
         }
         String name = source.getName();
         int dot = name.lastIndexOf('.');
         String extension = dot < 0 ? ".png" : name.substring(dot).toLowerCase();
-        File folder = new File(UPLOADS_DIR);
+        File folder = new File(folderPath);
         if (!folder.isDirectory() && !folder.mkdirs()) {
             throw new IOException("Could not create folder " + folder.getAbsolutePath());
         }
         File target = new File(folder, java.util.UUID.randomUUID() + extension);
         java.nio.file.Files.copy(source.toPath(), target.toPath());
-        return UPLOADS_DIR + "/" + target.getName();
+        return folderPath + "/" + target.getName();
     }
 
     /** Draws a Swing component into a PNG file (receipts are saved this way). */

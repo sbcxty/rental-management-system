@@ -16,13 +16,17 @@ import com.gudosnest.frontend.theme.Colors;
 import com.gudosnest.frontend.theme.Fonts;
 import net.miginfocom.swing.MigLayout;
 
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.ListCellRenderer;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.function.Function;
 
 /** Booking pieces shown the same way in both portals: status pill, details, payment summary. */
 public final class BookingUi {
@@ -163,5 +167,53 @@ public final class BookingUi {
     /** Label that shows money paid or refunded on list rows. */
     public static JLabel amountLabel(BigDecimal amount) {
         return Ui.label(Formats.money(amount), Fonts.bodyBold(), Colors.TEXT);
+    }
+
+    /**
+     * Draws each stay in a booking dropdown on two lines (property and unit; then dates, reference
+     * and the total, or the renter's name for the owner), never wider than the field: long text is
+     * cut with "…", so the open list lines up with the field instead of spilling over the page. The
+     * closed field shows one line, centred vertically in the field.
+     */
+    public static <T> ListCellRenderer<T> stayRenderer(JComboBox<T> combo, Function<T, Booking> booking,
+                                                       boolean forOwner) {
+        MigLayout layout = new MigLayout("insets 6 12 6 12, gap 0, wrap 1", "[grow,fill]");
+        JPanel cell = new JPanel(layout);
+        JLabel name = new JLabel();
+        JLabel details = new JLabel();
+        name.setFont(Fonts.bodyMedium());
+        details.setFont(Fonts.caption());
+        cell.add(name, "wmin 0");
+        cell.add(details, "wmin 0, hidemode 3");   // hidden in the closed field, so it takes no space
+        return (list, value, index, selected, focused) -> {
+            boolean closed = index < 0;
+            if (value == null) {
+                name.setText(" ");
+                details.setText(" ");
+            } else {
+                Booking b = booking.apply(value);
+                String dates = dates(b);
+                String ref = Formats.ref(b.getId(), b.getCreatedAt());
+                name.setText(place(b) + (closed ? " · " + dates : ""));
+                details.setText(forOwner
+                        ? b.getRenterName() + " · " + dates + " · " + ref
+                        : dates + " · " + ref + " · " + Formats.money(b.getTotal()));
+            }
+            details.setVisible(!closed);
+            layout.setLayoutConstraints(closed ? "insets 0 4 0 4, gap 0, wrap 1, aligny center"
+                    : "insets 6 12 6 12, gap 0, wrap 1");
+            boolean highlight = selected && !closed;
+            cell.setOpaque(!closed);
+            cell.setBackground(highlight ? list.getSelectionBackground() : list.getBackground());
+            name.setForeground(highlight ? list.getSelectionForeground() : Colors.TEXT);
+            details.setForeground(highlight ? list.getSelectionForeground() : Colors.TEXT_MUTED);
+            cell.setPreferredSize(null);
+            Dimension size = cell.getPreferredSize();
+            if (combo.getWidth() > 0) {
+                size.width = Math.min(size.width, combo.getWidth());
+            }
+            cell.setPreferredSize(size);
+            return cell;
+        };
     }
 }

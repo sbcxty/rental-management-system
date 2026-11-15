@@ -244,16 +244,23 @@ public class OwnerService {
         return ops.damageReports(ownerId);
     }
 
+    /** Longest damage description the owner can write. */
+    public static final int MAX_DAMAGE_DESCRIPTION = 1000;
+
     /** Bookings a report can be filed against: the stay has started (staying, check-out due, completed). */
     public List<Booking> reportableBookings(List<Booking> ownerBookings) {
         LocalDateTime now = LocalDateTime.now();
         return ownerBookings.stream()
-                .filter(b -> switch (b.getStage(now)) {
-                    case STAYING, CHECKOUT_DUE, COMPLETED -> true;
-                    default -> false;
-                })
+                .filter(b -> isReportable(b, now))
                 .sorted((a, b) -> b.getCheckOut().compareTo(a.getCheckOut()))
                 .toList();
+    }
+
+    private static boolean isReportable(Booking b, LocalDateTime now) {
+        return switch (b.getStage(now)) {
+            case STAYING, CHECKOUT_DUE, COMPLETED -> true;
+            default -> false;
+        };
     }
 
     public void fileDamageReport(int ownerId, Booking booking, String description, String photoPath, BigDecimal fee) {
@@ -263,8 +270,14 @@ public class OwnerService {
         if (booking.getOwnerId() != ownerId) {
             throw new RuleException("That booking is on another owner's property.");
         }
+        if (!isReportable(booking, LocalDateTime.now())) {
+            throw new RuleException("Damage can only be reported on a stay that has started or finished.");
+        }
         if (description == null || description.isBlank()) {
             throw new RuleException("Describe the damage.");
+        }
+        if (description.trim().length() > MAX_DAMAGE_DESCRIPTION) {
+            throw new RuleException("Keep the description to " + MAX_DAMAGE_DESCRIPTION + " characters or fewer.");
         }
         if (fee == null || fee.signum() <= 0) {
             throw new RuleException("Enter the fee to charge (above ₱0.00).");

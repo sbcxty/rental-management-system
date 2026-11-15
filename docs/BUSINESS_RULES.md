@@ -104,7 +104,7 @@ refund in full. Code: `RefundPolicy` (Strategy), `BookingService.cancelByRenter`
 
 | Area | Rule |
 |---|---|
-| Damage reports | The owner files one against a booking that has started or finished, with a description and a fee above ₱0.00. It goes from open to charged (a paid damage fee payment and income) or dismissed, once. Renters never see damage reports. Code: `OwnerService` |
+| Damage reports | The owner files one against a booking that has started or finished (staying now, check-out due or completed), with a description of up to 1,000 characters, a fee above ₱0.00 and an optional photo (copied to `uploads/damage`). A booking can have more than one report. A report goes from open to charged (a paid damage fee payment, its receipt and income) or dismissed, once; both ask for confirmation. Renters never see damage reports. Code: `OwnerService` |
 | Rental income | Recorded when the owner approves a booking; refunds are recorded as refund transactions |
 | Expenses | Added by the owner per property: Maintenance, Supplies or Utilities, an amount above ₱0.00, a date not in the future, a note up to 255 characters. Code: `FinanceService` |
 | Conversations | One per renter–owner pair. Can start from a booking or from the Messages search without a booking |
@@ -115,6 +115,7 @@ refund in full. Code: `RefundPolicy` (Strategy), `BookingService.cancelByRenter`
 
 | Date | Decision |
 |---|---|
+| Nov 15, 2026 | Damage reports: only stays that have started or finished (now also checked in `OwnerService`), description up to 1,000 characters, optional photo |
 | Nov 15, 2026 | Long-stay discount stays app-wide; owners see a note about it under the rates |
 | Nov 15, 2026 | The property dialog shows "Check-in and check-out" times, not "House rules" (owners can't write house rules) |
 | Nov 15, 2026 | Browse hides a renter's own properties; categories are All homes, Whole houses, Multi-unit, Available now |

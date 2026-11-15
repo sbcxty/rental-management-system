@@ -14,6 +14,7 @@ In the time complexities, **n** means the number of items in the structure unles
 | TreeMap for months in order | `src/main/java/com/gudosnest/backend/service/FinanceService.java` | 89–111 |
 | Tree with recursion | `src/main/java/com/gudosnest/backend/structures/InventoryTree.java` | 9–73 |
 | Binary search | `src/main/java/com/gudosnest/backend/structures/SortedSearch.java` | 6–34 |
+| Binary search for a range (lower bound) | `src/main/java/com/gudosnest/backend/structures/SortedSearch.java` | 36–61 |
 | Stack (back navigation) | `src/main/java/com/gudosnest/frontend/components/PortalShell.java` | 22–61 |
 | HashMap cache | `src/main/java/com/gudosnest/frontend/components/ImageUtil.java` | 31–62 |
 | Trie | `src/main/java/com/gudosnest/backend/structures/Trie.java` | 8–55 |
@@ -216,6 +217,45 @@ Note: `totalValue()` is written and works the same way, but no screen calls it y
 **What it's used for in the app:** On the owner's Bookings page, typing a reference like "GN-2026-8815" finds that booking by its id.
 
 **Time complexity:** O(log n), because each step halves the part of the list still being searched. (Sorting the list when the page loads is O(n log n), done once per load, not once per search.)
+
+### 5b. Binary search for a range (Damage reports)
+
+**What it is:** The same halving search, but it looks for the *first position* whose key is at least the target (a "lower bound"). Running it for `target` and for `target + 1` gives where a run of equal keys starts and ends, so it finds **every** match, not just one.
+
+**Where to find it:**
+- `src/main/java/com/gudosnest/backend/structures/SortedSearch.java`, lines 36–61 (`equalRange` at lines 42–46, `firstAtLeast` at lines 49–61).
+- Used in `src/main/java/com/gudosnest/frontend/owner/DamageReportsPage.java`, line 173. The reports are sorted by booking id at line 64.
+
+**Code snippet:** `high` starts one past the end, because the answer can be "after every element". The loop keeps `low` as the first index that might still be the answer.
+
+`src/main/java/com/gudosnest/backend/structures/SortedSearch.java`, lines 42–61:
+
+```java
+    public static <T> List<T> equalRange(List<T> sorted, int target, ToIntFunction<T> key) {
+        int from = firstAtLeast(sorted, target, key);
+        int to = firstAtLeast(sorted, target + 1L, key);
+        return sorted.subList(from, to);
+    }
+
+    /** Index of the first element whose key is at least {@code target} (size() if none). */
+    private static <T> int firstAtLeast(List<T> sorted, long target, ToIntFunction<T> key) {
+        int low = 0;
+        int high = sorted.size();             // the answer can be one past the end
+        while (low < high) {
+            int mid = (low + high) >>> 1;
+            if (key.applyAsInt(sorted.get(mid)) < target) {
+                low = mid + 1;
+            } else {
+                high = mid;
+            }
+        }
+        return low;
+    }
+```
+
+**What it's used for in the app:** On the owner's Damage reports page, typing a reference like "GN-2026-8815" shows every report filed on that booking (one stay can have more than one report), which plain `binarySearch` couldn't do because it stops at the first match it meets.
+
+**Time complexity:** O(log n) for the two searches, plus k for the k reports returned (`subList` is a view, so nothing is copied).
 
 ---
 

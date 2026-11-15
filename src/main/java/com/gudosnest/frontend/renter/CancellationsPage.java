@@ -27,14 +27,12 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
-import javax.swing.ListCellRenderer;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.AbstractDocument;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DocumentFilter;
-import java.awt.Dimension;
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
@@ -120,7 +118,7 @@ public class CancellationsPage extends BasePage {
         card.add(Ui.muted("Select a reservation to see the refund you are eligible for."), "gapbottom 20");
 
         JComboBox<Option> stays = new JComboBox<>();
-        stays.setRenderer(stayRenderer(stays));
+        stays.setRenderer(BookingUi.stayRenderer(stays, o -> o.booking, false));
         for (Booking b : cancellable) {
             Option option = new Option(b);
             stays.addItem(option);
@@ -378,50 +376,6 @@ public class CancellationsPage extends BasePage {
                 update();
             }
         });
-    }
-
-    /**
-     * Draws each stay in the reservation dropdown on two lines (property and unit; dates, reference
-     * and total), never wider than the field: long text is cut with "…", so the open list lines up
-     * with the field instead of spilling over the page. The closed field shows one line, centred
-     * vertically in the field.
-     */
-    private static ListCellRenderer<Option> stayRenderer(JComboBox<Option> combo) {
-        MigLayout layout = new MigLayout("insets 6 12 6 12, gap 0, wrap 1", "[grow,fill]");
-        JPanel cell = new JPanel(layout);
-        JLabel name = new JLabel();
-        JLabel details = new JLabel();
-        name.setFont(Fonts.bodyMedium());
-        details.setFont(Fonts.caption());
-        cell.add(name, "wmin 0");
-        cell.add(details, "wmin 0, hidemode 3");   // hidden in the closed field, so it takes no space
-        return (list, value, index, selected, focused) -> {
-            boolean closed = index < 0;
-            if (value == null) {
-                name.setText(" ");
-                details.setText(" ");
-            } else {
-                Booking b = value.booking;
-                String dates = BookingUi.dates(b);
-                name.setText(b.getPropertyName() + " · " + b.getUnitLabel() + (closed ? " · " + dates : ""));
-                details.setText(dates + " · " + Formats.ref(b.getId(), b.getCreatedAt()) + " · " + Formats.money(b.getTotal()));
-            }
-            details.setVisible(!closed);
-            layout.setLayoutConstraints(closed ? "insets 0 4 0 4, gap 0, wrap 1, aligny center"
-                    : "insets 6 12 6 12, gap 0, wrap 1");
-            boolean highlight = selected && !closed;
-            cell.setOpaque(!closed);
-            cell.setBackground(highlight ? list.getSelectionBackground() : list.getBackground());
-            name.setForeground(highlight ? list.getSelectionForeground() : Colors.TEXT);
-            details.setForeground(highlight ? list.getSelectionForeground() : Colors.TEXT_MUTED);
-            cell.setPreferredSize(null);
-            Dimension size = cell.getPreferredSize();
-            if (combo.getWidth() > 0) {
-                size.width = Math.min(size.width, combo.getWidth());
-            }
-            cell.setPreferredSize(size);
-            return cell;
-        };
     }
 
     /** One entry in the reservation dropdown: "Highland Glass Cabin · Nov 18 – Nov 22, 2026 · Ref #… (₱27,400.00)". */

@@ -19,7 +19,7 @@ The build passes: pages not built yet are placeholders ("Coming soon"). See `TOD
 - [x] Payments (`PaymentsPage`)
 - [ ] Finances (`FinancesPage`, placeholder) and Add expense dialog
 - [x] Messages (shared `MessagesPage` + `ChatBubble`, owner and renter views)
-- [ ] Damage reports (`DamageReportsPage`, placeholder) and File report dialog
+- [x] Damage reports (`DamageReportsPage`, `DamageReportDialog`): totals, All/Open/Charged/Dismissed tabs, search by renter, property, damage or Ref (binary search for every report on that booking), File report dialog (stay, description with counter, fee, optional photo), review dialog with Dismiss / Charge as confirm pages, then "Damage fee charged" with the receipt (saved to `receipts/damage-fee-<id>.png`). Pills: Open Primary tint, Charged green, Dismissed grey. The two-line stay dropdown renderer moved from `CancellationsPage` to `BookingUi.stayRenderer` so both portals share it. `Widgets.wrap(text, font, colour, width)` wraps long text at a fixed width so it can't widen a dialog.
 
 ## Phase 3 – Renter portal
 

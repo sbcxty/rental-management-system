@@ -235,6 +235,23 @@ public final class Widgets {
         return label;
     }
 
+    /**
+     * Wrapping text that is never wider than {@code width} (the units AppDialog widths use), so a long text wraps
+     * instead of widening the dialog it sits in, and its height fits the wrapped lines.
+     */
+    public static JLabel wrap(String text, java.awt.Font font, Color color, int width) {
+        JLabel label = wrap(text, font, color);
+        // Swing's HTML renderer scales CSS widths, so measure the wrapped text for a fixed width instead
+        javax.swing.text.View view = (javax.swing.text.View) label.getClientProperty(javax.swing.plaf.basic.BasicHTML.propertyKey);
+        int w = width;   // same units as AppDialog.showDialog(minWidth)
+        if (view != null) {
+            view.setSize(w, 0);
+            int h = (int) Math.ceil(view.getPreferredSpan(javax.swing.text.View.Y_AXIS));
+            label.setPreferredSize(new java.awt.Dimension(w, h));
+        }
+        return label;
+    }
+
     /** Escapes text shown inside an HTML label so names like "A & B" print correctly. */
     public static String escape(String text) {
         if (text == null) {

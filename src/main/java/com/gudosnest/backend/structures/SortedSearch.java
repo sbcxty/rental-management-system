@@ -34,6 +34,33 @@ public final class SortedSearch {
     }
 
     /**
+     * All elements whose key equals {@code target}, in a list sorted by that key (ascending). Used
+     * where several rows share one key (a booking can have more than one damage report). Two binary
+     * searches find where the run of equal keys starts and where it ends: O(log n), plus the size of
+     * the returned view.
+     */
+    public static <T> List<T> equalRange(List<T> sorted, int target, ToIntFunction<T> key) {
+        int from = firstAtLeast(sorted, target, key);
+        int to = firstAtLeast(sorted, target + 1L, key);
+        return sorted.subList(from, to);
+    }
+
+    /** Index of the first element whose key is at least {@code target} (size() if none). */
+    private static <T> int firstAtLeast(List<T> sorted, long target, ToIntFunction<T> key) {
+        int low = 0;
+        int high = sorted.size();             // the answer can be one past the end
+        while (low < high) {
+            int mid = (low + high) >>> 1;
+            if (key.applyAsInt(sorted.get(mid)) < target) {
+                low = mid + 1;
+            } else {
+                high = mid;
+            }
+        }
+        return low;
+    }
+
+    /**
      * Reads a booking id out of what the user typed: "8815", "#GN-2026-8815", "Ref #GN-2026-8815".
      * Returns -1 when the text doesn't look like a reference.
      */
