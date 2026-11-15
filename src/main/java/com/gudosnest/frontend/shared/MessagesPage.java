@@ -561,7 +561,6 @@ public class MessagesPage extends BasePage {
             receipt.addActionListener(e -> BookingUi.showPaymentReceipt(dialog, b));
             dialog.addLeftButton(receipt);
         }
-        dialog.addCloseButton("Close");
         dialog.showDialog(640);
     }
 
