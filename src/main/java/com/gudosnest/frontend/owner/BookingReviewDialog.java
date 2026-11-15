@@ -19,6 +19,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import java.awt.Component;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 /**
@@ -89,13 +90,13 @@ public final class BookingReviewDialog {
                         }));
                 AppButton approve = new AppButton("Approve", AppButton.Style.PRIMARY);
                 approve.addActionListener(e -> {
-                    List<Booking>[] rejected = new List[1];
-                    if (run(dialog, () -> rejected[0] = portal.bookings.approve(b.getId(), ownerId))) {
+                    AtomicReference<List<Booking>> rejected = new AtomicReference<>();
+                    if (run(dialog, () -> rejected.set(portal.bookings.approve(b.getId(), ownerId)))) {
                         changed[0] = true;
                         dialog.dispose();
-                        if (!rejected[0].isEmpty()) {
-                            AppDialog.info(parent, "Booking approved", rejected[0].size()
-                                    + (rejected[0].size() == 1 ? " other pending booking overlapped these dates and was"
+                        if (!rejected.get().isEmpty()) {
+                            AppDialog.info(parent, "Booking approved", rejected.get().size()
+                                    + (rejected.get().size() == 1 ? " other pending booking overlapped these dates and was"
                                     : " other pending bookings overlapped these dates and were")
                                     + " rejected with a full refund.");
                         }
