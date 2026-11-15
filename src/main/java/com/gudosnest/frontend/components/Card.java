@@ -23,7 +23,9 @@ public class Card extends JPanel {
     public Card(LayoutManager layout) {
         super(layout);
         setBackground(Colors.CARD);
-        setBorder(new FlatLineBorder(new Insets(1, 1, 1, 1), Colors.BORDER, 1f, Theme.RADIUS));
+        // Style first, border second: setting a FlatLaf style reinstalls the panel's defaults, which
+        // replaces a FlatLineBorder (a UIResource) with no border at all.
         putClientProperty(FlatClientProperties.STYLE, "arc:" + Theme.RADIUS);
+        setBorder(new FlatLineBorder(new Insets(1, 1, 1, 1), Colors.BORDER, 1f, Theme.RADIUS));
     }
 }

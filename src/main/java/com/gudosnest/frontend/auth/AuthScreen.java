@@ -253,8 +253,8 @@ public class AuthScreen extends JPanel {
         RoleOption(String title, String description) {
             super(new MigLayout("insets 12 14 12 14, gap 0 2", "[]12[grow,fill]", "[][]"));
             setBackground(Colors.CARD);
+            putClientProperty(FlatClientProperties.STYLE, "arc:" + Theme.CONTROL_RADIUS);   // before the border (see Card)
             setBorder(new com.formdev.flatlaf.ui.FlatLineBorder(new java.awt.Insets(1, 1, 1, 1), Colors.BORDER, 1f, Theme.CONTROL_RADIUS));
-            putClientProperty(FlatClientProperties.STYLE, "arc:" + Theme.CONTROL_RADIUS);
             box.setOpaque(false);
             add(box, "spany 2, aligny top");
             add(Ui.label(title, Fonts.bodyMedium(), Colors.TEXT), "wrap");
