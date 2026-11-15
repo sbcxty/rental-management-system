@@ -61,7 +61,10 @@ public class AuthScreen extends JPanel {
         headline.setHorizontalAlignment(SwingConstants.CENTER);
         JLabel sub = Ui.label("Book and manage properties with ease", Fonts.body(), Colors.TEXT_MUTED);
         sub.setHorizontalAlignment(SwingConstants.CENTER);
-        middle.add(headline, "gaptop push");
+        JLabel brand = Ui.label("Gudo's Nest", Fonts.logo().deriveFont(24f), Colors.TEXT);
+        brand.setHorizontalAlignment(SwingConstants.CENTER);
+        middle.add(brand, "gaptop push, gapbottom 12");
+        middle.add(headline);
         middle.add(sub, "gaptop 4, gapbottom 32");
         middle.add(new LoginArt(), "grow, push, hmin 240, wmin 200");
         art.add(middle, "grow");
