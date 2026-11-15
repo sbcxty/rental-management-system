@@ -10,13 +10,14 @@ In the time complexities, **n** means the number of items in the structure unles
 |---|---|---|
 | Priority queue (binary heap) | `src/main/java/com/gudosnest/backend/structures/AttentionQueue.java` | 9–43 |
 | TreeMap for overlapping dates | `src/main/java/com/gudosnest/backend/structures/AvailabilityCalendar.java` | 9–53 |
+| HashMap of TreeMaps (Browse availability) | `src/main/java/com/gudosnest/backend/service/BrowseService.java` | 97–104 |
 | TreeMap for months in order | `src/main/java/com/gudosnest/backend/service/FinanceService.java` | 89–111 |
 | Tree with recursion | `src/main/java/com/gudosnest/backend/structures/InventoryTree.java` | 9–73 |
 | Binary search | `src/main/java/com/gudosnest/backend/structures/SortedSearch.java` | 6–34 |
 | Stack (back navigation) | `src/main/java/com/gudosnest/frontend/components/PortalShell.java` | 22–61 |
 | HashMap cache | `src/main/java/com/gudosnest/frontend/components/ImageUtil.java` | 31–62 |
-| Partial: Trie | `src/main/java/com/gudosnest/backend/structures/Trie.java` | 8–55 |
-| Partial: Circular doubly linked list | `src/main/java/com/gudosnest/backend/structures/ImageRing.java` | 5–92 |
+| Trie | `src/main/java/com/gudosnest/backend/structures/Trie.java` | 8–55 |
+| Circular doubly linked list | `src/main/java/com/gudosnest/backend/structures/ImageRing.java` | 5–92 |
 
 ---
 
@@ -69,7 +70,8 @@ In the time complexities, **n** means the number of items in the structure unles
 
 **Where to find it:**
 - `src/main/java/com/gudosnest/backend/structures/AvailabilityCalendar.java`, lines 9–53. The map is at line 25, `overlapping(...)` at lines 32–49.
-- Built in `src/main/java/com/gudosnest/backend/service/BookingService.java`, lines 62–69 (`calendarFor`), and used for checks at lines 72, 111 and 190.
+- Built in `src/main/java/com/gudosnest/backend/service/BookingService.java`, lines 63–70 (`calendarFor`), and used for checks at lines 73, 112 and 191.
+- Browse keeps one calendar per unit in a `HashMap` (unit id → calendar): `src/main/java/com/gudosnest/backend/service/BrowseService.java`, lines 97–104 (built from one query in `catalog`) and lines 138–142 (`isFree`, used by `fittingUnits` at lines 131–136).
 
 
 **Code snippet:** Look at `floorEntry(start)` (the last stay that began before the new one) and `subMap(start, end)` (the stays that begin during the new one).
@@ -97,9 +99,9 @@ In the time complexities, **n** means the number of items in the structure unles
     }
 ```
 
-**What it's used for in the app:** Before a booking is approved, the app checks that the unit's dates are still free, so two approved stays never overlap. Line 190 runs when an owner presses Approve; lines 72 and 111 are for the renter booking flow, whose screen isn't built yet.
+**What it's used for in the app:** Before a booking is approved, the app checks that the unit's dates are still free, so two approved stays never overlap. Line 191 runs when an owner presses Approve; line 73 shows a renter whether the unit is free while they pick dates in the booking dialog (`src/main/java/com/gudosnest/frontend/renter/BookDialog.java`, line 211), and line 112 checks again when they pay. On Browse, searching with dates hides every unit whose calendar has an approved stay on those dates.
 
-**Time complexity:** O(log n + k) per check, where k is the number of overlapping stays found: `floorEntry` and `subMap` each take O(log n) to find their place in the tree. (Building the calendar first takes O(n log n) for n approved stays.)
+**Time complexity:** O(log n + k) per check, where k is the number of overlapping stays found: `floorEntry` and `subMap` each take O(log n) to find their place in the tree. (Building the calendar first takes O(n log n) for n approved stays.) On Browse, finding a unit's calendar in the `HashMap` is O(1) on average, so a search over u units costs O(u log n) with no extra database queries.
 
 ---
 
@@ -223,7 +225,7 @@ Note: `totalValue()` is written and works the same way, but no screen calls it y
 
 **Where to find it:**
 - `src/main/java/com/gudosnest/frontend/components/PortalShell.java`, lines 22–61: the stack at line 26, `push` at lines 46–51, `back` (pop) at lines 54–61, and `history.clear()` at line 40.
-- Called from `src/main/java/com/gudosnest/frontend/portal/Portal.java`, lines 106–113 (`open` and `back`). Pages use it, for example `src/main/java/com/gudosnest/frontend/owner/PropertiesPage.java`, line 99 (open a property's units) and `src/main/java/com/gudosnest/frontend/owner/InventoryPage.java`, line 81 (Back link).
+- Called from `src/main/java/com/gudosnest/frontend/portal/Portal.java`, lines 108–115 (`open` and `back`). Pages use it, for example `src/main/java/com/gudosnest/frontend/owner/PropertiesPage.java`, line 99 (open a property's units) and `src/main/java/com/gudosnest/frontend/owner/InventoryPage.java`, line 81 (Back link).
 
 
 **Code snippet:** Look at `history.push(current)` when going deeper and `history.pop()` when pressing Back.
@@ -289,15 +291,13 @@ Note: `totalValue()` is written and works the same way, but no screen calls it y
 
 ---
 
-## Partial or unclear
-
-These are written and complete as classes, but **no screen uses them yet**, because the pages that need them are still placeholders.
-
-### Trie (prefix tree)
+## 8. Trie (prefix tree)
 
 **What it is:** A trie stores words letter by letter in a tree, so all words that start with the same letters share the same path. To find words starting with "ta", you walk two letters down and collect everything below.
 
-**Where to find it:** `src/main/java/com/gudosnest/backend/structures/Trie.java`, lines 8–55 (`insert` at lines 23–29, `startingWith` at lines 32–43, recursive `collect` at lines 45–55). Nothing calls it yet: it's meant for the renter Browse page (`src/main/java/com/gudosnest/frontend/renter/BrowsePage.java`), which is a placeholder.
+**Where to find it:** `src/main/java/com/gudosnest/backend/structures/Trie.java`, lines 8–55 (`insert` at lines 23–29, `startingWith` at lines 32–43, recursive `collect` at lines 45–55).
+- Filled in `src/main/java/com/gudosnest/backend/service/BrowseService.java`, lines 86–95: every property name, location, and each part of a location ("Cavite" from "Tagaytay, Cavite").
+- Searched in `src/main/java/com/gudosnest/frontend/renter/BrowsePage.java`, line 155, on every key typed in the Location box.
 
 
 **Code snippet:** Look at the loop that walks one child per typed letter, then `collect` gathers every word under that node.
@@ -319,15 +319,17 @@ These are written and complete as classes, but **no screen uses them yet**, beca
     }
 ```
 
-**What it's for (planned):** Location suggestions under the Browse search box.
+**What it's used for in the app:** Suggestions under the Browse Location box. Typing "ta" lists up to 6 places and property names starting with those letters, in alphabetical order; picking one runs the search.
 
 **Time complexity:** O(p + r) for `startingWith`, where p is the length of the typed prefix and r the number of nodes visited while collecting: walking down takes one step per letter.
 
-### Circular doubly linked list (ImageRing)
+---
+
+## 9. Circular doubly linked list (ImageRing)
 
 **What it is:** A linked list where each node points to both the next and previous node, and the last node points back to the first. "Next" on the last photo wraps around to the first with no index math.
 
-**Where to find it:** `src/main/java/com/gudosnest/backend/structures/ImageRing.java`, lines 5–92 (`add` at lines 33–49, `next` at lines 55–61, `previous` at lines 63–69). It's used by `src/main/java/com/gudosnest/frontend/components/Carousel.java` (lines 38 and 52), but no page creates a `Carousel` yet: it's meant for the renter property detail page, which isn't built.
+**Where to find it:** `src/main/java/com/gudosnest/backend/structures/ImageRing.java`, lines 5–92 (`add` at lines 33–49, `next` at lines 55–61, `previous` at lines 63–69). It's used by `src/main/java/com/gudosnest/frontend/components/Carousel.java` (lines 38 and 52). The renter's property dialog creates the carousel: `src/main/java/com/gudosnest/frontend/renter/BookDialog.java`, lines 121–122.
 
 
 **Code snippet:** Look at how a new node is linked between the old tail and the head, which keeps the ring closed.
@@ -354,7 +356,6 @@ These are written and complete as classes, but **no screen uses them yet**, beca
     }
 ```
 
-**What it's for (planned):** The photo carousel's next and previous buttons on the property detail page.
+**What it's used for in the app:** The photo carousel's next and previous buttons when a renter opens a property from Browse. "Next" on the last photo goes back to the first.
 
 **Time complexity:** O(1) for `add`, `next` and `previous` (just pointer changes). `moveTo` (lines 72–80) is O(n) because it walks around the ring.
-

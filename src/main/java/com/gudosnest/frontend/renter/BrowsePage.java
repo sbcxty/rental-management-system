@@ -5,6 +5,7 @@ import com.gudosnest.backend.model.Booking;
 import com.gudosnest.backend.model.Property;
 import com.gudosnest.backend.model.Unit;
 import com.gudosnest.backend.service.BrowseService;
+import com.gudosnest.backend.service.BrowseService.Category;
 import com.gudosnest.backend.service.RuleException;
 import com.gudosnest.backend.structures.Trie;
 import com.gudosnest.frontend.components.AppButton;
@@ -44,7 +45,7 @@ import java.util.List;
  */
 public class BrowsePage extends BasePage {
 
-    private List<Property> listings = List.of();
+    private BrowseService.Catalog catalog;
     private Trie suggestions = new Trie();
 
     // The search box values survive Search / pill clicks (only reload() rebuilds the page)
@@ -52,7 +53,7 @@ public class BrowsePage extends BasePage {
     private final DateField checkIn = new DateField("Check-in");
     private final DateField checkOut = new DateField("Check-out");
     private final Stepper guests = new Stepper(2, 1, 12);
-    private String category = BrowseService.ALL_HOMES;
+    private Category category = Category.ALL;
     private final JPanel results = Ui.transparent("insets 0, fillx, gap 0, wrap 1", "[grow,fill]");
     private Badge count;
 
@@ -78,8 +79,8 @@ public class BrowsePage extends BasePage {
 
     @Override
     protected void build() {
-        listings = portal.browse.listings();
-        suggestions = portal.browse.suggestions();
+        catalog = portal.browse.catalog(portal.user().getId());
+        suggestions = catalog.suggestions();
 
         PageHeader header = new PageHeader("Browse stays")
                 .setSubtitle("Find and book calm properties curated for living and resting.");
@@ -108,10 +109,11 @@ public class BrowsePage extends BasePage {
         inputs.add(search, "aligny bottom, h 40!");
         card.add(inputs, "gapbottom 14");
 
-        JPanel pills = Ui.transparent("insets 0, fillx, gap 8", "[][][][][][][]push[]");
+        JPanel pills = Ui.transparent("insets 0, fillx, gap 8",
+                "[]".repeat(Category.values().length) + "push[]");
         ButtonGroup group = new ButtonGroup();
-        for (String name : portal.browse.categories()) {
-            JToggleButton pill = new JToggleButton(name);
+        for (Category option : Category.values()) {
+            JToggleButton pill = new JToggleButton(option.label());
             pill.setFont(Fonts.captionMedium());
             pill.setFocusPainted(false);
             pill.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -123,9 +125,9 @@ public class BrowsePage extends BasePage {
                             + ";focusedBackground:" + Colors.hex(Colors.PAGE)
                             + ";selectedBackground:" + Colors.hex(Colors.BURGUNDY)
                             + ";selectedForeground:#FFFFFF");
-            pill.setSelected(name.equals(category));
+            pill.setSelected(option == category);
             pill.addActionListener(e -> {
-                category = name;
+                category = option;
                 runSearch(true);
             });
             group.add(pill);
@@ -188,7 +190,7 @@ public class BrowsePage extends BasePage {
         location.setText("");
         checkIn.setValue(null);
         checkOut.setValue(null);
-        category = BrowseService.ALL_HOMES;
+        category = Category.ALL;
         reload();
     }
 
@@ -199,7 +201,7 @@ public class BrowsePage extends BasePage {
         results.removeAll();
         List<Property> found;
         try {
-            found = portal.browse.search(listings, location.getText(), category,
+            found = portal.browse.search(catalog, location.getText(), category,
                     checkIn.getValue(), checkOut.getValue(), guests.getValue());
         } catch (RuleException e) {
             if (showErrors) {
@@ -210,7 +212,7 @@ public class BrowsePage extends BasePage {
         }
         count.setText(found.size() + (found.size() == 1 ? " property available" : " properties available"));
         if (found.isEmpty() && results.getComponentCount() == 0) {
-            results.add(Ui.emptyState(listings.isEmpty()
+            results.add(Ui.emptyState(catalog.listings().isEmpty()
                     ? "No properties are listed yet."
                     : "No properties match your search. Try other dates, fewer guests or Clear filters."));
         } else if (!found.isEmpty()) {
@@ -225,7 +227,7 @@ public class BrowsePage extends BasePage {
     }
 
     private JComponent card(Property p) {
-        List<Unit> fitting = portal.browse.fittingUnits(p, checkIn.getValue(), checkOut.getValue(), guests.getValue());
+        List<Unit> fitting = portal.browse.fittingUnits(catalog, p, checkIn.getValue(), checkOut.getValue(), guests.getValue());
         Card card = Widgets.clickableCard(new MigLayout("insets 0, gap 0, fillx, wrap 1", "[grow,fill]"),
                 () -> reserve(p, fitting));
         card.add(new Widgets.Photo(p.getCoverImage(), 12, false), "h 155!, wmin 0");

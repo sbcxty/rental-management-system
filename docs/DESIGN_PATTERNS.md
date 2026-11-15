@@ -9,7 +9,7 @@ All paths start at the project root. Line numbers match the code as of the commi
 |---|---|---|
 | Singleton | `src/main/java/com/gudosnest/backend/database/DatabaseConnection.java` | 7–26 |
 | Singleton | `src/main/java/com/gudosnest/backend/database/SessionManager.java` | 5–25 |
-| Factory Method | `src/main/java/com/gudosnest/frontend/portal/Portal.java` | 22–53, 91–97 |
+| Factory Method | `src/main/java/com/gudosnest/frontend/portal/Portal.java` | 23–55, 93–99 |
 | Factory Method | `src/main/java/com/gudosnest/frontend/owner/OwnerPortal.java` | 29–40 |
 | Factory Method | `src/main/java/com/gudosnest/frontend/renter/RenterPortal.java` | 26–34 |
 | Template Method | `src/main/java/com/gudosnest/frontend/portal/BasePage.java` | 26–40 |
@@ -19,6 +19,7 @@ All paths start at the project root. Line numbers match the code as of the commi
 | Prototype | `src/main/java/com/gudosnest/backend/model/Unit.java` | 29–35 |
 | Decorator | `src/main/java/com/gudosnest/backend/service/pricing/Price.java` | 8–125 |
 | Strategy | `src/main/java/com/gudosnest/backend/service/refund/RefundPolicy.java` | 9–93 |
+| Strategy | `src/main/java/com/gudosnest/backend/service/BrowseService.java` | 24–65 |
 | Facade | `src/main/java/com/gudosnest/backend/service/BookingService.java` | 19–25 (whole class) |
 | Repository | `src/main/java/com/gudosnest/backend/repository/` (6 classes) | e.g. `BookingRepository.java` 16–46 |
 | Partial: Observer-style listener | `src/main/java/com/gudosnest/frontend/components/Sidebar.java` | 59–66 |
@@ -67,8 +68,8 @@ public final class DatabaseConnection {
 **What it is:** The parent class has an abstract method that creates an object, and each subclass decides which class to create. The shared code calls the method without knowing which exact class comes back.
 
 **Where to find it:**
-- `src/main/java/com/gudosnest/frontend/portal/Portal.java`, lines 22–53: `create(...)` picks the portal (lines 47–50) and `createPage(...)` is the factory method (line 53).
-- `src/main/java/com/gudosnest/frontend/portal/Portal.java`, lines 91–97: `navigate(...)` calls `createPage(itemId)` (line 93).
+- `src/main/java/com/gudosnest/frontend/portal/Portal.java`, lines 23–55: `create(...)` picks the portal (lines 49–52) and `createPage(...)` is the factory method (line 55).
+- `src/main/java/com/gudosnest/frontend/portal/Portal.java`, lines 93–99: `navigate(...)` calls `createPage(itemId)` (line 95).
 - `src/main/java/com/gudosnest/frontend/owner/OwnerPortal.java`, lines 29–40: the owner's version of `createPage`.
 - `src/main/java/com/gudosnest/frontend/renter/RenterPortal.java`, lines 26–34: the renter's version of `createPage`.
 - `src/main/java/com/gudosnest/frontend/MainWindow.java`, line 52: `Portal.create(this, user, kind)`.
@@ -76,7 +77,7 @@ public final class DatabaseConnection {
 
 **Code snippet:** Look at the abstract `createPage` in `Portal`, then at how `OwnerPortal` fills it in with its own pages.
 
-`src/main/java/com/gudosnest/frontend/portal/Portal.java`, lines 47–53:
+`src/main/java/com/gudosnest/frontend/portal/Portal.java`, lines 49–55:
 
 ```java
     /** Picks the portal class for the role the person is using. */
@@ -221,7 +222,7 @@ And `build()` checks the required values before making the object:
 
 **Where to find it:**
 - `src/main/java/com/gudosnest/backend/service/pricing/Price.java`, lines 8–125: the `Price` interface, the base `NightlyRate` (lines 44–65), the `PriceDecorator` parent (lines 68–74), and the layers `CleaningFee` (lines 77–96) and `LongStayDiscount` (lines 99–125). `forStay(...)` (lines 33–39) stacks them.
-- Used in `src/main/java/com/gudosnest/backend/service/BookingService.java`, line 100; `src/main/java/com/gudosnest/frontend/components/Receipt.java`, line 55; `src/main/java/com/gudosnest/frontend/shared/BookingUi.java`, line 89.
+- Used in `src/main/java/com/gudosnest/backend/service/BookingService.java`, line 101; `src/main/java/com/gudosnest/frontend/components/Receipt.java`, line 55; `src/main/java/com/gudosnest/frontend/shared/BookingUi.java`, line 89.
 
 
 **Code snippet:** Look at `forStay` wrapping one price inside the next, and at `CleaningFee.total()` adding its fee to `inner.total()`.
@@ -272,10 +273,12 @@ And `build()` checks the required values before making the object:
 
 **Where to find it:**
 - `src/main/java/com/gudosnest/backend/service/refund/RefundPolicy.java`, lines 9–93: the `RefundPolicy` interface with `quote(...)` (line 44), the chooser `forCancellation(...)` (lines 47–56), and the strategies `FullRefund` (65–70), `PartialRefund` (72–78), `NoRefund` (80–85), `AutomaticRefund` (88–93).
-- Used in `src/main/java/com/gudosnest/backend/service/BookingService.java`, lines 160, 168 and 275.
+- Used in `src/main/java/com/gudosnest/backend/service/BookingService.java`, lines 161, 169 and 276.
 
 
-Note: line 275 (automatic full refund) runs today when an owner rejects or cancels a booking. Line 168 picks a tier when a renter cancels, but the renter's Cancellations page is still a placeholder, so no screen reaches it yet.
+Note: line 276 (automatic full refund) runs when an owner rejects or cancels a booking, or a pending booking expires. Line 169 picks a tier when a renter cancels an approved booking on the Cancellations page (`src/main/java/com/gudosnest/frontend/renter/CancellationsPage.java`, lines 181 and 201).
+
+**Second use: Browse categories.** `src/main/java/com/gudosnest/backend/service/BrowseService.java`, lines 24–65: the `Category` enum. Each pill (All homes, Whole houses, Multi-unit, Available now) is a constant with its own `matches(property)`. `search(...)` calls `category::matches` at line 122 without checking which pill was picked.
 
 **Code snippet:** Look at how `forCancellation` returns a different class depending on the days left, and each class answers `quote(total)` its own way.
 
@@ -306,7 +309,7 @@ Note: line 275 (automatic full refund) runs today when an owner rejects or cance
     }
 ```
 
-**Why it fits this project:** The refund rules have clear tiers (7+ days, 3–6 days, under 3 days). Each tier is one small class, so the rules are in one place and easy to test.
+**Why it fits this project:** The refund rules have clear tiers (7+ days, 3–6 days, under 3 days). Each tier is one small class, so the rules are in one place and easy to test. On Browse, each category pill is a one-line rule, so adding a pill means adding one constant, and the search code stays the same.
 
 ---
 
@@ -315,13 +318,13 @@ Note: line 275 (automatic full refund) runs today when an owner rejects or cance
 **What it is:** A Facade is one simple class that hides a complicated set of steps behind it. The screens call one method, and the facade does all the work across many other classes.
 
 **Where to find it:**
-- `src/main/java/com/gudosnest/backend/service/BookingService.java`, lines 19–25 (the comment and class). For example `reject(...)` at lines 207–216 and `approve(...)` at lines 186–205.
+- `src/main/java/com/gudosnest/backend/service/BookingService.java`, lines 19–25 (the comment and class). For example `reject(...)` at lines 208–217 and `approve(...)` at lines 187–206. The renter's booking dialog uses it too: `quote(...)` for the live price and `book(...)` to pay (`src/main/java/com/gudosnest/frontend/renter/BookDialog.java`, lines 210 and 262).
 - The screen calls it in `src/main/java/com/gudosnest/frontend/owner/BookingReviewDialog.java`, lines 80, 88, 106 and 121.
 
 
 **Code snippet:** Look at how one call to `reject` changes the booking status and makes a refund inside one database transaction. The dialog only calls `portal.bookings.reject(...)`.
 
-`src/main/java/com/gudosnest/backend/service/BookingService.java`, lines 207–216:
+`src/main/java/com/gudosnest/backend/service/BookingService.java`, lines 208–217:
 
 ```java
     /** Rejects a pending booking; the renter gets everything back automatically. */
@@ -377,7 +380,7 @@ Note: line 275 (automatic full refund) runs today when an owner rejects or cance
 
 **What it is:** In the Observer pattern, an object keeps a list of listeners and tells all of them when something happens.
 
-**Where to find it:** `src/main/java/com/gudosnest/frontend/components/Sidebar.java`, lines 59–66 (the `Listener` interface), and `src/main/java/com/gudosnest/frontend/portal/Portal.java`, line 67 (the portal passes in its listener).
+**Where to find it:** `src/main/java/com/gudosnest/frontend/components/Sidebar.java`, lines 59–66 (the `Listener` interface), and `src/main/java/com/gudosnest/frontend/portal/Portal.java`, line 69 (the portal passes in its listener).
 
 
 **Code snippet:** Look at the three events the sidebar reports to its portal.

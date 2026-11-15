@@ -27,6 +27,7 @@ public class BookingService {
     public static final LocalTime CHECK_IN_TIME = LocalTime.of(14, 0);
     public static final LocalTime CHECK_OUT_TIME = LocalTime.of(11, 0);
     public static final int APPROVAL_HOURS = 48;
+    public static final int MAX_NIGHTS = 30;
 
     private final BookingRepository bookings = new BookingRepository();
     private final MoneyRepository money = new MoneyRepository();
@@ -280,20 +281,27 @@ public class BookingService {
         }
     }
 
-    private void validateStay(Unit unit, LocalDate checkIn, LocalDate checkOut, int guests) {
-        LocalDate today = LocalDate.now(clock);
+    /**
+     * The date rules for any stay: check-in from tomorrow, at least one night, at most
+     * {@link #MAX_NIGHTS}. Browse checks searched dates with this too, so both say the same thing.
+     */
+    public void checkDates(LocalDate checkIn, LocalDate checkOut) {
         if (checkIn == null || checkOut == null) {
             throw new RuleException("Choose check-in and check-out dates.");
         }
-        if (!checkIn.isAfter(today)) {
+        if (!checkIn.isAfter(LocalDate.now(clock))) {
             throw new RuleException("Check-in must be tomorrow or later.");
         }
         if (!checkOut.isAfter(checkIn)) {
             throw new RuleException("Check-out must be at least one night after check-in.");
         }
-        if (checkOut.toEpochDay() - checkIn.toEpochDay() > 30) {
-            throw new RuleException("Stays can be up to 30 nights.");
+        if (checkOut.toEpochDay() - checkIn.toEpochDay() > MAX_NIGHTS) {
+            throw new RuleException("Stays can be up to " + MAX_NIGHTS + " nights.");
         }
+    }
+
+    private void validateStay(Unit unit, LocalDate checkIn, LocalDate checkOut, int guests) {
+        checkDates(checkIn, checkOut);
         if (guests < 1 || guests > unit.getCapacity()) {
             throw new RuleException(unit.getName() + " fits up to " + unit.getCapacity()
                     + (unit.getCapacity() == 1 ? " guest." : " guests."));

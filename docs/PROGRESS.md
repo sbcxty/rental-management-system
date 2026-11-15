@@ -22,10 +22,10 @@ The build passes: pages not built yet are placeholders ("Coming soon"). See `TOD
 
 ## Phase 3 – Renter portal
 
-- [ ] Browse (`BrowsePage`, placeholder, Trie location suggestions)
-- [ ] Property detail + booking (carousel, price card, book dialog) – not started
+- [x] Browse (`BrowsePage` from PR #2, `BrowseService`, Trie location suggestions)
+- [x] Property detail + booking (`BookDialog`: carousel, price card, confirm, "Payment received")
 - [ ] Booking history (`BookingHistoryPage`, placeholder)
-- [ ] Cancellations (`CancellationsPage`, placeholder)
+- [x] Cancellations (`CancellationsPage`, from PR #2; not reviewed yet)
 
 ## Blocked
 
@@ -55,3 +55,9 @@ The build passes: pages not built yet are placeholders ("Coming soon"). See `TOD
 - Messages (renter): the panel's cancel button says "Cancel stay", not the design's "Request cancellation", because a renter's cancel takes effect at once (only the refund is reviewed). "View stay" opens a read-only booking dialog with the receipt.
 - Messages search also finds people to start a conversation with, no booking needed: renters find owners by name or property name, owners find renters by name. A conversation without a booking shows in the portal that matches the other person's role (owners in the Renter portal, renters in the Owner portal).
 - Money inputs (Task 15): every amount field (acquisition cost, nightly rate, cleaning fee, item price) is read by `MoneyInput`, which accepts `2800` or `2,800` with up to 2 decimals, rejects anything else with a message naming the field, and caps the value at what the database column holds (99,999,999.99; acquisition cost 9,999,999,999.99). The peso sign isn't accepted: the field label already says (₱). Stored amounts are put back into fields as `1,250,000.00` with `Money.plain`; `Money` is the only place that defines the number format. `Formats.parseMoney` and `Formats.plainMoney` were removed.
+- Browse (built to fit PR #2's `BrowsePage`): the search loads one `BrowseService.Catalog` per page load (listings, Trie, unit calendars), so typing and clicking pills don't hit the database. A renter never sees their own properties (two-role users can't book themselves). Dates are optional, but both or neither, and use the same rules as booking (`BookingService.checkDates`: from tomorrow, 1–30 nights). Only approved stays block dates; pending requests don't, as in `BookingService.book`.
+- Browse categories: the Stitch pills (Villas, Lofts, Cabins, Work-friendly, Oceanfront, Mountain View) need tags the app doesn't store, so the pills are All homes, Whole houses, Multi-unit and Available now (a unit free today). Ratings, favourites and "Refine filters" were dropped for the same reason.
+- Property detail is a dialog (`BookDialog`), not a page, because PR #2's Browse opens it with `BookDialog.show(...)`. Left: carousel, location, host, the unit's description, house rules (check-in after 2:00 PM, check-out before 11:00 AM) and the cancellation policy. Right: price card with unit picker (multi-unit only), dates, guests (capped at the unit's capacity), special requests and the live price from `BookingService.quote`. Amenities and quiet hours from the design were dropped (no data).
+- Booking flow: Reserve → a confirm box with the full amount and the 48-hour rule → `BookingService.book` (pay first, pending) → the payment receipt image is saved → "Payment received" with the reference, stay, payment, View receipt and Message host. The design's confirm text "Free cancellation up to 48 hours before check-in" contradicts the refund tiers, so the dialog shows the real policy box instead.
+- The property dialog also has "Message host", which opens a conversation without a booking (allowed since 2026-11-11).
+- Filled buttons (`AppButton` PRIMARY / SECONDARY / DANGER) looked greyed out when they were a dialog's default button (the one Enter presses), because FlatLaf paints default buttons with its own colours. `AppButton` now gives default buttons the same colours. This also fixes the Save buttons in the unit and item dialogs.

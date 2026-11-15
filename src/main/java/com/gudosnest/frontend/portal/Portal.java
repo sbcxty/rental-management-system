@@ -5,6 +5,7 @@ import com.gudosnest.backend.database.SessionManager;
 import com.gudosnest.backend.model.Booking;
 import com.gudosnest.backend.model.User;
 import com.gudosnest.backend.service.BookingService;
+import com.gudosnest.backend.service.BrowseService;
 import com.gudosnest.backend.service.FinanceService;
 import com.gudosnest.backend.service.MessageService;
 import com.gudosnest.backend.service.OwnerService;
@@ -35,6 +36,7 @@ public abstract class Portal {
     public final OwnerService owner = new OwnerService();
     public final FinanceService finance = new FinanceService();
     public final MessageService messages = new MessageService();
+    public final BrowseService browse = new BrowseService();
 
     private Sidebar sidebar;
     private PortalShell shell;

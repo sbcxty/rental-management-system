@@ -57,6 +57,12 @@ public class BookingRepository {
                 BookingRepository::map, unitId);
     }
 
+    /** Approved bookings of every unit that end after {@code now}, so Browse loads them in one query. */
+    public List<Booking> approvedEndingAfter(LocalDateTime now) {
+        return Db.list(SELECT + " WHERE b.booking_status = 'approved' AND b.check_out > ? ORDER BY b.check_in",
+                BookingRepository::map, now);
+    }
+
     /** Other pending bookings of the same unit that overlap [checkIn, checkOut). */
     public List<Booking> pendingOverlapping(int unitId, LocalDateTime checkIn, LocalDateTime checkOut, int excludeId) {
         return Db.list(SELECT + " WHERE b.unit_id = ? AND b.booking_status = 'pending' AND b.booking_id <> ?"
