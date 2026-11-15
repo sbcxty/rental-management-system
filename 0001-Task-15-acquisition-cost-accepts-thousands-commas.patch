@@ -1,0 +1,143 @@
+From d426a3cdaca389c8d96a7c0703ff007031835ec2 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Sat, 14 Nov 2026 17:24:32 +0800
+Subject: [PATCH] Task 15: acquisition cost accepts thousands commas
+
+Add MoneyInput (strict parse to BigDecimal, comma formatting) and use it in
+Add/Edit Property: accepts 1250000, 1,250,000, 1,250,000.50 and surrounding
+spaces; rejects letters, misplaced commas, more than one decimal point, more
+than 2 decimals, negatives, empty input and values too large for DECIMAL(12,2).
+Edit Property now pre-fills the cost as 1,250,000.00.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01S9GXEsE8MLxRtGGpL5UzMm
+---
+ .../frontend/components/MoneyInput.java       | 73 +++++++++++++++++++
+ .../frontend/owner/PropertyDialog.java        | 11 +--
+ 2 files changed, 77 insertions(+), 7 deletions(-)
+ create mode 100644 src/main/java/com/gudosnest/frontend/components/MoneyInput.java
+
+diff --git a/src/main/java/com/gudosnest/frontend/components/MoneyInput.java b/src/main/java/com/gudosnest/frontend/components/MoneyInput.java
+new file mode 100644
+index 0000000..0a775d2
+--- /dev/null
++++ b/src/main/java/com/gudosnest/frontend/components/MoneyInput.java
+@@ -0,0 +1,73 @@
++package com.gudosnest.frontend.components;
++
++import com.gudosnest.backend.service.RuleException;
++
++import java.math.BigDecimal;
++import java.math.RoundingMode;
++import java.text.DecimalFormat;
++import java.text.DecimalFormatSymbols;
++import java.util.Locale;
++import java.util.regex.Pattern;
++
++/**
++ * Strict reading and writing of a peso amount typed into a text field, with thousands commas:
++ *   "1250000", "1,250,000", " 1,250,000.50 "  ->  1250000.00 / 1250000.50
++ * Unlike {@link Formats#parseMoney}, a wrong value is not guessed at: the person is told what to fix.
++ */
++public final class MoneyInput {
++
++    /** Digits with commas every 3 digits, or digits with no commas; then up to 2 decimals. */
++    private static final Pattern AMOUNT = Pattern.compile("(\\d{1,3}(,\\d{3})+|\\d+)(\\.\\d{1,2})?");
++
++    /** DECIMAL(12,2) holds at most 10 digits before the decimal point. */
++    private static final int MAX_WHOLE_DIGITS = 10;
++
++    private static final ThreadLocal<DecimalFormat> FORMAT = ThreadLocal.withInitial(
++            () -> new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.US)));
++
++    private MoneyInput() {
++    }
++
++    /**
++     * Reads an amount of 0 or more. Throws a {@link RuleException} with a message that names the
++     * field (for example "Acquisition cost") when the text is empty or not a valid amount.
++     */
++    public static BigDecimal parse(String text, String fieldName) {
++        String example = " For example 1,250,000 or 1,250,000.50.";
++        String s = text == null ? "" : text.strip();
++        if (s.startsWith("₱")) {
++            s = s.substring(1).strip();
++        }
++        if (s.isEmpty()) {
++            throw new RuleException("Enter the " + fieldName.toLowerCase() + "." + example);
++        }
++        if (s.startsWith("-")) {
++            throw new RuleException(fieldName + " can't be negative.");
++        }
++        if (!s.matches("[0-9.,]+")) {
++            throw new RuleException(fieldName + " can only have numbers, commas and a decimal point." + example);
++        }
++        int dot = s.indexOf('.');
++        if (dot != s.lastIndexOf('.')) {
++            throw new RuleException(fieldName + " can have only one decimal point." + example);
++        }
++        if (dot >= 0 && s.length() - dot - 1 > 2) {
++            throw new RuleException(fieldName + " can have at most 2 decimal places." + example);
++        }
++        if (!AMOUNT.matcher(s).matches()) {
++            throw new RuleException(fieldName + " isn't a valid amount. Put commas every 3 digits (or leave them out)"
++                    + " and a number before and after the decimal point." + example);
++        }
++        String plain = s.replace(",", "");
++        String whole = dot >= 0 ? plain.substring(0, plain.indexOf('.')) : plain;
++        if (whole.replaceFirst("^0+(?=\\d)", "").length() > MAX_WHOLE_DIGITS) {
++            throw new RuleException(fieldName + " is too large.");
++        }
++        return new BigDecimal(plain).setScale(2, RoundingMode.UNNECESSARY);
++    }
++
++    /** "1,250,000.00" for putting a stored amount back into a text field (no peso sign). */
++    public static String format(BigDecimal amount) {
++        return amount == null ? "" : FORMAT.get().format(amount.setScale(2, RoundingMode.HALF_UP));
++    }
++}
+diff --git a/src/main/java/com/gudosnest/frontend/owner/PropertyDialog.java b/src/main/java/com/gudosnest/frontend/owner/PropertyDialog.java
+index 3b93dd7..616fa7d 100644
+--- a/src/main/java/com/gudosnest/frontend/owner/PropertyDialog.java
++++ b/src/main/java/com/gudosnest/frontend/owner/PropertyDialog.java
+@@ -6,8 +6,8 @@ import com.gudosnest.backend.service.RuleException;
+ import com.gudosnest.frontend.components.AppButton;
+ import com.gudosnest.frontend.components.AppDialog;
+ import com.gudosnest.frontend.components.DateField;
+-import com.gudosnest.frontend.components.Formats;
+ import com.gudosnest.frontend.components.ImageUtil;
++import com.gudosnest.frontend.components.MoneyInput;
+ import com.gudosnest.frontend.components.Segmented;
+ import com.gudosnest.frontend.components.Ui;
+ import com.gudosnest.frontend.portal.Portal;
+@@ -56,13 +56,13 @@ final class PropertyDialog {
+ 
+         JTextField name = Ui.textField("For example Highland Glass Cabin");
+         JTextField location = Ui.textField("For example Tagaytay Ridge, Cavite");
+-        JTextField cost = Ui.textField("For example 4500000");
++        JTextField cost = Ui.textField("For example 4,500,000");
+         DateField acquired = new DateField("Pick a date");
+         acquired.setMaximum(LocalDate.now());
+         if (!adding) {
+             name.setText(existing.getName());
+             location.setText(existing.getLocation());
+-            cost.setText(Formats.plainMoney(existing.getAcquisitionCost()));
++            cost.setText(MoneyInput.format(existing.getAcquisitionCost()));
+             acquired.setValue(existing.getAcquisitionDate());
+         }
+         body.add(Ui.field("Property name", name));
+@@ -114,10 +114,7 @@ final class PropertyDialog {
+         save.addActionListener(e -> {
+             int ownerId = portal.user().getId();
+             boolean ok = BookingReviewDialog.run(dialog, () -> {
+-                BigDecimal acquisitionCost = Formats.parseMoney(cost.getText());
+-                if (acquisitionCost == null) {
+-                    throw new RuleException("Enter the acquisition cost as a number, for example 4500000.");
+-                }
++                BigDecimal acquisitionCost = MoneyInput.parse(cost.getText(), "Acquisition cost");
+                 boolean house = adding ? type.getSelectedIndex() == 0 : existing.isHouse();
+                 Unit unit = house ? unitFields.toUnit(houseUnit.getId(), adding ? 0 : existing.getId(),
+                         houseUnit.isOccupied()) : null;
+-- 
+2.43.0
+
