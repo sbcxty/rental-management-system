@@ -27,10 +27,29 @@ public final class RefundReviewDialog {
     }
 
     public static boolean show(Component parent, Portal portal, RefundRow refund) {
-        Booking b = refund.booking();
         boolean[] changed = {false};
         AppDialog dialog = new AppDialog(parent, "Refund request");
-        JPanel body = dialog.getBody();
+        fill(dialog, dialog.getBody(), parent, portal, refund, changed, false);
+        dialog.showDialog(560);
+        if (changed[0]) {
+            portal.refreshBadges();
+        }
+        return changed[0];
+    }
+
+    /**
+     * Shows the refund review as the next page of an open dialog (the booking dialog's "Refund"
+     * button), with "Go back" to return. Sets changed[0] when the refund is approved or rejected.
+     */
+    static void showAsPage(AppDialog dialog, Component parent, Portal portal, RefundRow refund, boolean[] changed) {
+        fill(dialog, dialog.nextPage("Refund request"), parent, portal, refund, changed, true);
+        dialog.refit();
+    }
+
+    /** The summary (with the cancellation fee taken off) and the approve / reject buttons. */
+    private static void fill(AppDialog dialog, JPanel body, Component parent, Portal portal, RefundRow refund,
+                             boolean[] changed, boolean asPage) {
+        Booking b = refund.booking();
 
         body.add(Ui.label(b.getPropertyName() + " · " + b.getUnitLabel(), Fonts.cardTitle(), Colors.TEXT));
         body.add(Ui.muted(b.getRenterName() + " · " + Formats.ref(b.getId(), b.getCreatedAt())
@@ -81,18 +100,17 @@ public final class RefundReviewDialog {
                 AppDialog.info(parent, "Refund of " + Formats.money(refund.amount()) + " paid to " + b.getRenterName() + ".");
             }
         });
-        AppButton message = new AppButton("Message renter", AppButton.Style.OUTLINED).withIcon("message-square");
-        message.addActionListener(e -> {
-            dialog.dispose();
-            portal.openConversation(b.getRenterId(), b.getRenterName(), b);
-        });
-        dialog.addLeftButton(message);
+        if (asPage) {
+            dialog.addBackButton("Go back");
+        } else {
+            AppButton message = new AppButton("Message renter", AppButton.Style.OUTLINED).withIcon("message-square");
+            message.addActionListener(e -> {
+                dialog.dispose();
+                portal.openConversation(b.getRenterId(), b.getRenterName(), b);
+            });
+            dialog.addLeftButton(message);
+        }
         dialog.addButton(reject);
         dialog.addButton(approve);
-        dialog.showDialog(560);
-        if (changed[0]) {
-            portal.refreshBadges();
-        }
-        return changed[0];
     }
 }

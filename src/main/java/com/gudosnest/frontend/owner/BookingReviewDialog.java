@@ -24,7 +24,9 @@ import java.util.function.Consumer;
 
 /**
  * Everything an owner does with one booking happens here: approve or reject a pending booking,
- * cancel an upcoming one (full refund), mark a stay as completed, see the receipt, message the renter.
+ * cancel an upcoming one (full refund), mark a stay as completed, refund a cancelled one whose refund
+ * is waiting for review (same as on Payments: the cancellation fee stays off), see the receipt,
+ * message the renter.
  * Returns true from {@link #show} if something changed, so the page can reload.
  */
 public final class BookingReviewDialog {
@@ -68,7 +70,7 @@ public final class BookingReviewDialog {
             portal.openConversation(b.getRenterId(), b.getRenterName(), b);
         });
         dialog.addLeftButton(message);
-        AppButton receipt = new AppButton("View receipt", AppButton.Style.TEXT).withIcon("receipt");
+        AppButton receipt = new AppButton("View receipt", AppButton.Style.TEXT).withIcon("receipt").withControlHeight();
         receipt.addActionListener(e -> BookingUi.showPaymentReceipt(dialog, b));
         dialog.addLeftButton(receipt);
 
@@ -127,6 +129,15 @@ public final class BookingReviewDialog {
                             }
                         }));
                 dialog.addButton(complete);
+            }
+            case CANCELLED -> {
+                // Renter cancelled an approved booking and the refund waits for the owner's review
+                if (b.getRefundId() != null && "requested".equals(b.getRefundStatus())) {
+                    AppButton refund = new AppButton("Refund", AppButton.Style.PRIMARY).withIcon("refresh-ccw");
+                    refund.addActionListener(e -> RefundReviewDialog.showAsPage(dialog, parent, portal,
+                            portal.owner.refund(b.getRefundId()), changed));
+                    dialog.addButton(refund);
+                }
             }
             default -> {
                 // Nothing to do: the window's X or Esc closes it

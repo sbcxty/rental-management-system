@@ -120,7 +120,7 @@ public class NeedsAttentionPage extends BasePage {
         JPanel text = Ui.transparent("insets 0, gap 0 2, wrap 1", "[grow,fill]");
         JPanel titleRow = Ui.transparent("insets 0, gap 8", "[][]");
         titleRow.add(Ui.label(BookingUi.place(b), Fonts.bodyMedium(), Colors.TEXT), "wmin 0");
-        titleRow.add(new Badge(item.isRefund() ? "Refund request" : "Pending booking", Badge.Tone.NEUTRAL));
+        titleRow.add(item.isRefund() ? new Badge("Refund request", Badge.Tone.NEUTRAL) : new Badge("Pending booking", Badge.Tone.PENDING));
         text.add(titleRow, "wmin 0");
         text.add(Ui.caption(b.getRenterName() + " · " + Formats.ref(b.getId(), b.getCreatedAt())
                 + " · " + BookingUi.dates(b) + " · " + Formats.guests(b.getGuests())), "wmin 0");

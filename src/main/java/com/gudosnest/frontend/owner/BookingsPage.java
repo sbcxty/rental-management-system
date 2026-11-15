@@ -56,7 +56,7 @@ public class BookingsPage extends BasePage {
                 .toList();
 
         PageHeader header = new PageHeader("Bookings");
-        header.setSubtitle("Click a booking to approve, reject, cancel or complete it.");
+        header.setSubtitle("Click a booking to approve, reject, cancel, complete or refund it.");
         PropertyFilter filter = new PropertyFilter(portal.owner.properties(ownerId), propertyId);
         filter.onChange(() -> {
             propertyId = filter.selectedId();

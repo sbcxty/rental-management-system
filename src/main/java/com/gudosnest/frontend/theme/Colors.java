@@ -39,6 +39,8 @@ public final class Colors {
     public static final Color SUCCESS = new Color(0x2F6B3F);       // Completed pill text
     public static final Color WARNING_TINT = new Color(0xF7EBD9);  // Cancelled / Rejected pill fill
     public static final Color WARNING = new Color(0x8A5A1F);       // Cancelled / Rejected pill text
+    public static final Color PENDING_TINT = new Color(0xFFF1B8);  // Pending pill fill
+    public static final Color PENDING = new Color(0x6E5600);       // Pending pill text
     public static final Color TABLE_HEADER = new Color(0xF7F5F9);  // light tint behind table headers
 
     // Sidebar (light, as in the Stitch designs; Burgundy logo square)
