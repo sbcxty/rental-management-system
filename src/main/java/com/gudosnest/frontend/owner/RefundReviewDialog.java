@@ -97,7 +97,7 @@ public final class RefundReviewDialog {
                 LocalDateTime at = done.processedAt() == null ? LocalDateTime.now() : done.processedAt();
                 Receipt.forRefund(done.booking(), at).saveQuietly(
                         com.gudosnest.backend.service.ReceiptPaths.refund(refund.paymentId()));
-                AppDialog.info(parent, "Refund of " + Formats.money(refund.amount()) + " paid to " + b.getRenterName() + ".");
+                AppDialog.info(parent, "Refund paid", "Refund of " + Formats.money(refund.amount()) + " paid to " + b.getRenterName() + ".");
             }
         });
         if (asPage) {

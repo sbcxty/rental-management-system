@@ -19,9 +19,9 @@ public final class Main {
             try {
                 DatabaseConnection.getInstance().getConnection();
             } catch (Exception e) {
-                AppDialog.error(null, "Gudo's Nest can't reach the database.\n\n" + rootMessage(e)
-                        + "\n\nCheck that MySQL is running, that db/schema.sql has been run, and that"
-                        + "\nconfig.properties (in the project folder) has the right user and password.");
+                AppDialog.error(null, "Can't reach the database", rootMessage(e)
+                        + "\n\nCheck that MySQL is running, that db/schema.sql has been run, and that "
+                        + "config.properties (in the project folder) has the right user and password.");
                 System.exit(1);
             }
             Runtime.getRuntime().addShutdownHook(new Thread(() -> DatabaseConnection.getInstance().close()));

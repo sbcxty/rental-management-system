@@ -248,7 +248,8 @@ public class InventoryPage extends BasePage {
         AppButton delete = new AppButton("", AppButton.Style.TEXT).withIcon("trash-2");
         delete.setToolTipText("Delete item");
         delete.addActionListener(e -> {
-            if (AppDialog.confirm(this, "Delete " + item.getName() + " from this inventory?", "Delete item")) {
+            if (AppDialog.confirm(this, "Delete " + item.getName() + "?",
+                    "It is removed from this inventory. This can't be undone.", "Delete item")) {
                 act(() -> portal.owner.deleteItem(item), null);
             }
         });
@@ -285,13 +286,13 @@ public class InventoryPage extends BasePage {
             List<Item> sourceItems = tree.getChildren().stream().filter(t -> t.getName().equals(from.getName()))
                     .findFirst().map(InventoryTree::getItems).orElse(List.of());
             if (sourceItems.isEmpty()) {
-                AppDialog.error(dialog, from.getName() + " has no items to copy.");
+                AppDialog.error(dialog, "Nothing to copy", from.getName() + " has no items to copy.");
                 return;
             }
             int[] copied = {0};
             if (BookingReviewDialog.run(dialog, () -> copied[0] = portal.owner.copyInventory(sourceItems, unitId, items))) {
                 dialog.dispose();
-                AppDialog.info(this, "Copied " + copied[0] + (copied[0] == 1 ? " item." : " items."));
+                AppDialog.info(this, "Items copied", "Copied " + copied[0] + (copied[0] == 1 ? " item." : " items."));
                 reload();
             }
         });

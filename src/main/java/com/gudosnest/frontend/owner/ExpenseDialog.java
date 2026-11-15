@@ -30,7 +30,7 @@ final class ExpenseDialog {
     /** Returns true if an expense was added. {@code propertyId} (may be null) is selected first. */
     static boolean show(Component parent, Portal portal, List<Property> properties, Integer propertyId) {
         if (properties.isEmpty()) {
-            AppDialog.info(parent, "Add a property first; expenses are recorded per property.");
+            AppDialog.info(parent, "No properties yet", "Add a property first; expenses are recorded per property.");
             return false;
         }
         boolean[] added = {false};

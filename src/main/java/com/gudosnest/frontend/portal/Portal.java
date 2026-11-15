@@ -81,7 +81,8 @@ public abstract class Portal {
 
             @Override
             public void onLogOut() {
-                if (AppDialog.confirm(window, "Log out of Gudo's Nest?", "Log out")) {
+                if (AppDialog.confirm(window, "Log out?", "You'll need your email and password to log in again.",
+                        "Log out", com.gudosnest.frontend.components.AppButton.Style.PRIMARY, "log-out")) {
                     window.logOut();
                 }
             }

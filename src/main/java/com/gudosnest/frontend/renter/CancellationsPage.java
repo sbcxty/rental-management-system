@@ -172,7 +172,8 @@ public class CancellationsPage extends BasePage {
 
     private void submit(JCheckBox understood, String reason, String context) {
         if (!understood.isSelected()) {
-            AppDialog.error(this, "Please confirm that you understand the cancellation policy before continuing.");
+            AppDialog.error(this, "Confirm the policy first",
+                    "Please confirm that you understand the cancellation policy before continuing.");
             return;
         }
         Booking b;
@@ -189,7 +190,7 @@ public class CancellationsPage extends BasePage {
         String outcome = quote.refundsAnything()
                 ? "You get back " + Formats.money(quote.refund()) + "."
                 : "No refund applies, because check-in is too close.";
-        if (!AppDialog.confirm(this, "Cancel " + what + "?\n" + outcome + "\nThis can't be undone.",
+        if (!AppDialog.confirm(this, "Cancel this stay?", what + "\n\n" + outcome + " This can't be undone.",
                 "Cancel stay")) {
             return;
         }

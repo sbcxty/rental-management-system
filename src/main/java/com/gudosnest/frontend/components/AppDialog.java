@@ -8,7 +8,6 @@ import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.KeyStroke;
@@ -58,7 +57,7 @@ public class AppDialog extends JDialog {
     }
 
     public AppDialog(Component parent, String titleText) {
-        super(parent instanceof Window w ? w : SwingUtilities.getWindowAncestor(parent),
+        super(parent == null ? null : parent instanceof Window w ? w : SwingUtilities.getWindowAncestor(parent),
                 "Gudo's Nest", ModalityType.APPLICATION_MODAL);
 
         JPanel root = new JPanel(new MigLayout("insets 24, fill, gap 0", "[grow,fill]", "[]16[grow,fill]24[]"));
@@ -92,12 +91,20 @@ public class AppDialog extends JDialog {
 
     /** Adds a button on the right of the footer. Add them in reading order, primary last. */
     public void addButton(JButton button) {
-        footerRight.add(button);
+        footerRight.add(sameHeight(button));
     }
 
     /** Adds a button on the left of the footer (for example "Message renter"). */
     public void addLeftButton(JButton button) {
-        footerLeft.add(button);
+        footerLeft.add(sameHeight(button));
+    }
+
+    /** Footer buttons share one height, so a TEXT button ("View receipt") lines up with an outlined one. */
+    private static JButton sameHeight(JButton button) {
+        if (button instanceof AppButton b) {
+            b.withControlHeight();
+        }
+        return button;
     }
 
     /** A plain "Close" button. */
@@ -270,24 +277,89 @@ public class AppDialog extends JDialog {
         return w;
     }
 
-    // Simple shared message boxes.
+    // ------------------------------------------------------------------------- message boxes
+    // Small AppDialogs in the app's style: an icon tile, a title, the message, and app buttons.
     // They are centred on the app window, not on the component passed in: pages are taller than the
     // screen (they sit in a scroll pane), so centring on the page put the box at the screen edge.
 
+    /** Width of a message box and of its wrapped text, so long messages wrap instead of widening it. */
+    private static final int BOX_WIDTH = 440;
+    private static final int BOX_TEXT_WIDTH = 324;
+
+    /** Something worked: "Done" and the message, with an OK button. */
     public static void info(Component parent, String message) {
-        JOptionPane.showMessageDialog(windowOf(parent), message, "Gudo's Nest", JOptionPane.PLAIN_MESSAGE);
+        info(parent, "Done", message);
     }
 
+    public static void info(Component parent, String title, String message) {
+        notice(parent, title, message, "check", Colors.SUCCESS_TINT, Colors.SUCCESS);
+    }
+
+    /** Something couldn't be done (a broken rule or a database problem), with the reason. */
     public static void error(Component parent, String message) {
-        JOptionPane.showMessageDialog(windowOf(parent), message, "Gudo's Nest", JOptionPane.ERROR_MESSAGE);
+        error(parent, "Couldn't do that", message);
     }
 
-    /** Yes/No question. Returns true if the user chose the confirm option. */
-    public static boolean confirm(Component parent, String message, String confirmText) {
-        Object[] options = {confirmText, "Go back"};
-        int choice = JOptionPane.showOptionDialog(windowOf(parent), message, "Gudo's Nest",
-                JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null, options, options[1]);
-        return choice == 0;
+    public static void error(Component parent, String title, String message) {
+        notice(parent, title, message, "circle-alert", Colors.WARNING_TINT, Colors.DANGER);
+    }
+
+    /**
+     * A question before a destructive step (Delete, Cancel): "Go back" or a red confirm button.
+     * Returns true if the user chose the confirm button; Esc and the window's X mean Go back.
+     */
+    public static boolean confirm(Component parent, String title, String message, String confirmText) {
+        return confirm(parent, title, message, confirmText, AppButton.Style.DANGER, "triangle-alert");
+    }
+
+    /** The same question with a chosen confirm style and icon (Log out is PRIMARY, not red). */
+    public static boolean confirm(Component parent, String title, String message, String confirmText,
+                                  AppButton.Style style, String icon) {
+        boolean danger = style == AppButton.Style.DANGER;
+        boolean[] confirmed = {false};
+        AppDialog box = messageBox(parent, title, message, icon,
+                danger ? Colors.WARNING_TINT : Colors.PRIMARY_TINT, danger ? Colors.DANGER : Colors.PRIMARY);
+        AppButton back = new AppButton("Go back", AppButton.Style.OUTLINED);
+        back.addActionListener(e -> box.dispose());
+        box.addButton(back);
+        AppButton confirm = new AppButton(confirmText, style);
+        confirm.addActionListener(e -> {
+            confirmed[0] = true;
+            box.dispose();
+        });
+        box.addButton(confirm);
+        SwingUtilities.invokeLater(back::requestFocusInWindow);   // Space on open = the safe choice
+        box.showDialog(BOX_WIDTH);
+        return confirmed[0];
+    }
+
+    private static void notice(Component parent, String title, String message, String icon,
+                               java.awt.Color tint, java.awt.Color iconColor) {
+        AppDialog box = messageBox(parent, title, message, icon, tint, iconColor);
+        AppButton ok = new AppButton("OK", AppButton.Style.PRIMARY);
+        ok.addActionListener(e -> box.dispose());
+        box.addButton(ok);
+        box.getRootPane().setDefaultButton(ok);
+        box.showDialog(BOX_WIDTH);
+    }
+
+    /** Icon tile on the left; title and message on the right. The caller adds the buttons. */
+    private static AppDialog messageBox(Component parent, String title, String message, String icon,
+                                        java.awt.Color tint, java.awt.Color iconColor) {
+        AppDialog box = new AppDialog(windowOf(parent), "");
+        // The title sits beside the icon instead, so the dialog's title row and its gap go away
+        box.title.setVisible(false);
+        MigLayout layout = (MigLayout) box.getContentPane().getLayout();
+        layout.setComponentConstraints(box.title, "wrap, hidemode 3");
+        layout.setRowConstraints("[grow,fill]24[]");   // hidemode 3 drops the title row: body, then footer
+        JPanel row = Ui.transparent("insets 0, gap 16", "[][grow,fill]");
+        row.add(Widgets.iconTile(icon, tint, iconColor), "w 40!, h 40!, aligny top");
+        JPanel text = Ui.transparent("insets 0, gap 0 6, wrap 1", "[grow,fill]");
+        text.add(Ui.label(title, Fonts.cardTitle(), Colors.TEXT));
+        text.add(Widgets.wrap(message, Fonts.body(), Colors.TEXT_MUTED, BOX_TEXT_WIDTH), "wmin 0");
+        row.add(text, "wmin 0");
+        box.getBody().add(row);
+        return box;
     }
 
     /**
