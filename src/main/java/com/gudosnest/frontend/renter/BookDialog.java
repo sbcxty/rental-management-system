@@ -29,8 +29,10 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
+import javax.swing.JTextField;
 import java.awt.Component;
+import java.awt.Dimension;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -63,10 +65,10 @@ final class BookDialog {
     private final DateField checkIn = new DateField("Check-in");
     private final DateField checkOut = new DateField("Check-out");
     private Stepper guests;
-    private final JTextArea requests = Ui.textArea(2);
+    private final JTextField requests = Ui.textField("Special requests (optional)");
     private final JLabel rate = Ui.label("", Fonts.sectionTitle(), Colors.TEXT);
     private final JLabel about = Widgets.wrap("", Fonts.body(), Colors.TEXT);
-    private final JPanel breakdown = Ui.transparent("insets 0, gap 0 6, fillx, wrap 1", "[grow,fill]");
+    private final JPanel breakdown = new Breakdown();
     private final AppButton reserve = new AppButton("Reserve", AppButton.Style.PRIMARY).withIcon("credit-card");
 
     private Booking open(Component parent, Portal portal, Property p, LocalDate in, LocalDate out,
@@ -81,13 +83,14 @@ final class BookDialog {
         setUpDates(in, out);
 
         // The price card sets the height; the details scroll inside it, so the dialog fits a laptop screen.
-        JPanel columns = new JPanel(new MigLayout("insets 0, gap 24, fill", "[440!][340!]", "[grow,fill]"));
+        // The card fills its column, so its right edge lines up with the Reserve button below it.
+        JPanel columns = new JPanel(new MigLayout("insets 0, gap 20, fill", "[400!][320!]", "[grow,fill]"));
         columns.setOpaque(false);
         JScrollPane left = Ui.scroll(details());
         left.getViewport().setBackground(Colors.CARD);
         left.getViewport().getView().setBackground(Colors.CARD);
         columns.add(left, "h 120:120, growy");
-        columns.add(priceCard(), "aligny top");
+        columns.add(priceCard(), "grow");
         dialog.getBody().add(columns);
 
         AppButton message = new AppButton("Message host", AppButton.Style.OUTLINED).withIcon("message-square");
@@ -95,7 +98,7 @@ final class BookDialog {
             dialog.dispose();
             portal.openConversation(p.getOwnerId(), p.getOwnerName(), null);
         });
-        dialog.addLeftButton(message);
+        dialog.addLeftButton(message);      // no Close button: Esc and the window's X close it
         reserve.addActionListener(e -> reserve());
         dialog.addButton(reserve);
         dialog.getRootPane().setDefaultButton(reserve);
@@ -104,7 +107,7 @@ final class BookDialog {
         guests.onChange(v -> refresh());
         checkOut.onChange(v -> refresh());
         refresh();
-        dialog.showDialog(860);
+        dialog.showDialog(800);
 
         if (made != null) {
             showBooked(parent, made);
@@ -117,7 +120,7 @@ final class BookDialog {
     /** Left column: carousel, name, about the unit, check-in and check-out times, cancellation policy. */
     private JComponent details() {
         JPanel left = Ui.transparent("insets 0 0 0 12, gap 0, fillx, wrap 1", "[grow,fill]");
-        Carousel carousel = new Carousel(190);
+        Carousel carousel = new Carousel(165);
         carousel.setPhotos(property.getImages());
         left.add(carousel, "gapbottom 14");
 
@@ -147,8 +150,11 @@ final class BookDialog {
         head.add(Ui.caption("/ night"), "aligny bottom");
         card.add(head, "gapbottom 8");
 
-        if (property.getUnits().size() > 1) {
-            card.add(Ui.field("Unit", unitPicker), "gapbottom 8");
+        if (property.getUnits().size() > 1) {      // label beside the field, like Guests, to keep the card short
+            JPanel unitRow = Ui.transparent("insets 0, fillx", "[]16[grow,fill]");
+            unitRow.add(Ui.label("Unit", Fonts.bodyMedium(), Colors.TEXT));
+            unitRow.add(unitPicker, "wmin 0");
+            card.add(unitRow, "gapbottom 8");
         }
         JPanel dates = Ui.transparent("insets 0, gap 8, fillx", "[grow,fill,sg d][grow,fill,sg d]");
         dates.add(Ui.field("Check-in", checkIn), "wmin 0");
@@ -158,7 +164,7 @@ final class BookDialog {
         guestRow.add(Ui.label("Guests", Fonts.bodyMedium(), Colors.TEXT));
         guestRow.add(guests);
         card.add(guestRow, "gapbottom 8");
-        card.add(Ui.field("Special requests (optional)", new JScrollPane(requests)), "gapbottom 12");
+        card.add(requests, "gapbottom 12");
 
         card.add(breakdown, "gapbottom 10");
         card.add(Widgets.wrap("Owner approves within " + BookingService.APPROVAL_HOURS
@@ -211,14 +217,7 @@ final class BookDialog {
                 throw new RuleException(unit.getName() + " is already booked on those dates. Try other dates"
                         + (property.getUnits().size() > 1 ? " or another unit." : "."));
             }
-            for (Price.Line line : price.lines()) {
-                breakdown.add(Ui.row(line.label(), (line.discount() ? "-" : "") + Formats.money(line.amount())));
-            }
-            breakdown.add(Ui.divider(), "gaptop 2");
-            JPanel total = Ui.transparent("insets 0, fillx", "[grow][right]");
-            total.add(Ui.label("Total", Fonts.bodyBold(), Colors.TEXT));
-            total.add(Ui.label(Formats.money(price.total()), Fonts.sectionTitle(), Colors.TEXT));
-            breakdown.add(total);
+            fillBreakdown(breakdown, price.lines(), price.total());
             reserve.setText("Reserve · Pay " + Formats.money(price.total()));
             reserve.setEnabled(true);
         } catch (RuleException | DataException e) {
@@ -228,13 +227,44 @@ final class BookDialog {
         }
         breakdown.revalidate();
         breakdown.repaint();
-        growToFit();
     }
 
-    /** The price can gain a line (discount, cleaning fee): make the open dialog taller instead of cutting it. */
-    private void growToFit() {
-        if (dialog.isShowing() && dialog.getPreferredSize().height > dialog.getHeight()) {
-            dialog.setSize(dialog.getWidth(), dialog.getPreferredSize().height);
+    /** The price lines (nights, cleaning fee, weekly discount), a divider, and the total. */
+    private static void fillBreakdown(JPanel target, List<Price.Line> lines, BigDecimal totalAmount) {
+        for (Price.Line line : lines) {
+            target.add(Ui.row(line.label(), (line.discount() ? "-" : "") + Formats.money(line.amount())));
+        }
+        target.add(Ui.divider(), "gaptop 2");
+        JPanel total = Ui.transparent("insets 0, fillx", "[grow][right]");
+        total.add(Ui.label("Total", Fonts.bodyBold(), Colors.TEXT));
+        total.add(Ui.label(Formats.money(totalAmount), Fonts.sectionTitle(), Colors.TEXT));
+        target.add(total);
+    }
+
+    /**
+     * The price breakdown, always as tall as its longest form (nights, cleaning fee and discount, then
+     * the total). The dialog is sized when it opens, so picking dates fills space that is already
+     * there instead of making the dialog taller and pushing it off centre.
+     */
+    private static final class Breakdown extends JPanel {
+        private static final String LAYOUT = "insets 0, gap 0 6, fillx, wrap 1";
+        private final int tallest;
+
+        Breakdown() {
+            super(new MigLayout(LAYOUT, "[grow,fill]"));
+            setOpaque(false);
+            JPanel sample = new JPanel(new MigLayout(LAYOUT, "[grow,fill]"));
+            BigDecimal any = BigDecimal.ONE;
+            fillBreakdown(sample, List.of(new Price.Line("Nights", any, false),
+                    new Price.Line("Cleaning fee", any, false), new Price.Line("Discount", any, true)), any);
+            tallest = sample.getPreferredSize().height;
+        }
+
+        @Override
+        public Dimension getPreferredSize() {
+            Dimension size = super.getPreferredSize();
+            size.height = Math.max(size.height, tallest);
+            return size;
         }
     }
 

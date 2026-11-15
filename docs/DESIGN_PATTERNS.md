@@ -318,7 +318,7 @@ Note: line 276 (automatic full refund) runs when an owner rejects or cancels a b
 **What it is:** A Facade is one simple class that hides a complicated set of steps behind it. The screens call one method, and the facade does all the work across many other classes.
 
 **Where to find it:**
-- `src/main/java/com/gudosnest/backend/service/BookingService.java`, lines 19–25 (the comment and class). For example `reject(...)` at lines 208–217 and `approve(...)` at lines 187–206. The renter's booking dialog uses it too: `quote(...)` for the live price and `book(...)` to pay (`src/main/java/com/gudosnest/frontend/renter/BookDialog.java`, lines 210 and 262).
+- `src/main/java/com/gudosnest/backend/service/BookingService.java`, lines 19–25 (the comment and class). For example `reject(...)` at lines 208–217 and `approve(...)` at lines 187–206. The renter's booking dialog uses it too: `quote(...)` for the live price and `book(...)` to pay (`src/main/java/com/gudosnest/frontend/renter/BookDialog.java`, lines 215 and 291).
 - The screen calls it in `src/main/java/com/gudosnest/frontend/owner/BookingReviewDialog.java`, lines 80, 88, 106 and 121.
 
 

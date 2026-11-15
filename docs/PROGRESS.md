@@ -24,7 +24,7 @@ The build passes: pages not built yet are placeholders ("Coming soon"). See `TOD
 ## Phase 3 – Renter portal
 
 - [x] Browse (`BrowsePage` from PR #2, `BrowseService`, Trie location suggestions)
-- [x] Property detail + booking (`BookDialog`: carousel, price card, confirm, "Payment received")
+- [x] Property detail + booking (`BookDialog`: carousel, price card, confirm, "Payment received"). Nov 15: no Close button (Esc and the window's X close it); price card fills its column so it lines up with Reserve; the dialog is smaller (columns 400 + 320, carousel 165, Unit beside its field, special requests as one line with a placeholder) and keeps its size and centre when dates are picked, because the price breakdown always has room for its longest form
 - [ ] Booking history (`BookingHistoryPage`, placeholder)
 - [x] Cancellations (`CancellationsPage`, from PR #2; not reviewed yet). Fixed: the "I understand" tick disappeared after clicking and moving the mouse away (focused checkboxes now stay filled, `Theme`); the reservation field's text is centred vertically; the footer says "Cancelled automatically" (was "Step 1 of 1")
 
@@ -38,6 +38,8 @@ The build passes: pages not built yet are placeholders ("Coming soon"). See `TOD
 - Messages' "Cancel stay" opens `CancellationsPage`, which is still a placeholder.
 
 ## Decisions made without asking
+
+- Cards never showed their 1px outline: setting a FlatLaf style on a panel drops its FlatLineBorder, and `Card` set the border first. `Card` (and the sign-up role boxes in `AuthScreen`) now set the style first, so every card has its light outline (approved Nov 15).
 
 - Work is committed on branch `portal-pages`, not `main` (the repo rule is to branch before committing on the default branch). Merge it when you're happy.
 - The first commit also contains the earlier uncommitted Phase 2 / Phase 4 work, because `git add -A` was requested.

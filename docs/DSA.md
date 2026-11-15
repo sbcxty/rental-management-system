@@ -99,7 +99,7 @@ In the time complexities, **n** means the number of items in the structure unles
     }
 ```
 
-**What it's used for in the app:** Before a booking is approved, the app checks that the unit's dates are still free, so two approved stays never overlap. Line 191 runs when an owner presses Approve; line 73 shows a renter whether the unit is free while they pick dates in the booking dialog (`src/main/java/com/gudosnest/frontend/renter/BookDialog.java`, line 211), and line 112 checks again when they pay. On Browse, searching with dates hides every unit whose calendar has an approved stay on those dates.
+**What it's used for in the app:** Before a booking is approved, the app checks that the unit's dates are still free, so two approved stays never overlap. Line 191 runs when an owner presses Approve; line 73 shows a renter whether the unit is free while they pick dates in the booking dialog (`src/main/java/com/gudosnest/frontend/renter/BookDialog.java`, line 216), and line 112 checks again when they pay. On Browse, searching with dates hides every unit whose calendar has an approved stay on those dates.
 
 **Time complexity:** O(log n + k) per check, where k is the number of overlapping stays found: `floorEntry` and `subMap` each take O(log n) to find their place in the tree. (Building the calendar first takes O(n log n) for n approved stays.) On Browse, finding a unit's calendar in the `HashMap` is O(1) on average, so a search over u units costs O(u log n) with no extra database queries.
 
@@ -329,7 +329,7 @@ Note: `totalValue()` is written and works the same way, but no screen calls it y
 
 **What it is:** A linked list where each node points to both the next and previous node, and the last node points back to the first. "Next" on the last photo wraps around to the first with no index math.
 
-**Where to find it:** `src/main/java/com/gudosnest/backend/structures/ImageRing.java`, lines 5–92 (`add` at lines 33–49, `next` at lines 55–61, `previous` at lines 63–69). It's used by `src/main/java/com/gudosnest/frontend/components/Carousel.java` (lines 38 and 52). The renter's property dialog creates the carousel: `src/main/java/com/gudosnest/frontend/renter/BookDialog.java`, lines 121–122.
+**Where to find it:** `src/main/java/com/gudosnest/backend/structures/ImageRing.java`, lines 5–92 (`add` at lines 33–49, `next` at lines 55–61, `previous` at lines 63–69). It's used by `src/main/java/com/gudosnest/frontend/components/Carousel.java` (lines 38 and 52). The renter's property dialog creates the carousel: `src/main/java/com/gudosnest/frontend/renter/BookDialog.java`, lines 123–124.
 
 
 **Code snippet:** Look at how a new node is linked between the old tail and the head, which keeps the ring closed.
