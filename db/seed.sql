@@ -47,7 +47,9 @@ INSERT INTO Units (unit_id, property_id, unit_name, unit_description, capacity, 
 (8,  4, 'Room 3',            'Family room with two queen beds, facing the sea.',                 4, 9800.00, 1200.00, 'unoccupied'),
 (9,  4, 'Room 4',            'Family room with two queen beds and a balcony.',                   4, 9800.00, 1200.00, 'unoccupied'),
 (10, 5, 'Whole house',       'A wooden cottage among pine trees, with a fireplace.',            4, 4600.00,  700.00, 'unoccupied'),
-(11, 6, 'Whole house',       'A bright studio with a planted terrace in the city.',             2, 3200.00,  500.00, 'unoccupied');
+(11, 6, 'Whole house',       'A bright studio with a planted terrace in the city.',             2, 3200.00,  500.00, 'unoccupied'),
+-- Room 5 is new and has no bookings yet (shows up in the "never booked" report)
+(12, 4, 'Room 5',            'Quiet corner room with one double bed and a small desk.',          2, 5800.00,  800.00, 'unoccupied');
 
 -- Bookings. Check-in is 2:00 PM, check-out 11:00 AM. total = nights x rate + cleaning - discount
 -- (10% off the nightly subtotal for stays of 7 nights or more).

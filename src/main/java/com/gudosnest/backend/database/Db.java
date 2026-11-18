@@ -51,6 +51,32 @@ public final class Db {
         }
     }
 
+    /** The result of a query whose columns are not known in advance (used by the reports). */
+    public record Table(List<String> columns, List<List<Object>> rows) {
+    }
+
+    /** Runs a SELECT and returns its column labels and every row as plain values. */
+    public static Table table(String sql, Object... params) {
+        try (PreparedStatement ps = prepare(sql, false, params); ResultSet rs = ps.executeQuery()) {
+            int width = rs.getMetaData().getColumnCount();
+            List<String> columns = new ArrayList<>();
+            for (int i = 1; i <= width; i++) {
+                columns.add(rs.getMetaData().getColumnLabel(i));
+            }
+            List<List<Object>> rows = new ArrayList<>();
+            while (rs.next()) {
+                List<Object> row = new ArrayList<>();
+                for (int i = 1; i <= width; i++) {
+                    row.add(rs.getObject(i));
+                }
+                rows.add(row);
+            }
+            return new Table(columns, rows);
+        } catch (SQLException e) {
+            throw new DataException("Could not run the report. Please check the database connection.", e);
+        }
+    }
+
     public static <T> Optional<T> one(String sql, RowMapper<T> mapper, Object... params) {
         List<T> rows = list(sql, mapper, params);
         return rows.isEmpty() ? Optional.empty() : Optional.of(rows.get(0));
