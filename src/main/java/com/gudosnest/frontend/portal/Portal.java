@@ -10,6 +10,7 @@ import com.gudosnest.backend.service.DamageService;
 import com.gudosnest.backend.service.FinanceService;
 import com.gudosnest.backend.service.MessageService;
 import com.gudosnest.backend.service.OwnerService;
+import com.gudosnest.backend.service.ReportService;
 import com.gudosnest.frontend.MainWindow;
 import com.gudosnest.frontend.components.AppButton;
 import com.gudosnest.frontend.components.AppDialog;
@@ -42,6 +43,7 @@ public abstract class Portal {
     public final FinanceService finance = new FinanceService();
     public final MessageService messages = new MessageService();
     public final BrowseService browse = new BrowseService();
+    public final ReportService reports = new ReportService();
 
     private Sidebar sidebar;
     private PortalShell shell;

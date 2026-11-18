@@ -12,16 +12,21 @@ import java.sql.Statement;
  */
 public final class DbConnectionTest {
 
+    /** Every table in db/schema.sql. */
+    private static final String[] TABLES = {
+        "Users", "Properties", "PropertyImages", "Units", "Bookings", "Payments", "Refunds",
+        "FinancialTransactions", "Messages", "Items", "DamageReports"
+    };
+
     public static void main(String[] args) {
         System.out.println("Gudo's Nest - database check");
         System.out.println("----------------------------");
         try {
             Connection conn = DatabaseConnection.getInstance().getConnection();
             System.out.println("[OK] Connected to " + conn.getMetaData().getURL());
-            printCount(conn, "Users");
-            printCount(conn, "Properties");
-            printCount(conn, "Units");
-            printCount(conn, "Bookings");
+            for (String table : TABLES) {
+                printCount(conn, table);
+            }
             System.out.println("[OK] Database is ready.");
         } catch (IllegalStateException e) {
             System.out.println("[FAILED] " + e.getMessage());
@@ -43,7 +48,7 @@ public final class DbConnectionTest {
         try (Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM " + table)) {
             rs.next();
-            System.out.printf("     %-11s %d rows%n", table, rs.getInt(1));
+            System.out.printf("     %-22s %d rows%n", table, rs.getInt(1));
         }
     }
 }

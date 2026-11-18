@@ -20,7 +20,8 @@ public class OwnerPortal extends Portal {
             new Sidebar.Item("payments", "Payments", "credit-card"),
             new Sidebar.Item("finances", "Finances", "wallet"),
             new Sidebar.Item("messages", "Messages", "message-square"),
-            new Sidebar.Item("damage", "Damage reports", "triangle-alert"));
+            new Sidebar.Item("damage", "Damage reports", "triangle-alert"),
+            new Sidebar.Item("reports", "Reports", "file-text"));
 
     public OwnerPortal(MainWindow window, User user) {
         super(window, user);
@@ -35,6 +36,7 @@ public class OwnerPortal extends Portal {
             case "finances" -> new FinancesPage(this);
             case "messages" -> new MessagesPage(this);
             case "damage" -> new DamageReportsPage(this);
+            case "reports" -> new ReportsPage(this);
             default -> new DashboardPage(this);
         };
     }
